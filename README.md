@@ -4,24 +4,28 @@ A macOS menu bar app that plays a generated soundscape with rhythmic amplitude m
 
 ## Modes
 
-| Mode     | Rate  | Depth  | Intended state          |
-|----------|-------|--------|-------------------------|
-| Focus    | 16 Hz | 0.5    | Alert, task-oriented    |
-| Relax    | 10 Hz | 0.4    | Calm, unwinding         |
-| Meditate | 6 Hz  | 0.5    | Deep, inward attention  |
-| Sleep    | 2 Hz  | steady | Drifting off            |
+| Mode       | Rate  | Depth  | Intended state          |
+|------------|-------|--------|-------------------------|
+| Focus      | 16 Hz | 0.5    | Alert, task-oriented    |
+| Gamma      | 40 Hz | 0.3    | Alert; 40 Hz steady-state response |
+| Relax      | 10 Hz | 0.4    | Calm, unwinding         |
+| Meditate   | 6 Hz  | 0.5    | Deep, inward attention  |
+| Sleep      | 2 Hz  | steady | Drifting off            |
+| Deep Sleep | 1 Hz  | 0.5    | Slow-wave sleep         |
 
 Each mode sets the modulation rate and depth. On top of that you pick:
 
-- **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus starts on Rain, Relax and Meditate on Pad. A mix is scaled so it sits at the level of a single sound.
+- **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus starts on Rain, Gamma, Relax and Meditate on Pad. A mix is scaled so it sits at the level of a single sound.
 - **Intensity**: Low, Medium, High (scales modulation depth; High is a small step above Medium)
 - **Timer**: Endless, 15 to 90 minutes, or 2, 4 or 8 hours. A timed session fades out when it ends. Pausing keeps the countdown; it resumes where it stopped.
 - **Binaural**: optional binaural beat at the same rate (headphones required)
 - **Volume**: an app-level volume on top of the system level, so the soundscape can sit under music or a call
 
-Sleep is different on purpose. It plays steady brown noise with no modulation, and a timed sleep session tapers over its last five minutes instead of stopping. The 2 Hz rate only matters if binaural is on. When the Mac goes to sleep the session pauses, so it does not resume on wake.
+Gamma is shallow on purpose: 40 Hz is the most reproducible rate for driving a steady-state response on EEG, but at ordinary depth it sounds like a buzz.
 
-Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), and optionally from a system-wide ⌃⌥E shortcut. Control Center and the media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default.
+The two sleep modes play a fixed brown noise bed, ignore intensity, and taper over the last five minutes of a timed session instead of stopping. Sleep is unmodulated; its 2 Hz rate only matters if binaural is on. Deep Sleep swells the bed once a second, the slow-oscillation rate that rhythmic sound studies use to deepen slow-wave sleep. When the Mac goes to sleep the session pauses, so it does not resume on wake.
+
+Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, and optionally from a system-wide ⌃⌥E shortcut. The small widget shows the mode, sound and countdown with a play/pause button; the medium one adds a button per mode. Control Center and the media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default.
 
 ## How it works
 
@@ -33,12 +37,14 @@ The four soundscapes are trimmed to the same K-weighted loudness (-22 LUFS, ITU-
 Sources/
   App/       MenuBarExtra entry point, App Intents, global shortcut
   UI/        SwiftUI menu bar menu and player window
-  Session/   Session state, modes, Now Playing integration
+  Session/   Session state, modes, Now Playing and widget snapshot
   Audio/     Engine, synth voices, DSP primitives, shared parameters
+Widget/      WidgetKit extension; shares Mode, Intents and WidgetState with the app
 Tests/       Loudness, synth and session tests (Swift Testing)
 Tools/
   icon.swift   Renders the app icon set into Resources/
 Scripts/
+  run.sh       Debug build, ad-hoc signed with entitlements, relaunched
   release.sh   Developer ID build, notarization and stapling
 ```
 
@@ -52,13 +58,13 @@ xcodegen generate
 open Entrain.xcodeproj
 ```
 
-Build and run the `Entrain` scheme. The app has no Dock icon by default; look for the waveform in the menu bar. Run the tests with Cmd-U, or:
+Build and run the `Entrain` scheme, or run `Scripts/run.sh` (also wired up as "Build & Run" in `t3.json`). The script ad-hoc signs the app and widget with their entitlements, since Xcode will not sign the widget's App Group without a development certificate and the system only loads sandboxed widgets. The app has no Dock icon by default; look for the waveform in the menu bar. Run the tests with Cmd-U, or:
 
 ```sh
 xcodebuild -project Entrain.xcodeproj -scheme Entrain test
 ```
 
-Launch at Login uses `SMAppService`, which needs the app to run from a stable location such as `/Applications`; from a DerivedData build the toggle shows an error instead.
+Launch at Login uses `SMAppService`, which needs the app to run from a stable location such as `/Applications`; from a DerivedData build the toggle shows an error instead. The widget appears in the widget gallery once the app has been launched. Its buttons run the app's intents inside the app process (`allowedExecutionTargets = .main`), and the app publishes a snapshot to the `group.no.espenbye.entrain` app group on every change, so the widget never touches audio or the session directly.
 
 Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on every push.
 

@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Observation
+import WidgetKit
 
 @MainActor
 @Observable
@@ -29,13 +30,13 @@ final class Session {
     /// The soundscapes playing together, remembered per mode. Steady modes
     /// keep their fixed bed.
     var layers: Set<Soundscape> {
-        mode.isSteady ? mode.defaultLayers : layersByMode[mode] ?? mode.defaultLayers
+        mode.isSleep ? mode.defaultLayers : layersByMode[mode] ?? mode.defaultLayers
     }
     private var layersByMode: [Mode: Set<Soundscape>]
 
     /// Adds or removes one layer. The last layer stays: silence is pause, not a mix.
     func setLayer(_ soundscape: Soundscape, on: Bool) {
-        guard !mode.isSteady else { return }
+        guard !mode.isSleep else { return }
         var layers = layers
         if on { layers.insert(soundscape) } else if layers.count > 1 { layers.remove(soundscape) }
         layersByMode[mode] = layers
@@ -51,6 +52,8 @@ final class Session {
 
     let parameters = AudioParameters()
     private let defaults: UserDefaults
+    /// The app group the widget reads. Tests pass their own suite.
+    private let widgetDefaults: UserDefaults?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
@@ -61,8 +64,13 @@ final class Session {
     private var stopTask: Task<Void, Never>?
     private var sleepObserver: NSObjectProtocol?
 
-    init(defaults: UserDefaults, makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio) {
+    init(
+        defaults: UserDefaults,
+        widgetDefaults: UserDefaults? = UserDefaults(suiteName: WidgetState.group),
+        makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
+    ) {
         self.defaults = defaults
+        self.widgetDefaults = widgetDefaults
         self.makeEngine = makeEngine
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
         intensity = Intensity(rawValue: defaults.string(forKey: "intensity") ?? "") ?? .medium
@@ -116,7 +124,7 @@ final class Session {
         isPlaying = true
         startTimer()
         applyMaster()
-        NowPlaying.update(self)
+        broadcast()
     }
 
     func pause() {
@@ -124,7 +132,7 @@ final class Session {
         isPlaying = false
         stopTimer()
         applyMaster()
-        NowPlaying.update(self)
+        broadcast()
         stopTask = Task { [engine] in
             try? await Task.sleep(for: .seconds(1.5))
             guard !Task.isCancelled else { return }
@@ -141,13 +149,13 @@ final class Session {
     private func apply() {
         let p = parameters
         p.modulationRate.store(mode.rate, ordering: .relaxed)
-        p.modulationDepth.store(min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
+        p.modulationDepth.store(mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
         applyMaster()
         save()
-        NowPlaying.update(self)
+        broadcast()
     }
 
     private func save() {
@@ -170,6 +178,20 @@ final class Session {
         parameters.master.store(gain, ordering: .relaxed)
     }
 
+    /// Tells Now Playing and the widget about a state change. The widget reads
+    /// a snapshot from the shared defaults, so it needs no live connection.
+    private func broadcast() {
+        NowPlaying.update(self)
+        WidgetState(
+            mode: mode,
+            sound: layers.title,
+            isPlaying: isPlaying,
+            remaining: remaining,
+            deadline: isPlaying ? remaining.map { Date.now.addingTimeInterval(Double($0)) } : nil
+        ).save(to: widgetDefaults)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetState.kind)
+    }
+
     static func masterGain(remaining: Int?, fadeOut: Double) -> Double {
         remaining.map { min(1, Double($0) / fadeOut) } ?? 1
     }
@@ -182,7 +204,7 @@ final class Session {
         remaining = length == .endless ? nil : length.seconds
         if isPlaying { startTimer() }
         applyMaster()
-        NowPlaying.update(self)
+        broadcast()
     }
 
     private func startTimer() {
@@ -213,7 +235,7 @@ final class Session {
     private func finish() {
         pause()
         remaining = length.seconds
-        NowPlaying.update(self)
+        broadcast()
     }
 
     private static func secondsLeft(until deadline: ContinuousClock.Instant) -> Int {

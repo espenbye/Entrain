@@ -74,6 +74,11 @@ enum LaunchAtLogin {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var openPlayer: (() -> Void)?
 
+    /// Quitting mid-session would leave the widget showing Pause over nothing.
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated { Session.shared.pause() }
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !hasVisibleWindows { openPlayer?() }
         return true

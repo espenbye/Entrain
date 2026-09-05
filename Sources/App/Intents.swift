@@ -1,13 +1,23 @@
 import AppIntents
 
-/// Shortcuts and Siri. Each intent hops to the main actor: Session lives there.
+/// Shortcuts, Siri and the widget. Each intent hops to the main actor:
+/// Session lives there. The widget compiles these too, to build its buttons,
+/// but every run is pinned to the app process where the session is, so the
+/// widget copies never perform.
 struct StartSessionIntent: AppIntent {
     static let title: LocalizedStringResource = "Start Session"
     static let description = IntentDescription("Plays a mode, optionally for a set length.")
     static var supportedModes: IntentModes { .background }
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @Parameter(title: "Mode") var mode: Mode
     @Parameter(title: "Length") var length: SessionLength?
+
+    init() {}
+
+    init(mode: Mode) {
+        self.mode = mode
+    }
 
     static var parameterSummary: some ParameterSummary {
         Summary("Start \(\.$mode)") {
@@ -17,11 +27,13 @@ struct StartSessionIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        #if !WIDGET
         let session = Session.shared
         session.mode = mode
         if let length { session.length = length }
         session.play()
         guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
+        #endif
         return .result()
     }
 }
@@ -30,10 +42,13 @@ struct StopSessionIntent: AppIntent {
     static let title: LocalizedStringResource = "Stop Session"
     static let description = IntentDescription("Pauses playback. The timer keeps its place.")
     static var supportedModes: IntentModes { .background }
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        #if !WIDGET
         Session.shared.pause()
+        #endif
         return .result()
     }
 }
@@ -42,12 +57,15 @@ struct ToggleSessionIntent: AppIntent {
     static let title: LocalizedStringResource = "Play or Pause"
     static let description = IntentDescription("Toggles playback of the current mode.")
     static var supportedModes: IntentModes { .background }
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        #if !WIDGET
         let session = Session.shared
         session.toggle()
         if let error = session.error { throw SessionIntentError.failed(error) }
+        #endif
         return .result()
     }
 }
@@ -64,6 +82,7 @@ enum SessionIntentError: Error, CustomLocalizedStringResourceConvertible {
     }
 }
 
+#if !WIDGET
 struct EntrainShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -89,6 +108,7 @@ struct EntrainShortcuts: AppShortcutsProvider {
         )
     }
 }
+#endif
 
 // Raw values double as the persisted identity of saved shortcuts: never rename them.
 
@@ -96,9 +116,11 @@ extension Mode: AppEnum {
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Mode")
     static let caseDisplayRepresentations: [Mode: DisplayRepresentation] = [
         .focus: "Focus",
+        .gamma: "Gamma",
         .relax: "Relax",
         .meditate: "Meditate",
         .sleep: "Sleep",
+        .deepSleep: "Deep Sleep",
     ]
 }
 

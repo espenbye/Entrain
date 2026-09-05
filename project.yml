@@ -29,12 +29,45 @@ targets:
       path: Entrain.entitlements
       properties:
         com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: [group.no.espenbye.entrain]
+    dependencies:
+      - target: EntrainWidget
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain
         PRODUCT_NAME: Entrain
         SWIFT_EMIT_LOC_STRINGS: false
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  EntrainWidget:
+    type: app-extension
+    platform: macOS
+    # The widget shares the mode enums, the intents behind its buttons and the
+    # snapshot it draws; WIDGET compiles the intents without the session.
+    sources:
+      - Widget
+      - Sources/Session/Mode.swift
+      - Sources/Session/WidgetState.swift
+      - Sources/App/Intents.swift
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Entrain
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/EntrainWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: [group.no.espenbye.entrain]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain.widget
+        SWIFT_EMIT_LOC_STRINGS: false
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG WIDGET
+        Release:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: WIDGET
   EntrainTests:
     type: bundle.unit-test
     platform: macOS

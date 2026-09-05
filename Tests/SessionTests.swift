@@ -31,7 +31,7 @@ struct SessionTests {
     }
 
     func makeSession() -> Session {
-        Session(defaults: defaults) { [audio] _ in audio }
+        Session(defaults: defaults, widgetDefaults: defaults) { [audio] _ in audio }
     }
 
     @Test func settingsSurviveRelaunch() {
@@ -72,7 +72,7 @@ struct SessionTests {
 
     @Test func engineIsCreatedOnFirstPlay() {
         var created = 0
-        let session = Session(defaults: defaults) { [audio] _ in
+        let session = Session(defaults: defaults, widgetDefaults: defaults) { [audio] _ in
             created += 1
             return audio
         }
@@ -140,6 +140,19 @@ struct SessionTests {
         #expect(session.layers == [.noise])
         #expect(p.modulationDepth.load(ordering: .relaxed) == 0)
         #expect(p.layers.load(ordering: .relaxed) == Soundscape.noise.bit)
+
+        session.mode = .deepSleep
+        session.setLayer(.pad, on: true)
+        #expect(session.layers == [.noise])
+        #expect(p.modulationRate.load(ordering: .relaxed) == 1)
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.5)
+        #expect(p.binauralCarrier.load(ordering: .relaxed) == 100)
+
+        session.mode = .gamma
+        session.intensity = .medium
+        #expect(p.modulationRate.load(ordering: .relaxed) == 40)
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.3)
+        #expect(p.layers.load(ordering: .relaxed) == Soundscape.pad.bit)
     }
 
     @Test func masterTapersOverTheFadeOut() {
@@ -148,6 +161,24 @@ struct SessionTests {
         #expect(Session.masterGain(remaining: 150, fadeOut: 300) == 0.5)
         #expect(Session.masterGain(remaining: 0, fadeOut: 300) == 0)
         #expect(Session.masterGain(remaining: 30, fadeOut: 1) == 1)
+    }
+
+    @Test func widgetSeesTheSession() {
+        let session = makeSession()
+        session.mode = .relax
+        session.length = .thirty
+        session.play()
+        let playing = WidgetState.load(from: defaults)
+        #expect(playing?.mode == .relax)
+        #expect(playing?.sound == "Pad")
+        #expect(playing?.isPlaying == true)
+        #expect(playing?.deadline != nil)
+
+        session.pause()
+        let paused = WidgetState.load(from: defaults)
+        #expect(paused?.isPlaying == false)
+        #expect(paused?.remaining == SessionLength.thirty.seconds)
+        #expect(paused?.deadline == nil)
     }
 
     @Test func countdownGrowsPastAnHour() {

@@ -73,7 +73,7 @@ struct PlayerControls: View {
             intensity: $session.intensity,
             length: $session.length,
             binaural: $session.binaural,
-            steady: session.mode.isSteady,
+            sleep: session.mode.isSleep,
             inMenu: inMenu
         )
         VolumeSection(volume: $session.volume, inMenu: inMenu)
@@ -148,23 +148,23 @@ struct SettingsSection: View {
     @Binding var intensity: Intensity
     @Binding var length: SessionLength
     @Binding var binaural: Bool
-    /// Sleep is a fixed steady bed; sound and intensity have nothing to set.
-    let steady: Bool
+    /// Sleep modes play a fixed bed; sound and intensity have nothing to set.
+    let sleep: Bool
     let inMenu: Bool
 
     var body: some View {
         Section {
             if inMenu {
-                Menu("Sound") { layerToggles }.disabled(steady)
+                Menu("Sound") { layerToggles }.disabled(sleep)
             } else {
                 LabeledContent("Sound") { HStack { layerToggles } }
                     .toggleStyle(.button)
-                    .disabled(steady)
+                    .disabled(sleep)
             }
             Picker("Intensity", selection: $intensity) {
                 ForEach(Intensity.allCases) { Text($0.title).tag($0) }
             }
-            .disabled(steady)
+            .disabled(sleep)
             Picker("Timer", selection: $length) {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
             }
