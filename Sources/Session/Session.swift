@@ -178,8 +178,8 @@ final class Session {
         parameters.master.store(gain, ordering: .relaxed)
     }
 
-    /// Tells Now Playing and the widget about a state change. The widget reads
-    /// a snapshot from the shared defaults, so it needs no live connection.
+    /// Tells Now Playing, the widget and Control Center about a state change.
+    /// Both read the snapshot file, so they need no live connection.
     private func broadcast() {
         NowPlaying.update(self)
         WidgetState(
@@ -190,6 +190,7 @@ final class Session {
             deadline: isPlaying ? remaining.map { Date.now.addingTimeInterval(Double($0)) } : nil
         ).save(to: widgetDirectory)
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetState.kind)
+        ControlCenter.shared.reloadAllControls()
     }
 
     static func masterGain(remaining: Int?, fadeOut: Double) -> Double {

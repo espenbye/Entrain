@@ -70,6 +70,37 @@ struct ToggleSessionIntent: AppIntent {
     }
 }
 
+/// Behind each Control Center toggle: on starts the mode, off pauses.
+struct SetModePlayingIntent: SetValueIntent {
+    static let title: LocalizedStringResource = "Set Mode Playing"
+    static var supportedModes: IntentModes { .background }
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
+
+    @Parameter(title: "Mode") var mode: Mode
+    @Parameter(title: "Playing") var value: Bool
+
+    init() {}
+
+    init(mode: Mode) {
+        self.mode = mode
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        #if !WIDGET
+        let session = Session.shared
+        if value {
+            session.mode = mode
+            session.play()
+            guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
+        } else {
+            session.pause()
+        }
+        #endif
+        return .result()
+    }
+}
+
 enum SessionIntentError: Error, CustomLocalizedStringResourceConvertible {
     case audioUnavailable
     case failed(String)

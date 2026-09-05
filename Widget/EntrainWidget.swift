@@ -3,6 +3,18 @@ import SwiftUI
 import WidgetKit
 
 @main
+struct EntrainWidgets: WidgetBundle {
+    var body: some Widget {
+        EntrainWidget()
+        FocusControl()
+        GammaControl()
+        RelaxControl()
+        MeditateControl()
+        SleepControl()
+        DeepSleepControl()
+    }
+}
+
 struct EntrainWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: WidgetState.kind, provider: Provider()) { entry in
@@ -118,3 +130,44 @@ struct ModeButton: View {
         .accessibilityLabel(mode.title)
     }
 }
+
+/// One Control Center toggle per mode. On means that mode is playing;
+/// switching it off pauses the session. WidgetKit needs a distinct type per
+/// control, so each mode gets a one-line wrapper around the shared body.
+struct ModeControlValue {
+    let mode: Mode
+    let isOn: Bool
+}
+
+struct ModeControlProvider: ControlValueProvider {
+    let mode: Mode
+
+    var previewValue: ModeControlValue { ModeControlValue(mode: mode, isOn: false) }
+
+    func currentValue() async throws -> ModeControlValue {
+        let state = WidgetState.load()
+        return ModeControlValue(mode: mode, isOn: state?.isPlaying == true && state?.mode == mode)
+    }
+}
+
+extension Mode {
+    var controlKind: String { "no.espenbye.entrain.control.\(rawValue)" }
+}
+
+@MainActor
+func modeControl(_ mode: Mode) -> some ControlWidgetConfiguration {
+    StaticControlConfiguration(kind: mode.controlKind, provider: ModeControlProvider(mode: mode)) { value in
+        ControlWidgetToggle(mode.title, isOn: value.isOn, action: SetModePlayingIntent(mode: mode)) { isOn in
+            Label(isOn ? "Playing" : "Paused", systemImage: mode.symbol)
+        }
+    }
+    .displayName(LocalizedStringResource(stringLiteral: mode.title))
+    .description("Plays or pauses \(mode.title).")
+}
+
+struct FocusControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.focus) } }
+struct GammaControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.gamma) } }
+struct RelaxControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.relax) } }
+struct MeditateControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.meditate) } }
+struct SleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.sleep) } }
+struct DeepSleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.deepSleep) } }
