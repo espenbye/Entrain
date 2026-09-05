@@ -6,11 +6,10 @@ struct EntrainApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            PlayerView(session: session)
+            PlayerMenu(session: session)
         } label: {
-            Image(systemName: "waveform")
-                .symbolEffect(.variableColor.iterative, isActive: session.isPlaying)
+            MenuBarLabel(isPlaying: session.isPlaying, remaining: session.remaining)
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
     }
 }
