@@ -26,7 +26,7 @@ struct EntrainApp: App {
         Window("Entrain", id: PlayerWindow.id) {
             PlayerWindow(session: session)
         }
-        .defaultSize(width: 320, height: 480)
+        .defaultSize(width: 320, height: 560)
         .windowResizability(.contentSize)
     }
 }
