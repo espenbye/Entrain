@@ -1,9 +1,12 @@
+import AppKit
 import Foundation
 import Observation
 
 @MainActor
 @Observable
 final class Session {
+    static let shared = Session(defaults: .standard) { AudioEngine(parameters: $0) }
+
     var mode: Mode { didSet { apply() } }
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
@@ -11,7 +14,7 @@ final class Session {
     /// 0...1, on top of the system output level.
     var volume: Double {
         didSet {
-            engine.parameters.volume.store(volume, ordering: .relaxed)
+            parameters.volume.store(volume, ordering: .relaxed)
             save()
         }
     }
@@ -31,19 +34,24 @@ final class Session {
     /// Seconds left in a timed session. Nil when endless. Pausing keeps it,
     /// so resuming picks up where the session stopped.
     private(set) var remaining: Int?
-    /// Why the last play attempt produced no sound. Nil once audio is running.
+    /// Why there is no sound although the user pressed play. Nil once audio is running.
     private(set) var error: String?
 
-    private let engine = AudioEngine()
-    private let defaults = UserDefaults.standard
+    let parameters = AudioParameters()
+    private let defaults: UserDefaults
+    private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
+    /// Created on first play: a login item should not touch audio hardware at launch.
+    private var engine: (any SessionAudio)?
     /// Wall-clock end of the running timed session. Remaining is derived from
     /// it, so the countdown cannot drift.
     private var deadline: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
+    private var sleepObserver: NSObjectProtocol?
 
-    init() {
-        let defaults = UserDefaults.standard
+    init(defaults: UserDefaults, makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio) {
+        self.defaults = defaults
+        self.makeEngine = makeEngine
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
         intensity = Intensity(rawValue: defaults.string(forKey: "intensity") ?? "") ?? .medium
         binaural = defaults.object(forKey: "binaural") as? Bool ?? false
@@ -53,9 +61,17 @@ final class Session {
             Soundscape(rawValue: defaults.string(forKey: "soundscape.\(mode.rawValue)") ?? "").map { (mode, $0) }
         })
         remaining = length == .endless ? nil : length.seconds
-        engine.parameters.volume.store(volume, ordering: .relaxed)
+        parameters.volume.store(volume, ordering: .relaxed)
         apply()
         NowPlaying.attach(to: self)
+
+        // A session that outlives the Mac's sleep would otherwise resume on
+        // wake, which for Sleep mode means brown noise at breakfast.
+        sleepObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.pause() }
+        }
     }
 
     var title: String { "\(mode.title) · \(soundscape.title)" }
@@ -69,6 +85,12 @@ final class Session {
 
     func play() {
         stopTask?.cancel()
+        let engine = self.engine ?? {
+            let engine = makeEngine(parameters)
+            engine.onInterruption = { [weak self] in self?.interrupted() }
+            self.engine = engine
+            return engine
+        }()
         do {
             try engine.start()
             error = nil
@@ -83,6 +105,7 @@ final class Session {
     }
 
     func pause() {
+        guard isPlaying else { return }
         isPlaying = false
         stopTimer()
         applyMaster()
@@ -90,12 +113,18 @@ final class Session {
         stopTask = Task { [engine] in
             try? await Task.sleep(for: .seconds(1.5))
             guard !Task.isCancelled else { return }
-            engine.stop()
+            engine?.stop()
         }
     }
 
+    /// The engine stopped on its own and could not come back.
+    private func interrupted() {
+        pause()
+        error = "Audio stopped"
+    }
+
     private func apply() {
-        let p = engine.parameters
+        let p = parameters
         p.modulationRate.store(mode.rate, ordering: .relaxed)
         p.modulationDepth.store(min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
@@ -120,8 +149,12 @@ final class Session {
     /// Full level while playing, tapering linearly over the mode's fade-out
     /// as a timed session runs down. The synths smooth the one-second steps.
     private func applyMaster() {
-        let gain = remaining.map { min(1, Double($0) / mode.fadeOut) } ?? 1
-        engine.parameters.master.store(isPlaying ? gain : 0, ordering: .relaxed)
+        let gain = isPlaying ? Self.masterGain(remaining: remaining, fadeOut: mode.fadeOut) : 0
+        parameters.master.store(gain, ordering: .relaxed)
+    }
+
+    static func masterGain(remaining: Int?, fadeOut: Double) -> Double {
+        remaining.map { min(1, Double($0) / fadeOut) } ?? 1
     }
 
     // MARK: Timer
@@ -163,6 +196,7 @@ final class Session {
     private func finish() {
         pause()
         remaining = length.seconds
+        NowPlaying.update(self)
     }
 
     private static func secondsLeft(until deadline: ContinuousClock.Instant) -> Int {

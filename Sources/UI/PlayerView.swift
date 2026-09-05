@@ -71,7 +71,9 @@ struct PlayerControls: View {
 }
 
 /// What the menu bar shows: the waveform, plus the mode and countdown while playing.
-/// Laid out by hand: a `Label` in a status item renders icon-only.
+/// Laid out by hand: a `Label` in a status item renders icon-only. The symbol
+/// does not animate: a status item redrawing all day is a battery cost for
+/// an app meant to sit in the background.
 struct MenuBarLabel: View {
     let isPlaying: Bool
     let mode: Mode
@@ -80,8 +82,7 @@ struct MenuBarLabel: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "waveform")
-                .symbolEffect(.variableColor.iterative, isActive: isPlaying)
-                        if isPlaying {
+            if isPlaying {
                 if let remaining {
                     Text("\(mode.title) \(Duration.seconds(remaining), format: .time(pattern: .minuteSecond))")
                         .monospacedDigit()

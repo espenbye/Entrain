@@ -1,8 +1,19 @@
 import AVFoundation
 
+/// What the session needs from an audio backend. `AudioEngine` is the real one;
+/// tests substitute a fake.
 @MainActor
-final class AudioEngine {
-    let parameters = AudioParameters()
+protocol SessionAudio: AnyObject {
+    /// Called when playback stops for a reason the session did not ask for,
+    /// such as an output device going away and the engine failing to restart.
+    var onInterruption: (() -> Void)? { get set }
+    func start() throws
+    func stop()
+}
+
+@MainActor
+final class AudioEngine: SessionAudio {
+    var onInterruption: (() -> Void)?
 
     private let engine = AVAudioEngine()
     private let bedNode: AVAudioSourceNode
@@ -18,7 +29,7 @@ final class AudioEngine {
     private var shouldRun = false
     private var configurationObserver: NSObjectProtocol?
 
-    init() {
+    init(parameters: AudioParameters) {
         // Zero when no output device exists; the synths still need a real rate.
         let hardwareRate = engine.outputNode.outputFormat(forBus: 0).sampleRate
         let sampleRate = hardwareRate > 0 ? hardwareRate : 48000
@@ -71,8 +82,8 @@ final class AudioEngine {
         // Plugging in headphones or switching outputs stops the engine.
         configurationObserver = NotificationCenter.default.addObserver(
             forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil
-        ) { _ in
-            Task { @MainActor [weak self] in self?.recover() }
+        ) { [weak self] _ in
+            Task { @MainActor in self?.recover() }
         }
     }
 
@@ -88,8 +99,15 @@ final class AudioEngine {
         engine.pause()
     }
 
+    /// Bring the engine back after a device change. If it will not start, the
+    /// session hears about it so the UI does not claim to be playing.
     private func recover() {
         guard shouldRun, !engine.isRunning else { return }
-        try? engine.start()
+        do {
+            try engine.start()
+        } catch {
+            shouldRun = false
+            onInterruption?()
+        }
     }
 }

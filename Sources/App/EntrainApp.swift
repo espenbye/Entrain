@@ -3,7 +3,7 @@ import SwiftUI
 
 @main
 struct EntrainApp: App {
-    @State private var session = Session()
+    private let session = Session.shared
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
 
     init() {
@@ -29,6 +29,7 @@ struct EntrainApp: App {
 
 /// Whether the app appears in the Dock and app switcher. Launch is always
 /// menubar-only (LSUIElement); this raises the policy at runtime.
+@MainActor
 enum DockIcon {
     static let key = "showInDock"
 
