@@ -20,6 +20,7 @@ struct EntrainApp: App {
         } label: {
             MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, remaining: session.remaining)
                 .reopensPlayerWindow(delegate)
+                .onOpenURL { url in URLCommand(url)?.run(on: session) }
         }
         .menuBarExtraStyle(.menu)
 
