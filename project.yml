@@ -1,0 +1,35 @@
+name: Entrain
+options:
+  bundleIdPrefix: no.espenbye
+  deploymentTarget:
+    macOS: "27.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: true
+targets:
+  Entrain:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Entrain
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.healthcare-fitness
+        NSHumanReadableCopyright: © Espen Bye
+    entitlements:
+      path: Entrain.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain
+        PRODUCT_NAME: Entrain
+        SWIFT_EMIT_LOC_STRINGS: false
