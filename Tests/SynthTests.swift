@@ -14,7 +14,7 @@ struct SynthTests {
         var renderer = Renderer(synth: synth, block: Self.block)
 
         for soundscape in Soundscape.allCases {
-            parameters.soundscape.store(soundscape.index, ordering: .relaxed)
+            parameters.layers.store(soundscape.bit, ordering: .relaxed)
             let peak = renderer.render(seconds: 4)
             #expect(peak.isFinite && peak > 0, "\(soundscape.title) rendered \(peak)")
         }
@@ -23,17 +23,42 @@ struct SynthTests {
     @Test func switchingSoundscapesDoesNotSpike() {
         let parameters = AudioParameters()
         parameters.master.store(1, ordering: .relaxed)
-        parameters.soundscape.store(Soundscape.rain.index, ordering: .relaxed)
+        parameters.layers.store(Soundscape.rain.bit, ordering: .relaxed)
         let synth = BedSynth(parameters: parameters, sampleRate: Self.sampleRate)
         var renderer = Renderer(synth: synth, block: Self.block)
 
         _ = renderer.render(seconds: 3)
         let rainPeak = renderer.render(seconds: 5)
-        parameters.soundscape.store(Soundscape.drone.index, ordering: .relaxed)
+        parameters.layers.store(Soundscape.drone.bit, ordering: .relaxed)
         let transitionPeak = renderer.render(seconds: 3)
         let dronePeak = renderer.render(seconds: 5)
 
         #expect(transitionPeak <= max(rainPeak, dronePeak) * 1.2, "crossfade peaked at \(transitionPeak)")
+    }
+
+    /// Two layers are scaled by 1/sqrt(2), so the mix must not exceed the sum
+    /// of the two peaks at that gain, and it must not be quieter than the
+    /// louder layer alone after scaling.
+    @Test func mixingTwoLayersStaysInBounds() {
+        let parameters = AudioParameters()
+        parameters.master.store(1, ordering: .relaxed)
+        let synth = BedSynth(parameters: parameters, sampleRate: Self.sampleRate)
+        var renderer = Renderer(synth: synth, block: Self.block)
+
+        parameters.layers.store(Soundscape.rain.bit, ordering: .relaxed)
+        _ = renderer.render(seconds: 3)
+        let rainPeak = renderer.render(seconds: 4)
+        parameters.layers.store(Soundscape.drone.bit, ordering: .relaxed)
+        _ = renderer.render(seconds: 3)
+        let dronePeak = renderer.render(seconds: 4)
+        parameters.layers.store(Soundscape.rain.bit | Soundscape.drone.bit, ordering: .relaxed)
+        _ = renderer.render(seconds: 3)
+        let mixPeak = renderer.render(seconds: 4)
+
+        let scale = Float(1 / 2.0.squareRoot())
+        #expect(mixPeak.isFinite && mixPeak > 0)
+        #expect(mixPeak <= (rainPeak + dronePeak) * scale * 1.05, "mix peaked at \(mixPeak)")
+        #expect(mixPeak >= max(rainPeak, dronePeak) * scale * 0.8, "mix only reached \(mixPeak)")
     }
 
     @Test func masterAtZeroIsSilent() {

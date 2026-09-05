@@ -32,11 +32,11 @@ enum Mode: String, CaseIterable, Identifiable {
 
     /// Where a mode starts before the user picks. Steady-state carriers for
     /// Focus, since a walking pad is a mild irrelevant-sound risk while reading.
-    var defaultSoundscape: Soundscape {
+    var defaultLayers: Set<Soundscape> {
         switch self {
-        case .focus: .rain
-        case .relax, .meditate: .pad
-        case .sleep: .noise
+        case .focus: [.rain]
+        case .relax, .meditate: [.pad]
+        case .sleep: [.noise]
         }
     }
 
@@ -79,6 +79,13 @@ enum Soundscape: String, CaseIterable, Identifiable {
     var id: Self { self }
     var title: String { rawValue.capitalized }
     var index: Int { Self.allCases.firstIndex(of: self)! }
+    var bit: Int { 1 << index }
+}
+
+extension Set<Soundscape> {
+    var mask: Int { reduce(0) { $0 | $1.bit } }
+    /// In display order: "Rain + Pad".
+    var title: String { Soundscape.allCases.filter(contains).map(\.title).joined(separator: " + ") }
 }
 
 enum SessionLength: Int, CaseIterable, Identifiable {
@@ -87,8 +94,24 @@ enum SessionLength: Int, CaseIterable, Identifiable {
     case thirty = 30
     case sixty = 60
     case ninety = 90
+    case twoHours = 120
+    case fourHours = 240
+    case eightHours = 480
 
     var id: Self { self }
-    var title: String { self == .endless ? "Endless" : "\(rawValue) min" }
+    var title: String {
+        switch self {
+        case .endless: "Endless"
+        case .fifteen, .thirty, .sixty, .ninety: "\(rawValue) min"
+        case .twoHours, .fourHours, .eightHours: "\(rawValue / 60) h"
+        }
+    }
     var seconds: Int { rawValue * 60 }
+}
+
+extension Int {
+    /// A countdown in seconds as "14:59", growing to "1:14:59" past an hour.
+    var countdown: String {
+        Duration.seconds(self).formatted(.time(pattern: self >= 3600 ? .hourMinuteSecond : .minuteSecond))
+    }
 }

@@ -37,7 +37,7 @@ struct SessionTests {
     @Test func settingsSurviveRelaunch() {
         let first = makeSession()
         first.mode = .relax
-        first.soundscape = .drone
+        first.setLayer(.drone, on: true)
         first.mode = .meditate
         first.intensity = .high
         first.binaural = true
@@ -50,9 +50,22 @@ struct SessionTests {
         #expect(second.binaural)
         #expect(second.length == .thirty)
         #expect(second.volume == 0.4)
-        #expect(second.soundscape == .pad)
+        #expect(second.layers == [.pad])
         second.mode = .relax
-        #expect(second.soundscape == .drone)
+        #expect(second.layers == [.pad, .drone])
+    }
+
+    @Test func theLastLayerCannotBeRemoved() {
+        let session = makeSession()
+        session.mode = .focus
+        #expect(session.layers == [.rain])
+        session.setLayer(.rain, on: false)
+        #expect(session.layers == [.rain])
+        session.setLayer(.noise, on: true)
+        session.setLayer(.rain, on: false)
+        #expect(session.layers == [.noise])
+        #expect(session.title == "Focus · Noise")
+        #expect(session.parameters.layers.load(ordering: .relaxed) == Soundscape.noise.bit)
     }
 
     @Test func engineIsCreatedOnFirstPlay() {
@@ -118,13 +131,13 @@ struct SessionTests {
         #expect(p.modulationRate.load(ordering: .relaxed) == 16)
         #expect(p.modulationDepth.load(ordering: .relaxed) == 0.6)
         #expect(p.binauralLevel.load(ordering: .relaxed) == 0.12)
-        #expect(p.soundscape.load(ordering: .relaxed) == Soundscape.rain.index)
+        #expect(p.layers.load(ordering: .relaxed) == Soundscape.rain.bit)
 
         session.mode = .sleep
-        session.soundscape = .pad
-        #expect(session.soundscape == .noise)
+        session.setLayer(.pad, on: true)
+        #expect(session.layers == [.noise])
         #expect(p.modulationDepth.load(ordering: .relaxed) == 0)
-        #expect(p.soundscape.load(ordering: .relaxed) == Soundscape.noise.index)
+        #expect(p.layers.load(ordering: .relaxed) == Soundscape.noise.bit)
     }
 
     @Test func masterTapersOverTheFadeOut() {
@@ -133,5 +146,12 @@ struct SessionTests {
         #expect(Session.masterGain(remaining: 150, fadeOut: 300) == 0.5)
         #expect(Session.masterGain(remaining: 0, fadeOut: 300) == 0)
         #expect(Session.masterGain(remaining: 30, fadeOut: 1) == 1)
+    }
+
+    @Test func countdownGrowsPastAnHour() {
+        #expect(899.countdown == "14:59")
+        #expect(3600.countdown == "1:00:00")
+        #expect(SessionLength.eightHours.seconds.countdown == "8:00:00")
+        #expect(SessionLength.eightHours.title == "8 h")
     }
 }

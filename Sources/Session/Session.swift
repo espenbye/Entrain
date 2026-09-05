@@ -19,16 +19,21 @@ final class Session {
         }
     }
 
-    /// Each mode remembers its own soundscape. Steady modes ignore the choice.
-    var soundscape: Soundscape {
-        get { mode.isSteady ? mode.defaultSoundscape : soundscapes[mode] ?? mode.defaultSoundscape }
-        set {
-            guard !mode.isSteady else { return }
-            soundscapes[mode] = newValue
-            apply()
-        }
+    /// The soundscapes playing together, remembered per mode. Steady modes
+    /// keep their fixed bed.
+    var layers: Set<Soundscape> {
+        mode.isSteady ? mode.defaultLayers : layersByMode[mode] ?? mode.defaultLayers
     }
-    private var soundscapes: [Mode: Soundscape]
+    private var layersByMode: [Mode: Set<Soundscape>]
+
+    /// Adds or removes one layer. The last layer stays: silence is pause, not a mix.
+    func setLayer(_ soundscape: Soundscape, on: Bool) {
+        guard !mode.isSteady else { return }
+        var layers = layers
+        if on { layers.insert(soundscape) } else if layers.count > 1 { layers.remove(soundscape) }
+        layersByMode[mode] = layers
+        apply()
+    }
 
     private(set) var isPlaying = false
     /// Seconds left in a timed session. Nil when endless. Pausing keeps it,
@@ -57,8 +62,10 @@ final class Session {
         binaural = defaults.object(forKey: "binaural") as? Bool ?? false
         length = SessionLength(rawValue: defaults.integer(forKey: "length")) ?? .endless
         volume = defaults.object(forKey: "volume") as? Double ?? 1
-        soundscapes = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
-            Soundscape(rawValue: defaults.string(forKey: "soundscape.\(mode.rawValue)") ?? "").map { (mode, $0) }
+        layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
+            let stored = defaults.string(forKey: "layers.\(mode.rawValue)")?.split(separator: ",") ?? []
+            let layers = Set(stored.compactMap { Soundscape(rawValue: String($0)) })
+            return layers.isEmpty ? nil : (mode, layers)
         })
         remaining = length == .endless ? nil : length.seconds
         parameters.volume.store(volume, ordering: .relaxed)
@@ -74,7 +81,7 @@ final class Session {
         }
     }
 
-    var title: String { "\(mode.title) · \(soundscape.title)" }
+    var title: String { "\(mode.title) · \(layers.title)" }
 
     /// Seconds into the current timed session. Nil when endless.
     var elapsed: Int? { remaining.map { length.seconds - $0 } }
@@ -129,7 +136,7 @@ final class Session {
         p.modulationDepth.store(min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural ? 0.12 : 0, ordering: .relaxed)
-        p.soundscape.store(soundscape.index, ordering: .relaxed)
+        p.layers.store(layers.mask, ordering: .relaxed)
         applyMaster()
         save()
         NowPlaying.update(self)
@@ -141,8 +148,9 @@ final class Session {
         defaults.set(binaural, forKey: "binaural")
         defaults.set(length.rawValue, forKey: "length")
         defaults.set(volume, forKey: "volume")
-        for (mode, soundscape) in soundscapes {
-            defaults.set(soundscape.rawValue, forKey: "soundscape.\(mode.rawValue)")
+        for (mode, layers) in layersByMode {
+            let stored = Soundscape.allCases.filter(layers.contains).map(\.rawValue).joined(separator: ",")
+            defaults.set(stored, forKey: "layers.\(mode.rawValue)")
         }
     }
 

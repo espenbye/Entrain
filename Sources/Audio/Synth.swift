@@ -51,9 +51,12 @@ final class BedSynth: @unchecked Sendable {
         depth.target = Float(parameters.modulationDepth.load(ordering: .relaxed))
         master.target = Float(parameters.master.load(ordering: .relaxed))
         volume.target = Float(parameters.volume.load(ordering: .relaxed))
-        let active = parameters.soundscape.load(ordering: .relaxed)
+        // Each voice is trimmed to the same loudness, so a mix of n layers is
+        // scaled by 1/sqrt(n) to land near the level of one.
+        let active = parameters.layers.load(ordering: .relaxed)
+        let mixGain = 1 / sqrt(Float(max(1, active.nonzeroBitCount)))
         for i in layerGain.indices {
-            layerGain[i].target = i == active ? 1 : 0
+            layerGain[i].target = active & (1 << i) != 0 ? mixGain : 0
         }
 
         // Evaluated once per block; far too slow to need per-sample resolution.

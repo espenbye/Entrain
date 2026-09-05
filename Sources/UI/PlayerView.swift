@@ -52,19 +52,20 @@ struct PlayerControls: View {
     var body: some View {
         TransportSection(
             isPlaying: session.isPlaying,
-            mode: session.mode,
-            soundscape: session.soundscape,
+            title: session.title,
             remaining: session.remaining,
             error: session.error,
             toggle: session.toggle
         )
         ModeSection(selection: $session.mode)
         SettingsSection(
-            soundscape: $session.soundscape,
+            layers: session.layers,
+            setLayer: session.setLayer,
             intensity: $session.intensity,
             length: $session.length,
             binaural: $session.binaural,
-            steady: session.mode.isSteady
+            steady: session.mode.isSteady,
+            inMenu: inMenu
         )
         VolumeSection(volume: $session.volume, inMenu: inMenu)
     }
@@ -84,7 +85,7 @@ struct MenuBarLabel: View {
             Image(systemName: "waveform")
             if isPlaying {
                 if let remaining {
-                    Text("\(mode.title) \(Duration.seconds(remaining), format: .time(pattern: .minuteSecond))")
+                    Text("\(mode.title) \(remaining.countdown)")
                         .monospacedDigit()
                 } else {
                     Text(mode.title)
@@ -96,8 +97,7 @@ struct MenuBarLabel: View {
 
 struct TransportSection: View {
     let isPlaying: Bool
-    let mode: Mode
-    let soundscape: Soundscape
+    let title: String
     let remaining: Int?
     let error: String?
     let toggle: () -> Void
@@ -107,25 +107,13 @@ struct TransportSection: View {
             Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill", action: toggle)
                 .keyboardShortcut(.space, modifiers: [])
         } header: {
-            StatusLine(isPlaying: isPlaying, mode: mode, soundscape: soundscape, remaining: remaining, error: error)
-        }
-    }
-}
-
-struct StatusLine: View {
-    let isPlaying: Bool
-    let mode: Mode
-    let soundscape: Soundscape
-    let remaining: Int?
-    let error: String?
-
-    var body: some View {
-        if let error {
-            Text("\(mode.title) · \(soundscape.title) · \(error)")
-        } else if let remaining {
-            Text("\(mode.title) · \(soundscape.title) · \(Duration.seconds(remaining), format: .time(pattern: .minuteSecond)) left")
-        } else {
-            Text("\(mode.title) · \(soundscape.title)")
+            if let error {
+                Text("\(title) · \(error)")
+            } else if let remaining {
+                Text("\(title) · \(remaining.countdown) left")
+            } else {
+                Text(title)
+            }
         }
     }
 }
@@ -146,19 +134,24 @@ struct ModeSection: View {
 }
 
 struct SettingsSection: View {
-    @Binding var soundscape: Soundscape
+    let layers: Set<Soundscape>
+    let setLayer: (Soundscape, Bool) -> Void
     @Binding var intensity: Intensity
     @Binding var length: SessionLength
     @Binding var binaural: Bool
     /// Sleep is a fixed steady bed; sound and intensity have nothing to set.
     let steady: Bool
+    let inMenu: Bool
 
     var body: some View {
         Section {
-            Picker("Sound", selection: $soundscape) {
-                ForEach(Soundscape.allCases) { Text($0.title).tag($0) }
+            if inMenu {
+                Menu("Sound") { layerToggles }.disabled(steady)
+            } else {
+                LabeledContent("Sound") { HStack { layerToggles } }
+                    .toggleStyle(.button)
+                    .disabled(steady)
             }
-            .disabled(steady)
             Picker("Intensity", selection: $intensity) {
                 ForEach(Intensity.allCases) { Text($0.title).tag($0) }
             }
@@ -167,6 +160,16 @@ struct SettingsSection: View {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
             }
             Toggle("Binaural Beats", isOn: $binaural)
+        }
+    }
+
+    /// One check item per soundscape; any combination plays together.
+    private var layerToggles: some View {
+        ForEach(Soundscape.allCases) { soundscape in
+            Toggle(soundscape.title, isOn: Binding(
+                get: { layers.contains(soundscape) },
+                set: { setLayer(soundscape, $0) }
+            ))
         }
     }
 }
