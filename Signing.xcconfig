@@ -1,0 +1,6 @@
+// Pulls in the gitignored Local.xcconfig when present, so a checkout can
+// sign with its own team without touching the committed spec. Without it
+// Xcode signs to run locally (ad hoc). Example Local.xcconfig:
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   CODE_SIGN_IDENTITY = Apple Development
+#include? "Local.xcconfig"

@@ -4,13 +4,15 @@ options:
   deploymentTarget:
     macOS: "27.0"
   createIntermediateGroups: true
+configFiles:
+  Debug: Signing.xcconfig
+  Release: Signing.xcconfig
 settings:
   base:
     SWIFT_VERSION: "6.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_STRICT_CONCURRENCY: complete
     CODE_SIGN_STYLE: Automatic
-    CODE_SIGN_IDENTITY: "-"
     ENABLE_HARDENED_RUNTIME: true
 targets:
   Entrain:
