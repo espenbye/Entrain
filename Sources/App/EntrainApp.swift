@@ -7,7 +7,11 @@ struct EntrainApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
 
     init() {
-        DockIcon.apply(UserDefaults.standard.bool(forKey: DockIcon.key))
+        let defaults = UserDefaults.standard
+        DockIcon.apply(defaults.bool(forKey: DockIcon.key))
+        if defaults.bool(forKey: HotKey.key) {
+            HotKey.enable { Session.shared.toggle() }
+        }
     }
 
     var body: some Scene {
@@ -40,17 +44,28 @@ enum DockIcon {
 
 /// Registers the app as a login item. The system owns the state, so it is
 /// read back rather than stored.
+@MainActor
 enum LaunchAtLogin {
     static var isEnabled: Bool {
         SMAppService.mainApp.status == .enabled
     }
 
+    /// Registration fails for an app that is not in a stable location, such as
+    /// a DerivedData build. The user sees why instead of a toggle that snaps back.
     static func set(_ enabled: Bool) {
         let service = SMAppService.mainApp
-        if enabled {
-            try? service.register()
-        } else {
-            try? service.unregister()
+        do {
+            if enabled {
+                try service.register()
+            } else {
+                try service.unregister()
+            }
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = enabled ? "Could not enable Launch at Login" : "Could not disable Launch at Login"
+            alert.informativeText = "\(error.localizedDescription)\n\nMove Entrain to the Applications folder and try again."
+            NSApplication.shared.activate()
+            alert.runModal()
         }
     }
 }

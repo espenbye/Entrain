@@ -11,6 +11,13 @@ final class Session {
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
     var length: SessionLength { didSet { resetTimer(); save() } }
+    /// Control Center and media keys. Off keeps the media keys with the music player.
+    var nowPlaying: Bool {
+        didSet {
+            nowPlaying ? NowPlaying.attach(to: self) : NowPlaying.detach()
+            save()
+        }
+    }
     /// 0...1, on top of the system output level.
     var volume: Double {
         didSet {
@@ -62,6 +69,7 @@ final class Session {
         binaural = defaults.object(forKey: "binaural") as? Bool ?? false
         length = SessionLength(rawValue: defaults.integer(forKey: "length")) ?? .endless
         volume = defaults.object(forKey: "volume") as? Double ?? 1
+        nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? true
         layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
             let stored = defaults.string(forKey: "layers.\(mode.rawValue)")?.split(separator: ",") ?? []
             let layers = Set(stored.compactMap { Soundscape(rawValue: String($0)) })
@@ -70,7 +78,7 @@ final class Session {
         remaining = length == .endless ? nil : length.seconds
         parameters.volume.store(volume, ordering: .relaxed)
         apply()
-        NowPlaying.attach(to: self)
+        if nowPlaying { NowPlaying.attach(to: self) }
 
         // A session that outlives the Mac's sleep would otherwise resume on
         // wake, which for Sleep mode means brown noise at breakfast.
@@ -148,6 +156,7 @@ final class Session {
         defaults.set(binaural, forKey: "binaural")
         defaults.set(length.rawValue, forKey: "length")
         defaults.set(volume, forKey: "volume")
+        defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
             let stored = Soundscape.allCases.filter(layers.contains).map(\.rawValue).joined(separator: ",")
             defaults.set(stored, forKey: "layers.\(mode.rawValue)")

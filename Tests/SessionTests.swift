@@ -43,6 +43,7 @@ struct SessionTests {
         first.binaural = true
         first.length = .thirty
         first.volume = 0.4
+        first.nowPlaying = false
 
         let second = makeSession()
         #expect(second.mode == .meditate)
@@ -50,6 +51,7 @@ struct SessionTests {
         #expect(second.binaural)
         #expect(second.length == .thirty)
         #expect(second.volume == 0.4)
+        #expect(!second.nowPlaying)
         #expect(second.layers == [.pad])
         second.mode = .relax
         #expect(second.layers == [.pad, .drone])

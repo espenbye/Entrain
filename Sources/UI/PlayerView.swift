@@ -5,6 +5,7 @@ struct PlayerMenu: View {
     @Bindable var session: Session
     @Environment(\.openWindow) private var openWindow
     @AppStorage(DockIcon.key) private var showInDock = false
+    @AppStorage(HotKey.key) private var globalShortcut = false
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
@@ -15,6 +16,14 @@ struct PlayerMenu: View {
             NSApplication.shared.activate()
         }
         .keyboardShortcut("o")
+        Toggle(HotKey.title, isOn: Binding(
+            get: { globalShortcut },
+            set: { on in
+                globalShortcut = on
+                on ? HotKey.enable { session.toggle() } : HotKey.disable()
+            }
+        ))
+        Toggle("Control Center & Media Keys", isOn: $session.nowPlaying)
         Toggle("Show in Dock", isOn: Binding(
             get: { showInDock },
             set: { showInDock = $0; DockIcon.apply($0) }
