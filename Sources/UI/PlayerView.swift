@@ -3,6 +3,44 @@ import SwiftUI
 /// The menu bar menu. Every child is a real menu item, so the look is macOS's own.
 struct PlayerMenu: View {
     @Bindable var session: Session
+    @Environment(\.openWindow) private var openWindow
+    @AppStorage(DockIcon.key) private var showInDock = false
+
+    var body: some View {
+        PlayerControls(session: session)
+        Divider()
+        Button("Open Entrain…") {
+            openWindow(id: PlayerWindow.id)
+            NSApplication.shared.activate()
+        }
+        .keyboardShortcut("o")
+        Toggle("Show in Dock", isOn: Binding(
+            get: { showInDock },
+            set: { showInDock = $0; DockIcon.apply($0) }
+        ))
+        Divider()
+        Button("Quit Entrain") { NSApplication.shared.terminate(nil) }
+            .keyboardShortcut("q")
+    }
+}
+
+/// The same controls in a regular window, for people who want Entrain on screen.
+struct PlayerWindow: View {
+    static let id = "player"
+    @Bindable var session: Session
+
+    var body: some View {
+        Form {
+            PlayerControls(session: session)
+        }
+        .formStyle(.grouped)
+    }
+}
+
+/// Transport, mode and settings. Renders as menu items inside a menu and as
+/// grouped rows inside a Form, so the menu and the window share one source.
+struct PlayerControls: View {
+    @Bindable var session: Session
 
     var body: some View {
         TransportSection(
@@ -20,9 +58,6 @@ struct PlayerMenu: View {
             binaural: $session.binaural,
             steady: session.mode.isSteady
         )
-        Divider()
-        Button("Quit Entrain") { NSApplication.shared.terminate(nil) }
-            .keyboardShortcut("q")
     }
 }
 
