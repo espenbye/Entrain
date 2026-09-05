@@ -11,3 +11,6 @@ build/
 .prettiercache
 
 t3.json
+
+# Local signing override (see project.yml)
+Local.xcconfig

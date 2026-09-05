@@ -5,8 +5,9 @@ cd "$(dirname "$0")/.."
 xcodegen generate --quiet
 # Widget buttons perform inside the app over linkd, which only talks to
 # bundles signed with a team identity. Ad-hoc builds render the widget but
-# every button falls back to opening the app; set DEVELOPMENT_TEAM to sign
-# with your Apple Development certificate instead.
+# every button falls back to opening the app; add a Local.xcconfig (see
+# Signing.xcconfig) or set DEVELOPMENT_TEAM to sign with your Apple
+# Development certificate instead.
 signing=()
 [ -n "${DEVELOPMENT_TEAM:-}" ] && signing=(DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" CODE_SIGN_IDENTITY="Apple Development")
 # chronod caches the widget and control descriptors per bundle version and

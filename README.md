@@ -58,6 +58,13 @@ xcodegen generate
 open Entrain.xcodeproj
 ```
 
+The project signs to run locally by default. To sign with your own team (needed for the widget's buttons), add a gitignored `Local.xcconfig` next to `project.yml` before generating:
+
+```
+DEVELOPMENT_TEAM = ABCDE12345
+CODE_SIGN_IDENTITY = Apple Development
+```
+
 Build and run the `Entrain` scheme, or run `Scripts/run.sh` (also wired up as "Build & Run" in `t3.json`), which rebuilds, re-registers the widget extension and relaunches. The app has no Dock icon by default; look for the waveform in the menu bar. Run the tests with Cmd-U, or:
 
 ```sh
