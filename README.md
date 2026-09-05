@@ -42,7 +42,7 @@ Tools/
 
 ## Building
 
-Requires macOS 27, Xcode with Swift 6, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+Requires macOS 27 (the app will not run on earlier releases), Xcode with Swift 6, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
 ```sh
 brew install xcodegen
@@ -61,3 +61,11 @@ Launch at Login uses `SMAppService`, which needs the app to run from a stable lo
 ## Caveats
 
 Entrainment effects vary widely between people and the evidence is mixed. Treat this as a pleasant background sound with a rhythm, not a medical device. Keep the volume moderate, and don't use it while driving.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)
