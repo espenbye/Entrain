@@ -4,10 +4,17 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     case focus, gamma, relax, meditate, sleep, deepSleep
 
     var id: Self { self }
-    var title: String {
+    var title: String { String(localized: name) }
+    /// The same keys as the App Intents display representations, so one
+    /// catalog entry covers the menu, the widget and Shortcuts.
+    var name: LocalizedStringResource {
         switch self {
+        case .focus: "Focus"
+        case .gamma: "Gamma"
+        case .relax: "Relax"
+        case .meditate: "Meditate"
+        case .sleep: "Sleep"
         case .deepSleep: "Deep Sleep"
-        default: rawValue.capitalized
         }
     }
 
@@ -77,7 +84,13 @@ enum Intensity: String, CaseIterable, Identifiable {
     case low, medium, high
 
     var id: Self { self }
-    var title: String { rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .low: String(localized: "Low")
+        case .medium: String(localized: "Medium")
+        case .high: String(localized: "High")
+        }
+    }
 
     /// High is a small step above medium: medium depth tested best, and deep
     /// modulation was counterproductive.
@@ -94,7 +107,14 @@ enum Soundscape: String, CaseIterable, Identifiable {
     case rain, pad, drone, noise
 
     var id: Self { self }
-    var title: String { rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .rain: String(localized: "Rain")
+        case .pad: String(localized: "Pad")
+        case .drone: String(localized: "Drone")
+        case .noise: String(localized: "Noise")
+        }
+    }
     var index: Int { Self.allCases.firstIndex(of: self)! }
     var bit: Int { 1 << index }
 }
@@ -118,9 +138,9 @@ enum SessionLength: Int, CaseIterable, Identifiable, Sendable {
     var id: Self { self }
     var title: String {
         switch self {
-        case .endless: "Endless"
-        case .fifteen, .thirty, .sixty, .ninety: "\(rawValue) min"
-        case .twoHours, .fourHours, .eightHours: "\(rawValue / 60) h"
+        case .endless: String(localized: "Endless")
+        case .fifteen, .thirty, .sixty, .ninety: String(localized: "\(rawValue) min")
+        case .twoHours, .fourHours, .eightHours: String(localized: "\(rawValue / 60) h")
         }
     }
     var seconds: Int { rawValue * 60 }

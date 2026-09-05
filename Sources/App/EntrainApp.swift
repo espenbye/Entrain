@@ -62,8 +62,10 @@ enum LaunchAtLogin {
             }
         } catch {
             let alert = NSAlert()
-            alert.messageText = enabled ? "Could not enable Launch at Login" : "Could not disable Launch at Login"
-            alert.informativeText = "\(error.localizedDescription)\n\nMove Entrain to the Applications folder and try again."
+            alert.messageText = enabled
+                ? String(localized: "Could not enable Launch at Login")
+                : String(localized: "Could not disable Launch at Login")
+            alert.informativeText = String(localized: "\(error.localizedDescription)\n\nMove Entrain to the Applications folder and try again.")
             NSApplication.shared.activate()
             alert.runModal()
         }

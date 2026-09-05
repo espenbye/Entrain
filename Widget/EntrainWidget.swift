@@ -161,7 +161,7 @@ func modeControl(_ mode: Mode) -> some ControlWidgetConfiguration {
             Label(isOn ? "Playing" : "Paused", systemImage: mode.symbol)
         }
     }
-    .displayName(LocalizedStringResource(stringLiteral: mode.title))
+    .displayName(mode.name)
     .description("Plays or pauses \(mode.title).")
 }
 

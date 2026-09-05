@@ -68,7 +68,7 @@ struct SessionTests {
         session.setLayer(.noise, on: true)
         session.setLayer(.rain, on: false)
         #expect(session.layers == [.noise])
-        #expect(session.title == "Focus · Noise")
+        #expect(session.title == "\(Mode.focus.title) · \(Soundscape.noise.title)")
         #expect(session.parameters.layers.load(ordering: .relaxed) == Soundscape.noise.bit)
     }
 
@@ -91,7 +91,7 @@ struct SessionTests {
         let session = makeSession()
         session.play()
         #expect(!session.isPlaying)
-        #expect(session.error == "Audio unavailable")
+        #expect(session.error == String(localized: "Audio unavailable"))
         #expect(session.parameters.master.load(ordering: .relaxed) == 0)
 
         audio.failsToStart = false
@@ -109,7 +109,7 @@ struct SessionTests {
 
         audio.onInterruption?()
         #expect(!session.isPlaying)
-        #expect(session.error == "Audio stopped")
+        #expect(session.error == String(localized: "Audio stopped"))
         #expect(session.parameters.master.load(ordering: .relaxed) == 0)
         #expect(session.remaining == SessionLength.fifteen.seconds)
     }
@@ -187,6 +187,6 @@ struct SessionTests {
         #expect(899.countdown == "14:59")
         #expect(3600.countdown == "1:00:00")
         #expect(SessionLength.eightHours.seconds.countdown == "8:00:00")
-        #expect(SessionLength.eightHours.title == "8 h")
+        #expect(SessionLength.eightHours.title == String(localized: "\(8) h"))
     }
 }

@@ -1,0 +1,596 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@\n\nMove Entrain to the Applications folder and try again.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@\n\nFlytt Entrain til Programmer-mappen og prøv igjen."
+          }
+        }
+      }
+    },
+    "%@ · %@ left": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ igjen"
+          }
+        }
+      }
+    },
+    "%lld h": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld t"
+          }
+        }
+      }
+    },
+    "%lld min": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "15 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 minutter"
+          }
+        }
+      }
+    },
+    "2 hours": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 timer"
+          }
+        }
+      }
+    },
+    "30 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 minutter"
+          }
+        }
+      }
+    },
+    "4 hours": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 timer"
+          }
+        }
+      }
+    },
+    "60 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 minutter"
+          }
+        }
+      }
+    },
+    "8 hours": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 timer"
+          }
+        }
+      }
+    },
+    "90 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90 minutter"
+          }
+        }
+      }
+    },
+    "Audio stopped": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyden stoppet"
+          }
+        }
+      }
+    },
+    "Audio unavailable": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyd utilgjengelig"
+          }
+        }
+      }
+    },
+    "Binaural Beats": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Binaurale toner"
+          }
+        }
+      }
+    },
+    "Control Center & Media Keys": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrollsenter og medietaster"
+          }
+        }
+      }
+    },
+    "Could not disable Launch at Login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke slå av Åpne ved innlogging"
+          }
+        }
+      }
+    },
+    "Could not enable Launch at Login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke slå på Åpne ved innlogging"
+          }
+        }
+      }
+    },
+    "Deep Sleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyp søvn"
+          }
+        }
+      }
+    },
+    "Drone": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drone"
+          }
+        }
+      }
+    },
+    "Endless": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uendelig"
+          }
+        }
+      }
+    },
+    "Entrain could not play: %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain kunne ikke spille av: %@"
+          }
+        }
+      }
+    },
+    "Entrain could not start audio.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain kunne ikke starte lyd."
+          }
+        }
+      }
+    },
+    "Focus": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fokus"
+          }
+        }
+      }
+    },
+    "Gamma": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gamma"
+          }
+        }
+      }
+    },
+    "Global Shortcut ⌃⌥E": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global hurtigtast ⌃⌥E"
+          }
+        }
+      }
+    },
+    "High": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Høy"
+          }
+        }
+      }
+    },
+    "Intensity": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intensitet"
+          }
+        }
+      }
+    },
+    "Launch at Login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne ved innlogging"
+          }
+        }
+      }
+    },
+    "Length": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lengde"
+          }
+        }
+      }
+    },
+    "Low": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lav"
+          }
+        }
+      }
+    },
+    "Meditate": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediter"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Middels"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modus"
+          }
+        }
+      }
+    },
+    "Noise": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Støy"
+          }
+        }
+      }
+    },
+    "Open Entrain…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Entrain…"
+          }
+        }
+      }
+    },
+    "Pad": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pad"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "Paused": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauset"
+          }
+        }
+      }
+    },
+    "Pauses playback. The timer keeps its place.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauser avspillingen. Tidtakeren beholder plassen sin."
+          }
+        }
+      }
+    },
+    "Play": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spill av"
+          }
+        }
+      }
+    },
+    "Play or Pause": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spill av eller pause"
+          }
+        }
+      }
+    },
+    "Play, pause and switch modes.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spill av, pause og bytt modus."
+          }
+        }
+      }
+    },
+    "Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller"
+          }
+        }
+      }
+    },
+    "Plays a mode, optionally for a set length.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av en modus, eventuelt i en angitt lengde."
+          }
+        }
+      }
+    },
+    "Plays or pauses %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av eller pauser %@."
+          }
+        }
+      }
+    },
+    "Quit Entrain": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avslutt Entrain"
+          }
+        }
+      }
+    },
+    "Rain": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regn"
+          }
+        }
+      }
+    },
+    "Relax": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slapp av"
+          }
+        }
+      }
+    },
+    "Set Mode Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett modus til å spille"
+          }
+        }
+      }
+    },
+    "Show in Dock": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vis i Dock"
+          }
+        }
+      }
+    },
+    "Sleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søvn"
+          }
+        }
+      }
+    },
+    "Sound": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyd"
+          }
+        }
+      }
+    },
+    "Start ${mode}": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start ${mode}"
+          }
+        }
+      }
+    },
+    "Start Session": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start økt"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopp"
+          }
+        }
+      }
+    },
+    "Stop Session": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopp økt"
+          }
+        }
+      }
+    },
+    "Timer": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tidtaker"
+          }
+        }
+      }
+    },
+    "Toggles playback of the current mode.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veksler avspilling av gjeldende modus."
+          }
+        }
+      }
+    },
+    "Volume": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volum"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

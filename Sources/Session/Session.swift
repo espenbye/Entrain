@@ -118,7 +118,7 @@ final class Session {
             try engine.start()
             error = nil
         } catch {
-            self.error = "Audio unavailable"
+            self.error = String(localized: "Audio unavailable")
             return
         }
         isPlaying = true
@@ -143,7 +143,7 @@ final class Session {
     /// The engine stopped on its own and could not come back.
     private func interrupted() {
         pause()
-        error = "Audio stopped"
+        error = String(localized: "Audio stopped")
     }
 
     private func apply() {

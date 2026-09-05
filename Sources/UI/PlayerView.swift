@@ -94,7 +94,7 @@ struct MenuBarLabel: View {
             Image(systemName: "waveform")
             if isPlaying {
                 if let remaining {
-                    Text("\(mode.title) \(remaining.countdown)")
+                    Text(verbatim: "\(mode.title) \(remaining.countdown)")
                         .monospacedDigit()
                 } else {
                     Text(mode.title)
@@ -117,7 +117,7 @@ struct TransportSection: View {
                 .keyboardShortcut(.space, modifiers: [])
         } header: {
             if let error {
-                Text("\(title) · \(error)")
+                Text(verbatim: "\(title) · \(error)")
             } else if let remaining {
                 Text("\(title) · \(remaining.countdown) left")
             } else {
