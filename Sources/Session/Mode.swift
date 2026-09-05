@@ -1,6 +1,6 @@
 import Foundation
 
-enum Mode: String, CaseIterable, Identifiable {
+enum Mode: String, CaseIterable, Identifiable, Sendable {
     case focus, relax, meditate, sleep
 
     var id: Self { self }
@@ -88,7 +88,7 @@ extension Set<Soundscape> {
     var title: String { Soundscape.allCases.filter(contains).map(\.title).joined(separator: " + ") }
 }
 
-enum SessionLength: Int, CaseIterable, Identifiable {
+enum SessionLength: Int, CaseIterable, Identifiable, Sendable {
     case endless = 0
     case fifteen = 15
     case thirty = 30
