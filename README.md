@@ -4,32 +4,42 @@ A macOS menu bar app that plays a generated soundscape with rhythmic amplitude m
 
 ## Modes
 
-| Mode     | Rate  | Intended state          |
-|----------|-------|-------------------------|
-| Focus    | 16 Hz | Alert, task-oriented    |
-| Relax    | 10 Hz | Calm, unwinding         |
-| Meditate | 6 Hz  | Deep, inward attention  |
-| Sleep    | 2 Hz  | Drifting off            |
+| Mode     | Rate  | Depth  | Intended state          |
+|----------|-------|--------|-------------------------|
+| Focus    | 16 Hz | 0.5    | Alert, task-oriented    |
+| Relax    | 10 Hz | 0.4    | Calm, unwinding         |
+| Meditate | 6 Hz  | 0.5    | Deep, inward attention  |
+| Sleep    | 2 Hz  | steady | Drifting off            |
 
 Each mode sets the modulation rate and depth. On top of that you pick:
 
-- **Soundscape**: Rain, Pad, or Drone
-- **Intensity**: Low, Medium, High (scales modulation depth)
+- **Soundscape**: Rain, Pad, Drone, or Noise. Remembered per mode. Focus starts on Rain, Relax and Meditate on Pad.
+- **Intensity**: Low, Medium, High (scales modulation depth; High is a small step above Medium)
 - **Length**: Endless, or a 15/30/60/90 minute timer that fades out when it ends
 - **Binaural**: optional binaural beat at the same rate (headphones required)
 
-Settings persist between launches. Play/pause works from the menu bar popover, media keys, and Control Center via Now Playing.
+Sleep is different on purpose. It plays steady brown noise with no modulation, and a timed sleep session tapers over its last five minutes instead of stopping. The 2 Hz rate only matters if binaural is on.
+
+Settings persist between launches. Play/pause works from the menu bar menu, media keys, and Control Center via Now Playing.
 
 ## How it works
 
-The engine runs on a dedicated render thread and only reads control values through atomics, so the UI never touches the audio path. Modulation is applied above a 200 Hz crossover so the low end stays steady while the mid band pulses. All transitions (play, pause, switching soundscapes) ramp over roughly a second to avoid clicks.
+The engine runs on a dedicated render thread and only reads control values through atomics, so the UI never touches the audio path. Modulation is confined to the 200 Hz to 1 kHz band: the bass stays steady and the highs (rain droplets, pad harmonics) do not flutter. The modulation rate is fixed; instead the texture drifts slowly, one filter and pan cycle every 15 minutes, to counter habituation. All transitions (play, pause, switching soundscapes) ramp over roughly a second to avoid clicks.
+
+The four soundscapes are trimmed to the same K-weighted loudness (-22 LUFS, ITU-R BS.1770) so switching does not invite a volume change. `Tools/loudness.swift` renders each voice offline and prints its loudness and peak; re-run it after touching a voice:
+
+```sh
+swiftc -O Sources/Audio/DSP.swift Sources/Audio/Voices.swift Tools/loudness.swift -o /tmp/loudness && /tmp/loudness
+```
 
 ```
 Sources/
   App/       MenuBarExtra entry point
-  UI/        SwiftUI popover
+  UI/        SwiftUI menu bar menu
   Session/   Session state, modes, Now Playing integration
   Audio/     Engine, synth voices, DSP primitives, shared parameters
+Tools/
+  loudness.swift   Offline loudness check for the voices
 ```
 
 ## Building

@@ -35,7 +35,7 @@ struct Rain {
             s += sin(twoPi * drops[i].phasor.next(drops[i].increment)) * drops[i].level
             drops[i].level *= dropDecay
         }
-        return s
+        return s * Trim.rain
     }
 }
 
@@ -98,7 +98,7 @@ struct Pad {
             s += tone * level
         }
         let cutoff = 900 + 500 * lfo
-        return lowpass.process(s * 0.12, OnePoleLowpass.coefficient(cutoff: cutoff, sampleRate: sampleRate))
+        return lowpass.process(s, OnePoleLowpass.coefficient(cutoff: cutoff, sampleRate: sampleRate)) * Trim.pad
     }
 }
 
@@ -126,6 +126,35 @@ struct Drone {
         }
         s += 0.5 * sin(twoPi * f) + 0.5 * sin(twoPi * fd)
         let cutoff = 500 + 200 * lfo
-        return lowpass.process(s * 0.2, OnePoleLowpass.coefficient(cutoff: cutoff, sampleRate: sampleRate))
+        return lowpass.process(s, OnePoleLowpass.coefficient(cutoff: cutoff, sampleRate: sampleRate)) * Trim.drone
     }
+}
+
+/// Steady brown noise. White noise through a one-pole at 60 Hz gives the
+/// 6 dB per octave slope; a matching high-pass at 40 Hz drops the rumble
+/// speakers cannot reproduce and that would eat headroom. No events, no drift.
+struct Noise {
+    private var slope = OnePoleLowpass()
+    private var rumble = OnePoleLowpass()
+    private let slopeCoefficient: Float
+    private let rumbleCoefficient: Float
+
+    init(sampleRate: Double) {
+        slopeCoefficient = OnePoleLowpass.coefficient(cutoff: 60, sampleRate: Float(sampleRate))
+        rumbleCoefficient = OnePoleLowpass.coefficient(cutoff: 40, sampleRate: Float(sampleRate))
+    }
+
+    mutating func next(rng: inout XorShift) -> Float {
+        let brown = slope.process(rng.bipolar(), slopeCoefficient)
+        return (brown - rumble.process(brown, rumbleCoefficient)) * Trim.noise
+    }
+}
+
+/// Output trims that put the four voices at the same K-weighted loudness.
+/// Measured with `Tools/loudness.swift`. Re-run it after changing a voice.
+enum Trim {
+    static let rain: Float = 0.489
+    static let pad: Float = 0.0497
+    static let drone: Float = 0.108
+    static let noise: Float = 3.48
 }

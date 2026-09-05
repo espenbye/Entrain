@@ -14,7 +14,6 @@ struct PlayerMenu: View {
         )
         ModeSection(selection: $session.mode)
         SettingsSection(
-            isSteady: session.mode.isSteady,
             soundscape: $session.soundscape,
             intensity: $session.intensity,
             length: $session.length,
@@ -93,8 +92,6 @@ struct ModeSection: View {
 }
 
 struct SettingsSection: View {
-    /// A steady mode plays a fixed bed: sound and intensity are not tunable.
-    let isSteady: Bool
     @Binding var soundscape: Soundscape
     @Binding var intensity: Intensity
     @Binding var length: SessionLength

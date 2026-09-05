@@ -8,6 +8,7 @@ final class AudioParameters: Sendable {
     let binauralCarrier = Atomic<Double>(200)
     let binauralLevel = Atomic<Double>(0)
     let soundscape = Atomic<Int>(0)
-    /// 0 or 1. The synths ramp toward it over a second so play and pause fade.
+    /// 0...1. The synths ramp toward it over a second, so play and pause fade
+    /// and a timed session can taper over its last minutes.
     let master = Atomic<Double>(0)
 }

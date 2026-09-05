@@ -17,17 +17,34 @@ enum Mode: String, CaseIterable, Identifiable {
     }
 
     /// Amplitude modulation depth at medium intensity, 0...1.
+    /// Sleep is unmodulated: a steady bed habituates, which is the goal.
     var depth: Double {
         switch self {
         case .focus: 0.5
         case .relax: 0.4
         case .meditate: 0.5
-        case .sleep: 0.7
+        case .sleep: 0
         }
     }
 
+    /// Sleep plays a fixed steady bed, so soundscape and intensity are not tunable.
+    var isSteady: Bool { self == .sleep }
+
+    /// Where a mode starts before the user picks. Steady-state carriers for
+    /// Focus, since a walking pad is a mild irrelevant-sound risk while reading.
+    var defaultSoundscape: Soundscape {
+        switch self {
+        case .focus: .rain
+        case .relax, .meditate: .pad
+        case .sleep: .noise
+        }
+    }
+
+    /// Seconds over which a timed session tapers to silence before it ends.
+    var fadeOut: Double { isSteady ? 300 : 1 }
+
     /// Binaural carrier frequency in Hz for the left ear. Right ear is carrier + rate.
-    var carrier: Double { self == .sleep ? 100 : 200 }
+    var carrier: Double { isSteady ? 100 : 200 }
 
     var tint: Color {
         switch self {
@@ -54,17 +71,19 @@ enum Intensity: String, CaseIterable, Identifiable {
     var id: Self { self }
     var title: String { rawValue.capitalized }
 
+    /// High is a small step above medium: medium depth tested best, and deep
+    /// modulation was counterproductive.
     var multiplier: Double {
         switch self {
         case .low: 0.6
         case .medium: 1.0
-        case .high: 1.4
+        case .high: 1.2
         }
     }
 }
 
 enum Soundscape: String, CaseIterable, Identifiable {
-    case rain, pad, drone
+    case rain, pad, drone, noise
 
     var id: Self { self }
     var title: String { rawValue.capitalized }

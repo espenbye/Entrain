@@ -9,15 +9,25 @@ final class BedSynth: @unchecked Sendable {
     private var rain: Rain
     private var pad: Pad
     private var drone: Drone
+    private var noise: Noise
     private var layerGain: [Smoother]
     private var rng = XorShift()
 
     private var modulation = Phasor()
     private var depth: Smoother
     private var master: Smoother
-    private var slowLFO = Phasor()
-    private var crossover = OnePoleLowpass()
-    private let crossoverCoefficient: Float
+
+    /// Texture drift for filters and pan. One cycle every 15 minutes: the
+    /// carrier evolves slowly to counter habituation while the rate stays fixed.
+    private var drift = Phasor()
+    private let driftIncrement: Float
+
+    /// Modulation is confined to 200 Hz...1 kHz. Below, the bass stays steady;
+    /// above, rain droplets and pad harmonics do not flutter.
+    private var bandLow = OnePoleLowpass()
+    private var bandHigh = OnePoleLowpass()
+    private let bandLowCoefficient: Float
+    private let bandHighCoefficient: Float
 
     init(parameters: AudioParameters, sampleRate: Double) {
         self.parameters = parameters
@@ -25,10 +35,13 @@ final class BedSynth: @unchecked Sendable {
         rain = Rain(sampleRate: sampleRate)
         pad = Pad(sampleRate: sampleRate)
         drone = Drone(sampleRate: sampleRate)
-        layerGain = (0..<3).map { _ in Smoother(0, seconds: 1.5, sampleRate: sampleRate) }
+        noise = Noise(sampleRate: sampleRate)
+        layerGain = (0..<4).map { _ in Smoother(0, seconds: 1.5, sampleRate: sampleRate) }
         depth = Smoother(0.5, seconds: 0.05, sampleRate: sampleRate)
         master = Smoother(0, seconds: 1, sampleRate: sampleRate)
-        crossoverCoefficient = OnePoleLowpass.coefficient(cutoff: 200, sampleRate: Float(sampleRate))
+        driftIncrement = 1 / (900 * Float(sampleRate))
+        bandLowCoefficient = OnePoleLowpass.coefficient(cutoff: 200, sampleRate: Float(sampleRate))
+        bandHighCoefficient = OnePoleLowpass.coefficient(cutoff: 1000, sampleRate: Float(sampleRate))
     }
 
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
@@ -40,8 +53,8 @@ final class BedSynth: @unchecked Sendable {
             layerGain[i].target = i == active ? 1 : 0
         }
 
-        // Slow drift for filters and pan, evaluated once per block.
-        let lfo = sin(twoPi * slowLFO.next(0.05 / sampleRate * Float(frames)))
+        // Evaluated once per block; far too slow to need per-sample resolution.
+        let lfo = sin(twoPi * drift.next(driftIncrement * Float(frames)))
         let pan = 0.3 * lfo
         let panL = cos((pan + 1) * Float.pi / 4)
         let panR = sin((pan + 1) * Float.pi / 4)
@@ -51,15 +64,16 @@ final class BedSynth: @unchecked Sendable {
             let gRain = layerGain[0].next()
             let gPad = layerGain[1].next()
             let gDrone = layerGain[2].next()
+            let gNoise = layerGain[3].next()
             if gRain > 0.0005 { s += rain.next(lfo: lfo, rng: &rng) * gRain }
             if gPad > 0.0005 { s += pad.next(lfo: lfo, rng: &rng) * gPad }
             if gDrone > 0.0005 { s += drone.next(lfo: lfo) * gDrone }
+            if gNoise > 0.0005 { s += noise.next(rng: &rng) * gNoise }
 
-            // Modulate only above the crossover so the low end stays steady.
-            let low = crossover.process(s, crossoverCoefficient)
-            let mid = s - low
-            let gain = 1 - depth.next() * (0.5 - 0.5 * cos(twoPi * modulation.next(rateIncrement)))
-            let out = (low + mid * gain) * master.next()
+            let low = bandLow.process(s, bandLowCoefficient)
+            let mid = bandHigh.process(s, bandHighCoefficient) - low
+            let pulse = depth.next() * (0.5 - 0.5 * cos(twoPi * modulation.next(rateIncrement)))
+            let out = (s - mid * pulse) * master.next()
 
             left[i] = out * panL
             right[i] = out * panR
