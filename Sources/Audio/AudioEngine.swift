@@ -21,9 +21,6 @@ final class AudioEngine: SessionAudio {
     private let eq = AVAudioUnitEQ(numberOfBands: 1)
     private let reverb = AVAudioUnitReverb()
 
-    /// Graph wiring is fixed; if it failed, `start()` reports it instead of the
-    /// app dying in the initializer.
-    private var graphError: Error?
     /// Set by `start()` and `stop()`. After an output device change the engine
     /// stops on its own, so this says whether to bring it back.
     private var shouldRun = false
@@ -69,14 +66,10 @@ final class AudioEngine: SessionAudio {
         for node in [bedNode, binauralNode, eq, reverb] {
             engine.attach(node)
         }
-        do {
-            try engine.connectNode(bedNode, to: eq, format: format)
-            try engine.connectNode(eq, to: reverb, format: format)
-            try engine.connectNode(reverb, to: engine.mainMixerNode, format: format)
-            try engine.connectNode(binauralNode, to: engine.mainMixerNode, format: format)
-        } catch {
-            graphError = error
-        }
+        engine.connect(bedNode, to: eq, format: format)
+        engine.connect(eq, to: reverb, format: format)
+        engine.connect(reverb, to: engine.mainMixerNode, format: format)
+        engine.connect(binauralNode, to: engine.mainMixerNode, format: format)
         engine.prepare()
 
         // Plugging in headphones or switching outputs stops the engine.
@@ -88,7 +81,6 @@ final class AudioEngine: SessionAudio {
     }
 
     func start() throws {
-        if let graphError { throw graphError }
         shouldRun = true
         guard !engine.isRunning else { return }
         try engine.start()
