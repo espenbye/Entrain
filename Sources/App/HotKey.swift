@@ -5,7 +5,7 @@ import Carbon.HIToolbox
 @MainActor
 enum HotKey {
     static let key = "globalShortcut"
-    static let title = "Global Shortcut ⌃⌥E"
+    static let title = String(localized: "Global Shortcut ⌃⌥E")
 
     private static var hotKey: EventHotKeyRef?
     private static var handler: EventHandlerRef?
