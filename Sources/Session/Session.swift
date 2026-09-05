@@ -52,8 +52,8 @@ final class Session {
 
     let parameters = AudioParameters()
     private let defaults: UserDefaults
-    /// The app group the widget reads. Tests pass their own suite.
-    private let widgetDefaults: UserDefaults?
+    /// The folder the widget reads. Tests pass a scratch directory.
+    private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
@@ -66,11 +66,11 @@ final class Session {
 
     init(
         defaults: UserDefaults,
-        widgetDefaults: UserDefaults? = UserDefaults(suiteName: WidgetState.group),
+        widgetDirectory: URL? = WidgetState.directory,
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
-        self.widgetDefaults = widgetDefaults
+        self.widgetDirectory = widgetDirectory
         self.makeEngine = makeEngine
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
         intensity = Intensity(rawValue: defaults.string(forKey: "intensity") ?? "") ?? .medium
@@ -188,7 +188,7 @@ final class Session {
             isPlaying: isPlaying,
             remaining: remaining,
             deadline: isPlaying ? remaining.map { Date.now.addingTimeInterval(Double($0)) } : nil
-        ).save(to: widgetDefaults)
+        ).save(to: widgetDirectory)
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetState.kind)
     }
 

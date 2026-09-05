@@ -29,7 +29,9 @@ targets:
       path: Entrain.entitlements
       properties:
         com.apple.security.app-sandbox: true
-        com.apple.security.application-groups: [group.no.espenbye.entrain]
+        # The widget snapshot. An App Group would need a certificate to sign.
+        com.apple.security.temporary-exception.files.home-relative-path.read-write:
+          - /Library/Application Support/Entrain/
     dependencies:
       - target: EntrainWidget
     settings:
@@ -58,7 +60,8 @@ targets:
       path: Widget/EntrainWidget.entitlements
       properties:
         com.apple.security.app-sandbox: true
-        com.apple.security.application-groups: [group.no.espenbye.entrain]
+        com.apple.security.temporary-exception.files.home-relative-path.read-only:
+          - /Library/Application Support/Entrain/
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain.widget

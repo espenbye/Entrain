@@ -46,29 +46,32 @@ struct WidgetView: View {
         HStack(spacing: 12) {
             status
             if family == .systemMedium {
-                Divider()
                 modes
             }
         }
     }
 
     private var status: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Label(state.mode.title, systemImage: state.mode.symbol)
                 .font(.headline)
+                .lineLimit(1)
             Text(state.sound)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
+                .lineLimit(1)
+            Spacer(minLength: 4)
             countdown
                 .font(.title3.monospacedDigit())
+                .lineLimit(1)
             Button(intent: ToggleSessionIntent()) {
                 Label(state.isPlaying ? "Pause" : "Play", systemImage: state.isPlaying ? "pause.fill" : "play.fill")
                     .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.bordered)
             .tint(.accentColor)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -83,18 +86,35 @@ struct WidgetView: View {
         }
     }
 
-    /// Two columns: six modes stacked would not fit the medium height.
+    /// Icon-only, three across: the names would not fit, and the current
+    /// mode is spelled out on the left.
     private var modes: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-            ForEach(Mode.allCases) { mode in
-                Button(intent: StartSessionIntent(mode: mode)) {
-                    Label(mode.title, systemImage: mode.symbol)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+        let modes = Mode.allCases
+        return Grid(horizontalSpacing: 6, verticalSpacing: 6) {
+            ForEach(Array(stride(from: 0, to: modes.count, by: 3)), id: \.self) { start in
+                GridRow {
+                    ForEach(modes[start..<min(start + 3, modes.count)]) { mode in
+                        ModeButton(mode: mode, active: mode == state.mode)
+                    }
                 }
-                .buttonStyle(.bordered)
-                .tint(mode == state.mode && state.isPlaying ? .accentColor : .secondary)
             }
         }
-        .frame(maxWidth: .infinity)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+}
+
+struct ModeButton: View {
+    let mode: Mode
+    let active: Bool
+
+    var body: some View {
+        Button(intent: StartSessionIntent(mode: mode)) {
+            Image(systemName: mode.symbol)
+                .font(.title3)
+                .frame(width: 32, height: 32)
+        }
+        .buttonStyle(.bordered)
+        .tint(active ? .accentColor : nil)
+        .accessibilityLabel(mode.title)
     }
 }

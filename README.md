@@ -44,7 +44,7 @@ Tests/       Loudness, synth and session tests (Swift Testing)
 Tools/
   icon.swift   Renders the app icon set into Resources/
 Scripts/
-  run.sh       Debug build, ad-hoc signed with entitlements, relaunched
+  run.sh       Debug build, widget re-registered, app relaunched
   release.sh   Developer ID build, notarization and stapling
 ```
 
@@ -58,13 +58,13 @@ xcodegen generate
 open Entrain.xcodeproj
 ```
 
-Build and run the `Entrain` scheme, or run `Scripts/run.sh` (also wired up as "Build & Run" in `t3.json`). The script ad-hoc signs the app and widget with their entitlements, since Xcode will not sign the widget's App Group without a development certificate and the system only loads sandboxed widgets. The app has no Dock icon by default; look for the waveform in the menu bar. Run the tests with Cmd-U, or:
+Build and run the `Entrain` scheme, or run `Scripts/run.sh` (also wired up as "Build & Run" in `t3.json`), which rebuilds, re-registers the widget extension and relaunches. The app has no Dock icon by default; look for the waveform in the menu bar. Run the tests with Cmd-U, or:
 
 ```sh
 xcodebuild -project Entrain.xcodeproj -scheme Entrain test
 ```
 
-Launch at Login uses `SMAppService`, which needs the app to run from a stable location such as `/Applications`; from a DerivedData build the toggle shows an error instead. The widget appears in the widget gallery once the app has been launched. Its buttons run the app's intents inside the app process (`allowedExecutionTargets = .main`), and the app publishes a snapshot to the `group.no.espenbye.entrain` app group on every change, so the widget never touches audio or the session directly.
+Launch at Login uses `SMAppService`, which needs the app to run from a stable location such as `/Applications`; from a DerivedData build the toggle shows an error instead. The widget appears in the widget gallery once the app has been launched. Its buttons run the app's intents inside the app process (`allowedExecutionTargets = .main`), and the app publishes a snapshot to `~/Library/Application Support/Entrain/widget.json` on every change, so the widget never touches audio or the session directly. Both sandboxes reach that folder through a path exception rather than an App Group, because group containers need a certificate-backed identity that a development build does not have.
 
 Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on every push.
 

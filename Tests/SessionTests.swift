@@ -22,16 +22,18 @@ struct SessionTests {
     }
 
     let defaults: UserDefaults
+    let widgetDirectory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let audio = FakeAudio()
 
     init() {
         let suite = "entrain.tests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
+        try? FileManager.default.createDirectory(at: widgetDirectory, withIntermediateDirectories: true)
     }
 
     func makeSession() -> Session {
-        Session(defaults: defaults, widgetDefaults: defaults) { [audio] _ in audio }
+        Session(defaults: defaults, widgetDirectory: widgetDirectory) { [audio] _ in audio }
     }
 
     @Test func settingsSurviveRelaunch() {
@@ -72,7 +74,7 @@ struct SessionTests {
 
     @Test func engineIsCreatedOnFirstPlay() {
         var created = 0
-        let session = Session(defaults: defaults, widgetDefaults: defaults) { [audio] _ in
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory) { [audio] _ in
             created += 1
             return audio
         }
@@ -168,14 +170,14 @@ struct SessionTests {
         session.mode = .relax
         session.length = .thirty
         session.play()
-        let playing = WidgetState.load(from: defaults)
+        let playing = WidgetState.load(from: widgetDirectory)
         #expect(playing?.mode == .relax)
         #expect(playing?.sound == "Pad")
         #expect(playing?.isPlaying == true)
         #expect(playing?.deadline != nil)
 
         session.pause()
-        let paused = WidgetState.load(from: defaults)
+        let paused = WidgetState.load(from: widgetDirectory)
         #expect(paused?.isPlaying == false)
         #expect(paused?.remaining == SessionLength.thirty.seconds)
         #expect(paused?.deadline == nil)
