@@ -1,3 +1,4 @@
+import ServiceManagement
 import SwiftUI
 
 @main
@@ -13,7 +14,7 @@ struct EntrainApp: App {
         MenuBarExtra {
             PlayerMenu(session: session)
         } label: {
-            MenuBarLabel(isPlaying: session.isPlaying, remaining: session.remaining)
+            MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, remaining: session.remaining)
                 .reopensPlayerWindow(delegate)
         }
         .menuBarExtraStyle(.menu)
@@ -21,7 +22,7 @@ struct EntrainApp: App {
         Window("Entrain", id: PlayerWindow.id) {
             PlayerWindow(session: session)
         }
-        .defaultSize(width: 320, height: 440)
+        .defaultSize(width: 320, height: 480)
         .windowResizability(.contentSize)
     }
 }
@@ -33,6 +34,23 @@ enum DockIcon {
 
     static func apply(_ show: Bool) {
         NSApplication.shared.setActivationPolicy(show ? .regular : .accessory)
+    }
+}
+
+/// Registers the app as a login item. The system owns the state, so it is
+/// read back rather than stored.
+enum LaunchAtLogin {
+    static var isEnabled: Bool {
+        SMAppService.mainApp.status == .enabled
+    }
+
+    static func set(_ enabled: Bool) {
+        let service = SMAppService.mainApp
+        if enabled {
+            try? service.register()
+        } else {
+            try? service.unregister()
+        }
     }
 }
 

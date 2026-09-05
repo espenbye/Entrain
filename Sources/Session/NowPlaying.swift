@@ -19,13 +19,23 @@ enum NowPlaying {
         update(session)
     }
 
+    /// Called on every state change. Timed sessions report position and length
+    /// so Control Center draws a progress bar; the system interpolates between
+    /// updates from the playback rate, so no per-second refresh is needed.
     static func update(_ session: Session) {
-        let info = MPNowPlayingInfoCenter.default()
-        info.nowPlayingInfo = [
+        var info: [String: Any] = [
             MPMediaItemPropertyTitle: session.title,
             MPMediaItemPropertyArtist: "Entrain",
-            MPNowPlayingInfoPropertyIsLiveStream: true,
+            MPNowPlayingInfoPropertyPlaybackRate: session.isPlaying ? 1.0 : 0.0,
         ]
-        info.playbackState = session.isPlaying ? .playing : .paused
+        if let elapsed = session.elapsed {
+            info[MPMediaItemPropertyPlaybackDuration] = Double(session.length.seconds)
+            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = Double(elapsed)
+        } else {
+            info[MPNowPlayingInfoPropertyIsLiveStream] = true
+        }
+        let center = MPNowPlayingInfoCenter.default()
+        center.nowPlayingInfo = info
+        center.playbackState = session.isPlaying ? .playing : .paused
     }
 }

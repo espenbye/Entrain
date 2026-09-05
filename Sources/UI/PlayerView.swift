@@ -5,9 +5,10 @@ struct PlayerMenu: View {
     @Bindable var session: Session
     @Environment(\.openWindow) private var openWindow
     @AppStorage(DockIcon.key) private var showInDock = false
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
-        PlayerControls(session: session)
+        PlayerControls(session: session, inMenu: true)
         Divider()
         Button("Open Entrain…") {
             openWindow(id: PlayerWindow.id)
@@ -17,6 +18,10 @@ struct PlayerMenu: View {
         Toggle("Show in Dock", isOn: Binding(
             get: { showInDock },
             set: { showInDock = $0; DockIcon.apply($0) }
+        ))
+        Toggle("Launch at Login", isOn: Binding(
+            get: { launchAtLogin },
+            set: { LaunchAtLogin.set($0); launchAtLogin = LaunchAtLogin.isEnabled }
         ))
         Divider()
         Button("Quit Entrain") { NSApplication.shared.terminate(nil) }
@@ -31,7 +36,7 @@ struct PlayerWindow: View {
 
     var body: some View {
         Form {
-            PlayerControls(session: session)
+            PlayerControls(session: session, inMenu: false)
         }
         .formStyle(.grouped)
     }
@@ -41,6 +46,8 @@ struct PlayerWindow: View {
 /// grouped rows inside a Form, so the menu and the window share one source.
 struct PlayerControls: View {
     @Bindable var session: Session
+    /// Menus cannot host a slider, so volume becomes a submenu of steps there.
+    let inMenu: Bool
 
     var body: some View {
         TransportSection(
@@ -48,6 +55,7 @@ struct PlayerControls: View {
             mode: session.mode,
             soundscape: session.soundscape,
             remaining: session.remaining,
+            error: session.error,
             toggle: session.toggle
         )
         ModeSection(selection: $session.mode)
@@ -58,23 +66,29 @@ struct PlayerControls: View {
             binaural: $session.binaural,
             steady: session.mode.isSteady
         )
+        VolumeSection(volume: $session.volume, inMenu: inMenu)
     }
 }
 
-/// What the menu bar shows: the waveform, plus the countdown while a timed session plays.
+/// What the menu bar shows: the waveform, plus the mode and countdown while playing.
+/// Laid out by hand: a `Label` in a status item renders icon-only.
 struct MenuBarLabel: View {
     let isPlaying: Bool
+    let mode: Mode
     let remaining: Int?
 
     var body: some View {
-        Label {
-            if isPlaying, let remaining {
-                Text(Duration.seconds(remaining), format: .time(pattern: .minuteSecond))
-                    .monospacedDigit()
-            }
-        } icon: {
+        HStack(spacing: 4) {
             Image(systemName: "waveform")
                 .symbolEffect(.variableColor.iterative, isActive: isPlaying)
+                        if isPlaying {
+                if let remaining {
+                    Text("\(mode.title) \(Duration.seconds(remaining), format: .time(pattern: .minuteSecond))")
+                        .monospacedDigit()
+                } else {
+                    Text(mode.title)
+                }
+            }
         }
     }
 }
@@ -84,6 +98,7 @@ struct TransportSection: View {
     let mode: Mode
     let soundscape: Soundscape
     let remaining: Int?
+    let error: String?
     let toggle: () -> Void
 
     var body: some View {
@@ -91,7 +106,7 @@ struct TransportSection: View {
             Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill", action: toggle)
                 .keyboardShortcut(.space, modifiers: [])
         } header: {
-            StatusLine(isPlaying: isPlaying, mode: mode, soundscape: soundscape, remaining: remaining)
+            StatusLine(isPlaying: isPlaying, mode: mode, soundscape: soundscape, remaining: remaining, error: error)
         }
     }
 }
@@ -101,9 +116,12 @@ struct StatusLine: View {
     let mode: Mode
     let soundscape: Soundscape
     let remaining: Int?
+    let error: String?
 
     var body: some View {
-        if let remaining {
+        if let error {
+            Text("\(mode.title) · \(soundscape.title) · \(error)")
+        } else if let remaining {
             Text("\(mode.title) · \(soundscape.title) · \(Duration.seconds(remaining), format: .time(pattern: .minuteSecond)) left")
         } else {
             Text("\(mode.title) · \(soundscape.title)")
@@ -148,6 +166,36 @@ struct SettingsSection: View {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
             }
             Toggle("Binaural Beats", isOn: $binaural)
+        }
+    }
+}
+
+struct VolumeSection: View {
+    @Binding var volume: Double
+    let inMenu: Bool
+
+    private static let steps: [Double] = [0.25, 0.5, 0.75, 1]
+
+    var body: some View {
+        Section {
+            if inMenu {
+                Picker("Volume", selection: Binding(
+                    get: { Self.steps.min { abs($0 - volume) < abs($1 - volume) } ?? 1 },
+                    set: { volume = $0 }
+                )) {
+                    ForEach(Self.steps, id: \.self) { step in
+                        Text(step, format: .percent).tag(step)
+                    }
+                }
+            } else {
+                Slider(value: $volume, in: 0...1) {
+                    Text("Volume")
+                } minimumValueLabel: {
+                    Image(systemName: "speaker.fill")
+                } maximumValueLabel: {
+                    Image(systemName: "speaker.wave.3.fill")
+                }
+            }
         }
     }
 }

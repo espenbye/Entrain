@@ -11,4 +11,7 @@ final class AudioParameters: Sendable {
     /// 0...1. The synths ramp toward it over a second, so play and pause fade
     /// and a timed session can taper over its last minutes.
     let master = Atomic<Double>(0)
+    /// 0...1 user volume, independent of the system output level. Smoothed
+    /// over 50 ms so a slider drag is immediate but click-free.
+    let volume = Atomic<Double>(1)
 }

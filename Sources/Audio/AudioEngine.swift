@@ -10,8 +10,18 @@ final class AudioEngine {
     private let eq = AVAudioUnitEQ(numberOfBands: 1)
     private let reverb = AVAudioUnitReverb()
 
-    init() throws {
-        let sampleRate = engine.outputNode.outputFormat(forBus: 0).sampleRate
+    /// Graph wiring is fixed; if it failed, `start()` reports it instead of the
+    /// app dying in the initializer.
+    private var graphError: Error?
+    /// Set by `start()` and `stop()`. After an output device change the engine
+    /// stops on its own, so this says whether to bring it back.
+    private var shouldRun = false
+    private var configurationObserver: NSObjectProtocol?
+
+    init() {
+        // Zero when no output device exists; the synths still need a real rate.
+        let hardwareRate = engine.outputNode.outputFormat(forBus: 0).sampleRate
+        let sampleRate = hardwareRate > 0 ? hardwareRate : 48000
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
 
         let bed = BedSynth(parameters: parameters, sampleRate: sampleRate)
@@ -48,19 +58,38 @@ final class AudioEngine {
         for node in [bedNode, binauralNode, eq, reverb] {
             engine.attach(node)
         }
-        try engine.connectNode(bedNode, to: eq, format: format)
-        try engine.connectNode(eq, to: reverb, format: format)
-        try engine.connectNode(reverb, to: engine.mainMixerNode, format: format)
-        try engine.connectNode(binauralNode, to: engine.mainMixerNode, format: format)
+        do {
+            try engine.connectNode(bedNode, to: eq, format: format)
+            try engine.connectNode(eq, to: reverb, format: format)
+            try engine.connectNode(reverb, to: engine.mainMixerNode, format: format)
+            try engine.connectNode(binauralNode, to: engine.mainMixerNode, format: format)
+        } catch {
+            graphError = error
+        }
         engine.prepare()
+
+        // Plugging in headphones or switching outputs stops the engine.
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil
+        ) { _ in
+            Task { @MainActor [weak self] in self?.recover() }
+        }
     }
 
     func start() throws {
+        if let graphError { throw graphError }
+        shouldRun = true
         guard !engine.isRunning else { return }
         try engine.start()
     }
 
     func stop() {
+        shouldRun = false
         engine.pause()
+    }
+
+    private func recover() {
+        guard shouldRun, !engine.isRunning else { return }
+        try? engine.start()
     }
 }

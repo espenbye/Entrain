@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 enum Mode: String, CaseIterable, Identifiable {
     case focus, relax, meditate, sleep
@@ -46,15 +46,6 @@ enum Mode: String, CaseIterable, Identifiable {
     /// Binaural carrier frequency in Hz for the left ear. Right ear is carrier + rate.
     var carrier: Double { isSteady ? 100 : 200 }
 
-    var tint: Color {
-        switch self {
-        case .focus: .orange
-        case .relax: .teal
-        case .meditate: .purple
-        case .sleep: .indigo
-        }
-    }
-
     var symbol: String {
         switch self {
         case .focus: "scope"
@@ -99,4 +90,5 @@ enum SessionLength: Int, CaseIterable, Identifiable {
 
     var id: Self { self }
     var title: String { self == .endless ? "Endless" : "\(rawValue) min" }
+    var seconds: Int { rawValue * 60 }
 }
