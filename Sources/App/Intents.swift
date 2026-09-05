@@ -8,6 +8,7 @@ struct StartSessionIntent: AppIntent {
     static let title: LocalizedStringResource = "Start Session"
     static let description = IntentDescription("Plays a mode, optionally for a set length.")
     static var supportedModes: IntentModes { .background }
+    @available(macOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @Parameter(title: "Mode") var mode: Mode
@@ -42,6 +43,7 @@ struct StopSessionIntent: AppIntent {
     static let title: LocalizedStringResource = "Stop Session"
     static let description = IntentDescription("Pauses playback. The timer keeps its place.")
     static var supportedModes: IntentModes { .background }
+    @available(macOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @MainActor
@@ -57,6 +59,7 @@ struct ToggleSessionIntent: AppIntent {
     static let title: LocalizedStringResource = "Play or Pause"
     static let description = IntentDescription("Toggles playback of the current mode.")
     static var supportedModes: IntentModes { .background }
+    @available(macOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @MainActor
@@ -74,6 +77,7 @@ struct ToggleSessionIntent: AppIntent {
 struct SetModePlayingIntent: SetValueIntent {
     static let title: LocalizedStringResource = "Set Mode Playing"
     static var supportedModes: IntentModes { .background }
+    @available(macOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
 
     @Parameter(title: "Mode") var mode: Mode
