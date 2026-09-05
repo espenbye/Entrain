@@ -4,6 +4,8 @@ options:
   developmentLanguage: en
   deploymentTarget:
     macOS: "26.0"
+    iOS: "26.0"
+    watchOS: "26.0"
   createIntermediateGroups: true
 configFiles:
   Debug: Signing.xcconfig
@@ -12,16 +14,54 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.0"
     SWIFT_STRICT_CONCURRENCY: complete
     CODE_SIGN_STYLE: Automatic
-    ENABLE_HARDENED_RUNTIME: true
+    SWIFT_EMIT_LOC_STRINGS: true
+
+# The session, audio, modes, intents and widget snapshot are shared by every
+# app. Each platform adds its own shell under Sources/App and Sources/UI.
+targetTemplates:
+  SharedApp:
+    type: application
+    sources:
+      - Sources/Session
+      - Sources/Audio
+      - Sources/UI/PlayerView.swift
+      - Resources
+    settings:
+      base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  # The widget shares the mode enums, the intents behind its buttons and the
+  # snapshot it draws; WIDGET compiles the intents without the session.
+  SharedWidget:
+    type: app-extension
+    sources:
+      - Widget/EntrainWidget.swift
+      - Sources/Session/Mode.swift
+      - Sources/Session/WidgetState.swift
+      - Sources/Session/Intents.swift
+      - Resources/Localizable.xcstrings
+    info:
+      properties:
+        CFBundleDisplayName: Entrain
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG WIDGET
+        Release:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: WIDGET
+
 targets:
   Entrain:
-    type: application
+    templates: [SharedApp]
     platform: macOS
     sources:
-      - Sources
-      - Resources
+      - Sources/App/macOS
+      - Sources/UI/macOS
     info:
       path: Info.plist
       properties:
@@ -46,26 +86,13 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain
         PRODUCT_NAME: Entrain
-        SWIFT_EMIT_LOC_STRINGS: true
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: true
+
   EntrainWidget:
-    type: app-extension
+    templates: [SharedWidget]
     platform: macOS
-    # The widget shares the mode enums, the intents behind its buttons and the
-    # snapshot it draws; WIDGET compiles the intents without the session.
-    sources:
-      - Widget
-      - Sources/Session/Mode.swift
-      - Sources/Session/WidgetState.swift
-      - Sources/App/Intents.swift
-      - Resources/Localizable.xcstrings
     info:
       path: Widget/Info.plist
-      properties:
-        CFBundleDisplayName: Entrain
-        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: Widget/EntrainWidget.entitlements
       properties:
@@ -75,12 +102,103 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain.widget
-        SWIFT_EMIT_LOC_STRINGS: true
-      configs:
-        Debug:
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG WIDGET
-        Release:
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS: WIDGET
+        ENABLE_HARDENED_RUNTIME: true
+
+  # iPhone and iPad. Same bundle id as the Mac app for universal purchase.
+  # The widget and the app share the snapshot through an App Group, which
+  # the iOS sandbox has no path exception to replace.
+  EntrainiOS:
+    templates: [SharedApp]
+    platform: iOS
+    sources:
+      - Sources/App/iOS
+    info:
+      path: iOS/Info.plist
+      properties:
+        CFBundleDisplayName: Entrain
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        LSApplicationCategoryType: public.app-category.healthcare-fitness
+        CFBundleURLTypes:
+          - CFBundleURLName: no.espenbye.entrain
+            CFBundleURLSchemes: [entrain]
+        UIBackgroundModes: [audio]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          [
+            UIInterfaceOrientationPortrait,
+            UIInterfaceOrientationPortraitUpsideDown,
+            UIInterfaceOrientationLandscapeLeft,
+            UIInterfaceOrientationLandscapeRight,
+          ]
+    entitlements:
+      path: iOS/Entrain.entitlements
+      properties:
+        com.apple.security.application-groups: [group.no.espenbye.entrain]
+    dependencies:
+      - target: EntrainWidgetiOS
+      - target: EntrainWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain
+        PRODUCT_NAME: Entrain
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  EntrainWidgetiOS:
+    templates: [SharedWidget]
+    platform: iOS
+    info:
+      path: iOS/Widget.plist
+    entitlements:
+      path: iOS/Widget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.no.espenbye.entrain]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain.widget
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  # Embedded in the iOS app, runs on its own. The watch has its own
+  # session and engine; it plays through paired headphones.
+  EntrainWatch:
+    templates: [SharedApp]
+    platform: watchOS
+    sources:
+      - Sources/App/watchOS
+      - Sources/UI/watchOS
+    info:
+      path: watchOS/Info.plist
+      properties:
+        CFBundleDisplayName: Entrain
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: no.espenbye.entrain
+        WKBackgroundModes: [audio]
+    entitlements:
+      path: watchOS/Entrain.entitlements
+      properties:
+        com.apple.security.application-groups: [group.no.espenbye.entrain]
+    dependencies:
+      - target: EntrainWidgetWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain.watchkitapp
+        PRODUCT_NAME: Entrain
+
+  EntrainWidgetWatch:
+    templates: [SharedWidget]
+    platform: watchOS
+    info:
+      path: watchOS/Widget.plist
+    entitlements:
+      path: watchOS/Widget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.no.espenbye.entrain]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.espenbye.entrain.watchkitapp.widget
+
   EntrainTests:
     type: bundle.unit-test
     platform: macOS

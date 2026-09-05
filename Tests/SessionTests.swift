@@ -7,13 +7,14 @@ import Testing
 struct SessionTests {
     final class FakeAudio: SessionAudio {
         var onInterruption: (() -> Void)?
+        var mixesWithOthers = false
         var starts = 0
         var stops = 0
         var failsToStart = false
 
         struct Unavailable: Error {}
 
-        func start() throws {
+        func start() async throws {
             if failsToStart { throw Unavailable() }
             starts += 1
         }
@@ -72,39 +73,39 @@ struct SessionTests {
         #expect(session.parameters.layers.load(ordering: .relaxed) == Soundscape.noise.bit)
     }
 
-    @Test func engineIsCreatedOnFirstPlay() {
+    @Test func engineIsCreatedOnFirstPlay() async {
         var created = 0
         let session = Session(defaults: defaults, widgetDirectory: widgetDirectory) { [audio] _ in
             created += 1
             return audio
         }
         #expect(created == 0)
-        session.play()
+        await session.play()
         session.pause()
-        session.play()
+        await session.play()
         #expect(created == 1)
         #expect(audio.starts == 2)
     }
 
-    @Test func playReportsWhenAudioIsUnavailable() {
+    @Test func playReportsWhenAudioIsUnavailable() async {
         audio.failsToStart = true
         let session = makeSession()
-        session.play()
+        await session.play()
         #expect(!session.isPlaying)
         #expect(session.error == String(localized: "Audio unavailable"))
         #expect(session.parameters.master.load(ordering: .relaxed) == 0)
 
         audio.failsToStart = false
-        session.play()
+        await session.play()
         #expect(session.isPlaying)
         #expect(session.error == nil)
         #expect(session.parameters.master.load(ordering: .relaxed) == 1)
     }
 
-    @Test func interruptionStopsTheSessionVisibly() {
+    @Test func interruptionStopsTheSessionVisibly() async {
         let session = makeSession()
         session.length = .fifteen
-        session.play()
+        await session.play()
         #expect(session.isPlaying)
 
         audio.onInterruption?()
@@ -114,10 +115,10 @@ struct SessionTests {
         #expect(session.remaining == SessionLength.fifteen.seconds)
     }
 
-    @Test func pauseKeepsTheCountdownAndNewLengthResetsIt() {
+    @Test func pauseKeepsTheCountdownAndNewLengthResetsIt() async {
         let session = makeSession()
         session.length = .sixty
-        session.play()
+        await session.play()
         session.pause()
         #expect(session.remaining == SessionLength.sixty.seconds)
         session.length = .fifteen
@@ -165,11 +166,11 @@ struct SessionTests {
         #expect(Session.masterGain(remaining: 30, fadeOut: 1) == 1)
     }
 
-    @Test func widgetSeesTheSession() {
+    @Test func widgetSeesTheSession() async {
         let session = makeSession()
         session.mode = .relax
         session.length = .thirty
-        session.play()
+        await session.play()
         let playing = WidgetState.load(from: widgetDirectory)
         #expect(playing?.mode == .relax)
         #expect(playing?.sound == "Pad")

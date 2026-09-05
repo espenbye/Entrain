@@ -1,4 +1,6 @@
+#if canImport(AppKit)
 import AppKit
+#endif
 import Foundation
 import Observation
 import WidgetKit
@@ -16,6 +18,7 @@ final class Session {
     var nowPlaying: Bool {
         didSet {
             nowPlaying ? NowPlaying.attach(to: self) : NowPlaying.detach()
+            engine?.mixesWithOthers = !nowPlaying
             save()
         }
     }
@@ -62,7 +65,9 @@ final class Session {
     private var deadline: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
+    #if os(macOS)
     private var sleepObserver: NSObjectProtocol?
+    #endif
 
     init(
         defaults: UserDefaults,
@@ -88,6 +93,7 @@ final class Session {
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
 
+        #if os(macOS)
         // A session that outlives the Mac's sleep would otherwise resume on
         // wake, which for Sleep mode means brown noise at breakfast.
         sleepObserver = NSWorkspace.shared.notificationCenter.addObserver(
@@ -95,6 +101,7 @@ final class Session {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.pause() }
         }
+        #endif
     }
 
     var title: String { "\(mode.title) · \(layers.title)" }
@@ -102,20 +109,23 @@ final class Session {
     /// Seconds into the current timed session. Nil when endless.
     var elapsed: Int? { remaining.map { length.seconds - $0 } }
 
-    func toggle() {
-        isPlaying ? pause() : play()
+    func toggle() async {
+        if isPlaying { pause() } else { await play() }
     }
 
-    func play() {
+    /// Async because the watch may have to ask which headphones to use before
+    /// its audio route exists; on the Mac and iPhone the engine starts at once.
+    func play() async {
         stopTask?.cancel()
         let engine = self.engine ?? {
             let engine = makeEngine(parameters)
             engine.onInterruption = { [weak self] in self?.interrupted() }
+            engine.mixesWithOthers = !nowPlaying
             self.engine = engine
             return engine
         }()
         do {
-            try engine.start()
+            try await engine.start()
             error = nil
         } catch {
             self.error = String(localized: "Audio unavailable")

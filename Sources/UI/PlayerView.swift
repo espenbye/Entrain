@@ -1,44 +1,7 @@
 import SwiftUI
 
-/// The menu bar menu. Every child is a real menu item, so the look is macOS's own.
-struct PlayerMenu: View {
-    @Bindable var session: Session
-    @Environment(\.openWindow) private var openWindow
-    @AppStorage(DockIcon.key) private var showInDock = false
-    @AppStorage(HotKey.key) private var globalShortcut = false
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
-
-    var body: some View {
-        PlayerControls(session: session, inMenu: true)
-        Divider()
-        Button("Open Entrain…") {
-            openWindow(id: PlayerWindow.id)
-            NSApplication.shared.activate()
-        }
-        .keyboardShortcut("o")
-        Toggle(HotKey.title, isOn: Binding(
-            get: { globalShortcut },
-            set: { on in
-                globalShortcut = on
-                on ? HotKey.enable { session.toggle() } : HotKey.disable()
-            }
-        ))
-        Toggle("Control Center & Media Keys", isOn: $session.nowPlaying)
-        Toggle("Show in Dock", isOn: Binding(
-            get: { showInDock },
-            set: { showInDock = $0; DockIcon.apply($0) }
-        ))
-        Toggle("Launch at Login", isOn: Binding(
-            get: { launchAtLogin },
-            set: { LaunchAtLogin.set($0); launchAtLogin = LaunchAtLogin.isEnabled }
-        ))
-        Divider()
-        Button("Quit Entrain") { NSApplication.shared.terminate(nil) }
-            .keyboardShortcut("q")
-    }
-}
-
-/// The same controls in a regular window, for people who want Entrain on screen.
+/// The same controls in a regular window, for people who want Entrain on
+/// screen. On iPhone and iPad this is the app.
 struct PlayerWindow: View {
     static let id = "player"
     @Bindable var session: Session
@@ -80,41 +43,19 @@ struct PlayerControls: View {
     }
 }
 
-/// What the menu bar shows: the waveform, plus the mode and countdown while playing.
-/// Laid out by hand: a `Label` in a status item renders icon-only. The symbol
-/// does not animate: a status item redrawing all day is a battery cost for
-/// an app meant to sit in the background.
-struct MenuBarLabel: View {
-    let isPlaying: Bool
-    let mode: Mode
-    let remaining: Int?
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "waveform")
-            if isPlaying {
-                if let remaining {
-                    Text(verbatim: "\(mode.title) \(remaining.countdown)")
-                        .monospacedDigit()
-                } else {
-                    Text(mode.title)
-                }
-            }
-        }
-    }
-}
-
 struct TransportSection: View {
     let isPlaying: Bool
     let title: String
     let remaining: Int?
     let error: String?
-    let toggle: () -> Void
+    let toggle: () async -> Void
 
     var body: some View {
         Section {
-            Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill", action: toggle)
-                .keyboardShortcut(.space, modifiers: [])
+            Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
+                Task { await toggle() }
+            }
+            .spaceBarToggles()
         } header: {
             if let error {
                 Text(verbatim: "\(title) · \(error)")
@@ -154,10 +95,13 @@ struct SettingsSection: View {
 
     var body: some View {
         Section {
+            #if os(macOS)
             if inMenu {
-                Menu("Sound") { layerToggles }.disabled(sleep)
-            } else {
-                LabeledContent("Sound") { HStack { layerToggles } }
+                Menu("Sound") { LayerToggles(layers: layers, setLayer: setLayer) }.disabled(sleep)
+            }
+            #endif
+            if !inMenu {
+                LabeledContent("Sound") { HStack { LayerToggles(layers: layers, setLayer: setLayer) } }
                     .toggleStyle(.button)
                     .disabled(sleep)
             }
@@ -171,9 +115,14 @@ struct SettingsSection: View {
             Toggle("Binaural Beats", isOn: $binaural)
         }
     }
+}
 
-    /// One check item per soundscape; any combination plays together.
-    private var layerToggles: some View {
+/// One check item per soundscape; any combination plays together.
+struct LayerToggles: View {
+    let layers: Set<Soundscape>
+    let setLayer: (Soundscape, Bool) -> Void
+
+    var body: some View {
         ForEach(Soundscape.allCases) { soundscape in
             Toggle(soundscape.title, isOn: Binding(
                 get: { layers.contains(soundscape) },
@@ -210,5 +159,16 @@ struct VolumeSection: View {
                 }
             }
         }
+    }
+}
+
+private extension View {
+    /// Space plays and pauses wherever there is a keyboard.
+    func spaceBarToggles() -> some View {
+        #if os(watchOS)
+        self
+        #else
+        keyboardShortcut(.space, modifiers: [])
+        #endif
     }
 }

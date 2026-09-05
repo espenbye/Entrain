@@ -1,46 +1,74 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "Start ${mode} in ${applicationName}": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start ${mode} i ${applicationName}"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Start ${mode} in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Start ${mode} in ${applicationName}",
+              "Start a ${mode} session in ${applicationName}"
+            ]
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Start ${mode} i ${applicationName}"
           }
         }
       }
     },
-    "Start a ${mode} session in ${applicationName}": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start en ${mode}-økt i ${applicationName}"
+    "Start a ${mode} session in ${applicationName}" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start en ${mode}-økt i ${applicationName}"
           }
         }
       }
     },
-    "Stop ${applicationName}": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopp ${applicationName}"
+    "Stop ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Stop ${applicationName}"
+            ]
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Stopp ${applicationName}"
           }
         }
       }
     },
-    "Toggle ${applicationName}": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Veksle ${applicationName}"
+    "Toggle ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Toggle ${applicationName}"
+            ]
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Veksle ${applicationName}"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

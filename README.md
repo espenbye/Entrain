@@ -1,6 +1,6 @@
 # Entrain
 
-A macOS menu bar app that plays a generated soundscape with rhythmic amplitude modulation, tuned to nudge your brain toward a target state. No audio files, no network. Everything is synthesized in real time.
+A Mac, iPhone, iPad and Apple Watch app that plays a generated soundscape with rhythmic amplitude modulation, tuned to nudge your brain toward a target state. No audio files, no network. Everything is synthesized in real time. On the Mac it lives in the menu bar.
 
 ## Modes
 
@@ -27,6 +27,12 @@ The two sleep modes play a fixed brown noise bed, ignore intensity, and taper ov
 
 Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, and optionally from a system-wide ⌃⌥E shortcut. The small widget shows the mode, sound and countdown with a play/pause button; the medium one adds a button per mode. Control Center offers a toggle per mode, lit while that mode plays. The media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default.
 
+## iPhone, iPad and Apple Watch
+
+The same session, synth and intents run on every platform; only the shell differs. On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. The "Lock Screen & Control Center" toggle plays the same role as the Mac's Now Playing toggle: on, Entrain takes the playback controls and pauses other audio; off, it mixes under whatever is playing. A phone call pauses the session, and it stays paused.
+
+The watch app is embedded in the iPhone app but plays on its own, through paired headphones: it uses the long-form audio policy so the session continues with the wrist down, and asks which headphones to use when none are connected. The Smart Stack widget shows the mode and countdown; tapping it opens the app. The watch has no reverb or EQ units, so the bed goes straight to the mixer there. Each device keeps its own session; nothing syncs between the phone and the watch. Volume on the watch is the Digital Crown in the system Now Playing view.
+
 ## How it works
 
 The engine is created on first play, so a login item does not touch audio hardware at launch. It runs on a dedicated render thread and only reads control values through atomics, so the UI never touches the audio path. Modulation is confined to the 200 Hz to 1 kHz band: the bass stays steady and the highs (rain droplets, pad harmonics) do not flutter. The modulation rate is fixed; instead the texture drifts slowly, one filter and pan cycle every 15 minutes, to counter habituation. All transitions (play, pause, switching soundscapes) ramp over roughly a second to avoid clicks. If the output device changes mid-session (headphones plugged in, a display with speakers connected), the engine restarts itself; if it cannot, the session stops and says so rather than showing Pause over silence.
@@ -35,12 +41,13 @@ The four soundscapes are trimmed to the same K-weighted loudness (-22 LUFS, ITU-
 
 ```
 Sources/
-  App/       MenuBarExtra entry point, App Intents, global shortcut
-  UI/        SwiftUI menu bar menu and player window
-  Session/   Session state, modes, Now Playing and widget snapshot
-  Audio/     Engine, synth voices, DSP primitives, shared parameters
-Widget/      WidgetKit extension; shares Mode, Intents and WidgetState with the app
-Tests/       Loudness, synth and session tests (Swift Testing)
+  App/       One entry point per platform: macOS (MenuBarExtra, global shortcut), iOS, watchOS
+  UI/        Shared player controls; the menu bar menu under macOS/, the watch screen under watchOS/
+  Session/   Session state, modes, App Intents, Now Playing and widget snapshot
+  Audio/     Engine, audio session, synth voices, DSP primitives, shared parameters
+Widget/      WidgetKit extension built once per platform; shares Mode, Intents and WidgetState with the app
+iOS/, watchOS/  Generated Info.plist and entitlements for those targets
+Tests/       Loudness, synth and session tests (Swift Testing, run on macOS)
 Tools/
   icon.swift   Renders the app icon set into Resources/
 Scripts/
@@ -50,7 +57,7 @@ Scripts/
 
 ## Building
 
-Requires macOS 27 (the app will not run on earlier releases), Xcode with Swift 6, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+Requires macOS 26, iOS 26 or watchOS 26 (the apps will not run on earlier releases), Xcode with Swift 6, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
 ```sh
 brew install xcodegen
@@ -65,7 +72,7 @@ DEVELOPMENT_TEAM = ABCDE12345
 CODE_SIGN_IDENTITY = Apple Development
 ```
 
-Build and run the `Entrain` scheme, or run `Scripts/run.sh` (also wired up as "Build & Run" in `t3.json`), which rebuilds, re-registers the widget extension and relaunches. The app has no Dock icon by default; look for the waveform in the menu bar. Run the tests with Cmd-U, or:
+Build and run the `Entrain` scheme, or run `Scripts/run.sh` (also wired up as "Build & Run" in `t3.json`), which rebuilds, re-registers the widget extension and relaunches. The app has no Dock icon by default; look for the waveform in the menu bar. The `EntrainiOS` scheme builds the iPhone and iPad app with the watch app embedded; run it on a simulator or, with a team set, on a device. Run the tests with Cmd-U, or:
 
 ```sh
 xcodebuild -project Entrain.xcodeproj -scheme Entrain test
@@ -73,7 +80,9 @@ xcodebuild -project Entrain.xcodeproj -scheme Entrain test
 
 Launch at Login uses `SMAppService`, which needs the app to run from a stable location such as `/Applications`; from a DerivedData build the toggle shows an error instead. The widget appears in the widget gallery once the app has been launched. Its buttons run the app's intents inside the app process (`allowedExecutionTargets = .main`), and the app publishes a snapshot to `~/Library/Application Support/Entrain/widget.json` on every change, so the widget never touches audio or the session directly. Both sandboxes reach that folder through a path exception rather than an App Group, because group containers need a certificate-backed identity that a development build does not have.
 
-Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on every push.
+On iOS and watchOS the snapshot lives in the `group.no.espenbye.entrain` App Group instead, so device builds there need a development team; simulator builds do not.
+
+Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on macOS and builds the iOS and watch apps on every push.
 
 ## Releasing
 

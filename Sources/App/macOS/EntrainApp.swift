@@ -10,7 +10,7 @@ struct EntrainApp: App {
         let defaults = UserDefaults.standard
         DockIcon.apply(defaults.bool(forKey: DockIcon.key))
         if defaults.bool(forKey: HotKey.key) {
-            HotKey.enable { Session.shared.toggle() }
+            HotKey.enable { Task { await Session.shared.toggle() } }
         }
     }
 
@@ -20,7 +20,7 @@ struct EntrainApp: App {
         } label: {
             MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, remaining: session.remaining)
                 .reopensPlayerWindow(delegate)
-                .onOpenURL { url in URLCommand(url)?.run(on: session) }
+                .onOpenURL { url in Task { await URLCommand(url)?.run(on: session) } }
         }
         .menuBarExtraStyle(.menu)
 
