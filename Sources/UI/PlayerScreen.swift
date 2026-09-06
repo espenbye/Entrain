@@ -180,9 +180,10 @@ private struct ModeChips: View {
                                 .font(.subheadline.weight(.medium))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
+                                .contentShape(.capsule)
                         }
-                        .buttonStyle(.glass)
-                        .glassEffect(mode == selection ? .regular.tint(mode.tint).interactive() : .regular.interactive())
+                        .buttonStyle(.plain)
+                        .glassEffect(mode == selection ? .regular.tint(mode.tint).interactive() : .regular.interactive(), in: .capsule)
                         .foregroundStyle(mode == selection ? .white : .primary)
                     }
                 }
