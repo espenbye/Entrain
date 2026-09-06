@@ -81,7 +81,7 @@ final class BedSynth: @unchecked Sendable {
 
             let low = bandLow.process(s, bandLowCoefficient)
             let mid = bandHigh.process(s, bandHighCoefficient) - low
-            let pulse = depth.next() * (0.5 - 0.5 * cos(twoPi * modulation.next(rateIncrement)))
+            let pulse = depth.next() * (0.5 - 0.5 * SineTable.sin(cycles: modulation.next(rateIncrement) + 0.25))
             let out = (s - mid * pulse) * master.next() * volume.next()
 
             left[i] = out * panL
@@ -119,8 +119,8 @@ final class BinauralSynth: @unchecked Sendable {
 
         for i in 0..<frames {
             let g = level.next() * master.next() * volume.next()
-            outL[i] = sin(twoPi * left.next(incL)) * g
-            outR[i] = sin(twoPi * right.next(incR)) * g
+            outL[i] = SineTable.sin(cycles: left.next(incL)) * g
+            outR[i] = SineTable.sin(cycles: right.next(incR)) * g
         }
     }
 }
