@@ -2,6 +2,29 @@ import Foundation
 
 let twoPi = Float(2 * Double.pi)
 
+/// Shared sine wavetable for the render thread. Linear interpolation over
+/// 4096 points keeps distortion below -80 dB, far under the noise floor of
+/// every voice, and replaces a libm call with two loads and a multiply.
+enum SineTable {
+    private static let size = 4096
+    private static let mask = size - 1
+    private static let table: [Float] = (0..<size).map {
+        Float(Foundation.sin(2 * Double.pi * Double($0) / Double(size)))
+    }
+
+    /// `cycles` is a phase in cycles, so 1.0 is one full period. Any value
+    /// at or above zero wraps; a `Phasor` output times a harmonic number is fine.
+    @inline(__always)
+    static func sin(cycles: Float) -> Float {
+        let x = cycles * Float(size)
+        let i = Int(x)
+        let f = x - Float(i)
+        let a = table[i & mask]
+        let b = table[(i + 1) & mask]
+        return a + (b - a) * f
+    }
+}
+
 /// One-pole parameter smoother. Call `next()` once per sample.
 struct Smoother {
     var value: Float

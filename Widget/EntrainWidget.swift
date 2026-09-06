@@ -77,7 +77,7 @@ struct WidgetView: View {
         switch family {
         case .accessoryInline:
             Label {
-                Text("\(state.mode.title) ") + countdownText
+                Text(verbatim: state.mode.title + " ") + countdownText
             } icon: {
                 Image(systemName: state.mode.symbol)
             }

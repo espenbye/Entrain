@@ -12,21 +12,21 @@ struct WatchPlayerView: View {
                 TransportSection(
                     isPlaying: session.isPlaying,
                     title: session.title,
-                    remaining: session.remaining,
+                    countdown: session.countdown,
                     error: session.error,
                     toggle: session.toggle
                 )
                 ModeSection(selection: $session.mode)
                 Section {
-                    NavigationLink("Sound") {
-                        List { LayerToggles(layers: session.layers, setLayer: session.setLayer) }
-                        .navigationTitle("Sound")
+                    if !session.mode.isSleep {
+                        NavigationLink("Sound") {
+                            List { LayerToggles(layers: session.layers, setLayer: session.setLayer) }
+                            .navigationTitle("Sound")
+                        }
+                        Picker("Intensity", selection: $session.intensity) {
+                            ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+                        }
                     }
-                    .disabled(session.mode.isSleep)
-                    Picker("Intensity", selection: $session.intensity) {
-                        ForEach(Intensity.allCases) { Text($0.title).tag($0) }
-                    }
-                    .disabled(session.mode.isSleep)
                     Picker("Timer", selection: $session.length) {
                         ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
                     }

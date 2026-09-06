@@ -22,6 +22,13 @@ struct SessionTests {
         func stop() { stops += 1 }
     }
 
+    final class FakeMindful: MindfulLog {
+        var prepared = 0
+        var segments: [DateInterval] = []
+        func prepare() { prepared += 1 }
+        func log(_ segment: DateInterval) { segments.append(segment) }
+    }
+
     let defaults: UserDefaults
     let widgetDirectory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let audio = FakeAudio()
@@ -119,7 +126,9 @@ struct SessionTests {
         let session = makeSession()
         session.length = .sixty
         await session.play()
+        #expect(session.deadline != nil)
         session.pause()
+        #expect(session.deadline == nil)
         #expect(session.remaining == SessionLength.sixty.seconds)
         session.length = .fifteen
         #expect(session.remaining == SessionLength.fifteen.seconds)
@@ -203,6 +212,48 @@ struct SessionTests {
         #expect(paused?.isPlaying == false)
         #expect(paused?.remaining == SessionLength.thirty.seconds)
         #expect(paused?.deadline == nil)
+    }
+
+    /// iOS budgets widget reloads, so a change the widget cannot see must not rewrite its snapshot.
+    @Test func widgetSnapshotOnlyChangesWhenVisible() throws {
+        let session = makeSession()
+        let file = widgetDirectory.appending(path: "widget.json")
+        session.mode = .relax
+        let written = try #require(WidgetState.load(from: widgetDirectory))
+        let stamp = try FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date
+        session.intensity = .high
+        session.binaural = true
+        session.volume = 0.2
+        #expect(try FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date == stamp)
+        #expect(written.matches(WidgetState.load(from: widgetDirectory)))
+        session.setLayer(.drone, on: true)
+        #expect(WidgetState.load(from: widgetDirectory)?.sound == "Pad + Drone")
+    }
+
+    @Test func meditateSegmentsReachTheMindfulLog() async {
+        let mindful = FakeMindful()
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory, mindful: mindful) { [audio] _ in audio }
+        session.mode = .focus
+        await session.play()
+        session.pause()
+        #expect(mindful.prepared == 0)
+        #expect(mindful.segments.isEmpty)
+
+        session.mode = .meditate
+        await session.play()
+        #expect(mindful.prepared == 1)
+        session.pause()
+        #expect(mindful.segments.count == 1)
+
+        // Switching mode mid-play closes the segment; switching back opens a new one.
+        await session.play()
+        session.mode = .relax
+        #expect(mindful.segments.count == 2)
+        session.mode = .meditate
+        #expect(mindful.prepared == 3)
+        session.pause()
+        #expect(mindful.segments.count == 3)
+        #expect(mindful.segments.allSatisfy { $0.duration >= 0 && $0.end <= .now })
     }
 
     @Test func countdownGrowsPastAnHour() {

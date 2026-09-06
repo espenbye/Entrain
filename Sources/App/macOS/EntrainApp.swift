@@ -18,7 +18,7 @@ struct EntrainApp: App {
         MenuBarExtra {
             PlayerMenu(session: session)
         } label: {
-            MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, remaining: session.remaining)
+            MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, deadline: session.deadline)
                 .reopensPlayerWindow(delegate)
                 .onOpenURL { url in Task { await URLCommand(url)?.run(on: session) } }
         }
@@ -28,7 +28,8 @@ struct EntrainApp: App {
             PlayerScreen(session: session)
         }
         .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 380, height: 760)
     }
 }
 

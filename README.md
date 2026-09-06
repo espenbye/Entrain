@@ -41,7 +41,7 @@ open entrain://toggle
 
 ## iPhone, iPad and Apple Watch
 
-The same session, synth and intents run on every platform; only the shell differs. On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. Entrain blends under music and podcasts by default. The "Lock Screen Controls" toggle is the Mac's Now Playing toggle under another name: on, Entrain takes the Lock Screen and Control Center playback controls and pauses other audio, because iOS gives those controls only to an app that does not mix. A phone call pauses the session, and it stays paused.
+The same session, synth and intents run on every platform; only the shell differs. On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. Entrain blends under music and podcasts by default. The "Lock Screen Controls" toggle is the Mac's Now Playing toggle under another name: on, Entrain takes the Lock Screen and Control Center playback controls and pauses other audio, because iOS gives those controls only to an app that does not mix. A phone call pauses the session, and it stays paused. On iPhone, iPad and the watch, each stretch of Meditate play a minute or longer is logged to Health as mindful minutes; Health asks for permission the first time Meditate starts.
 
 Wake has an alarm on iPhone and iPad, built on AlarmKit. Pick a time, optionally some weekdays, and switch it on; it rings through silent mode and Focus like a Clock alarm. With no days it rings once at the next occurrence and shows a Live Activity counting down until then, with a Cancel button. With days it repeats weekly, and the system re-arms it after each ring. The alarm's Start Wake button opens Entrain and plays the ramp, for 30 minutes when the timer is endless; Dismiss just silences it. It needs the alarm permission the first time.
 
@@ -95,7 +95,12 @@ xcodebuild -project Entrain.xcodeproj -scheme Entrain test
 
 Launch at Login uses `SMAppService`, which needs the app to run from a stable location such as `/Applications`; from a DerivedData build the toggle shows an error instead. The widget appears in the widget gallery once the app has been launched. Its buttons run the app's intents inside the app process (`allowedExecutionTargets = .main`), and the app publishes a snapshot to `~/Library/Application Support/Entrain/widget.json` on every change, so the widget never touches audio or the session directly. Both sandboxes reach that folder through a path exception rather than an App Group, because group containers need a certificate-backed identity that a development build does not have.
 
-On iOS and watchOS the snapshot lives in the `group.no.espenbye.entrain` App Group instead, so device builds there need a development team; simulator builds do not.
+On iOS and watchOS the snapshot lives in the `group.no.espenbye.entrain` App Group instead, so device builds there need a development team; simulator builds do not. App Review rejects the path exception, so a Mac App Store archive signs with the App Group entitlements in `AppStore/` instead, and the app then uses the group container at runtime:
+
+```sh
+xcodebuild -project Entrain.xcodeproj -scheme Entrain -configuration Release archive \
+  CODE_SIGN_ENTITLEMENTS='AppStore/$(TARGET_NAME).entitlements'
+```
 
 Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on macOS and builds the iOS and watch apps on every push and pull request, with code signing disabled.
 

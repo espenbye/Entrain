@@ -8,12 +8,14 @@ import WidgetKit
 @MainActor
 @Observable
 final class Session {
-    static let shared = Session(defaults: .standard) { AudioEngine(parameters: $0) }
+    static let shared = Session(defaults: .standard, mindful: health) { AudioEngine(parameters: $0) }
 
     var mode: Mode {
         didSet {
+            endMindful()
             played = 0
             playStart = isPlaying ? .now : nil
+            if isPlaying { startMindful() }
             apply()
         }
     }
@@ -53,9 +55,14 @@ final class Session {
     }
 
     private(set) var isPlaying = false
+    /// Wall-clock end of the running timed session. Nil when endless or
+    /// paused. Views count down from it themselves, so nothing observes
+    /// the once-a-second tick.
+    private(set) var deadline: Date?
     /// Seconds left in a timed session. Nil when endless. Pausing keeps it,
-    /// so resuming picks up where the session stopped.
-    private(set) var remaining: Int?
+    /// so resuming picks up where the session stopped. Not observed: it
+    /// changes every second, and only the fade and the paused label read it.
+    @ObservationIgnored private(set) var remaining: Int?
     /// Why there is no sound although the user pressed play. Nil once audio is running.
     private(set) var error: String?
 
@@ -64,17 +71,23 @@ final class Session {
     /// The folder the widget reads. Tests pass a scratch directory.
     private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
+    private let mindful: (any MindfulLog)?
+    /// Wall-clock start of the Meditate segment playing now.
+    private var mindfulStart: Date?
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
-    /// Wall-clock end of the running timed session. Remaining is derived from
-    /// it, so the countdown cannot drift.
-    private var deadline: ContinuousClock.Instant?
+    /// The deadline on the monotonic clock. Remaining is derived from it, so
+    /// the countdown cannot drift.
+    private var tickDeadline: ContinuousClock.Instant?
     /// Play time in this mode, which is what a ramp walks along. `played`
     /// accumulates across pauses; `playStart` is set while playing.
     private var played: Double = 0
     private var playStart: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
+    /// What the widget last got. iOS budgets a few dozen reloads a day, so
+    /// only a snapshot that differs from it is written and reloaded.
+    private var widgetState: WidgetState?
     #if os(macOS)
     private var sleepObserver: NSObjectProtocol?
     #endif
@@ -82,11 +95,14 @@ final class Session {
     init(
         defaults: UserDefaults,
         widgetDirectory: URL? = WidgetState.directory,
+        mindful: (any MindfulLog)? = nil,
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
+        self.mindful = mindful
         self.makeEngine = makeEngine
+        widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
         intensity = Intensity(rawValue: defaults.string(forKey: "intensity") ?? "") ?? .medium
         binaural = defaults.object(forKey: "binaural") as? Bool ?? false
@@ -111,6 +127,14 @@ final class Session {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.pause() }
         }
+        #endif
+    }
+
+    private static var health: (any MindfulLog)? {
+        #if os(iOS) || os(watchOS)
+        MindfulMinutes()
+        #else
+        nil
         #endif
     }
 
@@ -159,6 +183,7 @@ final class Session {
         }
         isPlaying = true
         playStart = .now
+        startMindful()
         startTimer()
         applyMaster()
         broadcast()
@@ -169,6 +194,7 @@ final class Session {
         isPlaying = false
         played = playTime
         playStart = nil
+        endMindful()
         stopTimer()
         applyMaster()
         broadcast()
@@ -186,6 +212,22 @@ final class Session {
     private func interrupted() {
         pause()
         error = String(localized: "Audio stopped")
+    }
+
+    // MARK: Mindful minutes
+
+    /// Meditate is the one mode Health has a place for. Each stretch of play
+    /// is its own segment, so a pause is a break, not part of the session.
+    private func startMindful() {
+        guard mode == .meditate else { return }
+        mindfulStart = .now
+        mindful?.prepare()
+    }
+
+    private func endMindful() {
+        guard let start = mindfulStart else { return }
+        mindfulStart = nil
+        mindful?.log(DateInterval(start: start, end: .now))
     }
 
     private func apply() {
@@ -228,13 +270,16 @@ final class Session {
     /// Both read the snapshot file, so they need no live connection.
     private func broadcast() {
         NowPlaying.update(self)
-        WidgetState(
+        let state = WidgetState(
             mode: mode,
             sound: layers.title,
             isPlaying: isPlaying,
             remaining: remaining,
-            deadline: isPlaying ? remaining.map { Date.now.addingTimeInterval(Double($0)) } : nil
-        ).save(to: widgetDirectory)
+            deadline: deadline
+        )
+        guard !state.matches(widgetState) else { return }
+        widgetState = state
+        state.save(to: widgetDirectory)
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetState.kind)
         ControlCenter.shared.reloadAllControls()
     }
@@ -254,15 +299,21 @@ final class Session {
         broadcast()
     }
 
-    /// Ticks once a second while there is a countdown to keep or a ramp to walk.
+    /// Ticks once a second while there is a countdown to keep or a ramp to
+    /// walk. An endless session stops ticking once its ramp has arrived.
     private func startTimer() {
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
         guard deadline != nil || mode.ramp != nil else { return }
-        self.deadline = deadline
+        tickDeadline = deadline
+        self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
                 applyRate()
                 guard let deadline else {
+                    if let ramp = mode.ramp, playTime >= ramp.seconds {
+                        tickTask = nil
+                        return
+                    }
                     try? await Task.sleep(for: .seconds(1))
                     continue
                 }
@@ -281,6 +332,7 @@ final class Session {
     private func stopTimer() {
         tickTask?.cancel()
         tickTask = nil
+        tickDeadline = nil
         deadline = nil
     }
 

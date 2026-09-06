@@ -36,7 +36,7 @@ struct Rain {
             drops[free].level = 0.08 + 0.06 * rng.unit()
         }
         for i in drops.indices where drops[i].level >= 0.001 {
-            s += sin(twoPi * drops[i].phasor.next(drops[i].increment)) * drops[i].level
+            s += SineTable.sin(cycles: drops[i].phasor.next(drops[i].increment)) * drops[i].level
             drops[i].level *= dropDecay
         }
         return s * Trim.rain
@@ -105,7 +105,7 @@ struct Pad {
             let inc = voices[i].increment
             let pa = voices[i].a.next(inc * 1.003)
             let pb = voices[i].b.next(inc * 0.997)
-            let tone = sin(twoPi * pa) + sin(twoPi * pb) + 0.25 * sin(twoPi * 2 * pa)
+            let tone = SineTable.sin(cycles: pa) + SineTable.sin(cycles: pb) + 0.25 * SineTable.sin(cycles: 2 * pa)
             s += tone * level
         }
         return lowpass.process(s, coefficient) * Trim.pad
@@ -115,6 +115,8 @@ struct Pad {
 /// Root plus fifth with slowly beating harmonics.
 struct Drone {
     private static let base: Float = 82.41
+    /// Harmonic gains 1/n^1.4 for n in 1...6.
+    private static let harmonicGains: [Float] = (1...6).map { pow(Float($0), -1.4) }
 
     private var root = Phasor()
     private var fifth = Phasor()
@@ -145,10 +147,10 @@ struct Drone {
         let fd = fifthDetuned.next(detunedIncrement)
 
         var s: Float = 0
-        for n in 1...6 {
-            s += sin(twoPi * Float(n) * r) / pow(Float(n), 1.4)
+        for (i, gain) in Drone.harmonicGains.enumerated() {
+            s += SineTable.sin(cycles: Float(i + 1) * r) * gain
         }
-        s += 0.5 * sin(twoPi * f) + 0.5 * sin(twoPi * fd)
+        s += 0.5 * SineTable.sin(cycles: f) + 0.5 * SineTable.sin(cycles: fd)
         return lowpass.process(s, coefficient) * Trim.drone
     }
 }

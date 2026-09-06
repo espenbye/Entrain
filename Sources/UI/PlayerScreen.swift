@@ -7,6 +7,10 @@ import SwiftUI
 struct PlayerScreen: View {
     static let windowID = "player"
     @Bindable var session: Session
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize = 64.0
+    @ScaledMetric(relativeTo: .title) private var countdownSize = 34.0
+    @ScaledMetric(relativeTo: .title) private var transportSize = 30.0
     #if canImport(AlarmKit)
     @Bindable private var alarm = WakeAlarm.shared
     #endif
@@ -24,9 +28,9 @@ struct PlayerScreen: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(Backdrop(mode: session.mode))
         .preferredColorScheme(.dark)
-        .animation(.smooth(duration: 0.6), value: session.mode)
+        .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: session.mode)
         #if os(macOS)
-        .frame(width: 380, height: 760)
+        .frame(minWidth: 380, idealWidth: 380, minHeight: 520, idealHeight: 760)
         #endif
     }
 
@@ -38,9 +42,9 @@ struct PlayerScreen: View {
                     .blur(radius: 40)
                     .frame(width: 180, height: 180)
                 Image(systemName: session.mode.symbol)
-                    .font(.system(size: 64, weight: .light))
+                    .font(.system(size: heroSize, weight: .light))
                     .foregroundStyle(.white)
-                    .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying)
+                    .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying && !reduceMotion)
             }
             .frame(height: 170)
 
@@ -52,9 +56,9 @@ struct PlayerScreen: View {
                     .foregroundStyle(.secondary)
             }
 
-            if let remaining = session.remaining {
-                Text(remaining.countdown)
-                    .font(.system(size: 34, weight: .light, design: .rounded).monospacedDigit())
+            if let countdown = session.countdown {
+                countdown
+                    .font(.system(size: countdownSize, weight: .light, design: .rounded).monospacedDigit())
                     .contentTransition(.numericText())
             }
 
@@ -62,9 +66,9 @@ struct PlayerScreen: View {
                 Task { await session.toggle() }
             } label: {
                 Image(systemName: session.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 30, weight: .semibold))
+                    .font(.system(size: transportSize, weight: .semibold))
                     .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 84, height: 84)
+                    .frame(width: transportSize * 2.8, height: transportSize * 2.8)
             }
             .buttonStyle(.glassProminent)
             .buttonBorderShape(.circle)
@@ -81,27 +85,26 @@ struct PlayerScreen: View {
     }
 
     private var settings: some View {
-        let sleep = session.mode.isSleep
-        return VStack(spacing: 0) {
-            Row("Sound") {
-                LayerToggles(layers: session.layers, setLayer: session.setLayer)
-                    .toggleStyle(.button)
-                    .buttonStyle(.glass)
-                    .tint(session.mode.tint)
-                    .font(.footnote.weight(.medium))
-            }
-            .disabled(sleep)
-            Divider()
-            Row("Intensity") {
-                Picker("Intensity", selection: $session.intensity) {
-                    ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+        VStack(spacing: 0) {
+            if !session.mode.isSleep {
+                Row("Sound") {
+                    LayerToggles(layers: session.layers, setLayer: session.setLayer)
+                        .toggleStyle(.button)
+                        .buttonStyle(.glass)
+                        .tint(session.mode.tint)
+                        .font(.footnote.weight(.medium))
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: 220)
+                Divider()
+                Row("Intensity") {
+                    Picker("Intensity", selection: $session.intensity) {
+                        ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(maxWidth: 220)
+                }
+                Divider()
             }
-            .disabled(sleep)
-            Divider()
             Row("Timer") {
                 Picker("Timer", selection: $session.length) {
                     ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
@@ -147,6 +150,7 @@ struct PlayerScreen: View {
             HStack(spacing: 12) {
                 Image(systemName: "speaker.fill")
                 Slider(value: $session.volume, in: 0...1)
+                    .accessibilityLabel("Volume")
                 Image(systemName: "speaker.wave.3.fill")
             }
             .font(.caption)
