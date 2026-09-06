@@ -53,9 +53,14 @@ final class Session {
     }
 
     private(set) var isPlaying = false
+    /// Wall-clock end of the running timed session. Nil when endless or
+    /// paused. Views count down from it themselves, so nothing observes
+    /// the once-a-second tick.
+    private(set) var deadline: Date?
     /// Seconds left in a timed session. Nil when endless. Pausing keeps it,
-    /// so resuming picks up where the session stopped.
-    private(set) var remaining: Int?
+    /// so resuming picks up where the session stopped. Not observed: it
+    /// changes every second, and only the fade and the paused label read it.
+    @ObservationIgnored private(set) var remaining: Int?
     /// Why there is no sound although the user pressed play. Nil once audio is running.
     private(set) var error: String?
 
@@ -66,9 +71,9 @@ final class Session {
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
-    /// Wall-clock end of the running timed session. Remaining is derived from
-    /// it, so the countdown cannot drift.
-    private var deadline: ContinuousClock.Instant?
+    /// The deadline on the monotonic clock. Remaining is derived from it, so
+    /// the countdown cannot drift.
+    private var tickDeadline: ContinuousClock.Instant?
     /// Play time in this mode, which is what a ramp walks along. `played`
     /// accumulates across pauses; `playStart` is set while playing.
     private var played: Double = 0
@@ -237,7 +242,7 @@ final class Session {
             sound: layers.title,
             isPlaying: isPlaying,
             remaining: remaining,
-            deadline: isPlaying ? remaining.map { Date.now.addingTimeInterval(Double($0)) } : nil
+            deadline: deadline
         )
         guard !state.matches(widgetState) else { return }
         widgetState = state
@@ -266,7 +271,8 @@ final class Session {
     private func startTimer() {
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
         guard deadline != nil || mode.ramp != nil else { return }
-        self.deadline = deadline
+        tickDeadline = deadline
+        self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
                 applyRate()
@@ -293,6 +299,7 @@ final class Session {
     private func stopTimer() {
         tickTask?.cancel()
         tickTask = nil
+        tickDeadline = nil
         deadline = nil
     }
 

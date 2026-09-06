@@ -18,7 +18,7 @@ struct EntrainApp: App {
         MenuBarExtra {
             PlayerMenu(session: session)
         } label: {
-            MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, remaining: session.remaining)
+            MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, deadline: session.deadline)
                 .reopensPlayerWindow(delegate)
                 .onOpenURL { url in Task { await URLCommand(url)?.run(on: session) } }
         }

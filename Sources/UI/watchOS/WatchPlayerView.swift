@@ -12,7 +12,7 @@ struct WatchPlayerView: View {
                 TransportSection(
                     isPlaying: session.isPlaying,
                     title: session.title,
-                    remaining: session.remaining,
+                    countdown: session.countdown,
                     error: session.error,
                     toggle: session.toggle
                 )
