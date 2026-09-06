@@ -78,7 +78,9 @@ targets:
       path: Entrain.entitlements
       properties:
         com.apple.security.app-sandbox: true
-        # The widget snapshot. An App Group would need a certificate to sign.
+        # The widget snapshot. An App Group would need a certificate to sign,
+        # and App Review rejects this exception: a Mac App Store archive passes
+        # CODE_SIGN_ENTITLEMENTS=AppStore/$(TARGET_NAME).entitlements instead.
         com.apple.security.temporary-exception.files.home-relative-path.read-write:
           - /Library/Application Support/Entrain/
     dependencies:
@@ -125,7 +127,9 @@ targets:
           - CFBundleURLName: no.espenbye.entrain
             CFBundleURLSchemes: [entrain]
         UIBackgroundModes: [audio]
-        UILaunchScreen: {}
+        # The backdrop's top colour, so launch does not flash white before the dark UI.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           [
             UIInterfaceOrientationPortrait,

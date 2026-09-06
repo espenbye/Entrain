@@ -11,9 +11,6 @@
         }
       }
     },
-    "%@ " : {
-
-    },
     "%@ · %@ left" : {
       "localizations" : {
         "nb" : {
@@ -297,8 +294,15 @@
         }
       }
     },
-    "Lock Screen & Control Center" : {
-
+    "Lock Screen Controls" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontroller på låst skjerm"
+          }
+        }
+      }
     },
     "Low" : {
       "localizations" : {
@@ -350,8 +354,15 @@
         }
       }
     },
-    "Off lets Entrain play under music and leaves the playback controls with it." : {
-
+    "Off, Entrain blends under music and podcasts. On, it takes the playback controls and pauses other audio." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av lar Entrain spille under musikk og podkaster. På tar avspillingskontrollene og setter annen lyd på pause."
+          }
+        }
+      }
     },
     "Open Entrain…" : {
       "localizations" : {

@@ -205,6 +205,22 @@ struct SessionTests {
         #expect(paused?.deadline == nil)
     }
 
+    /// iOS budgets widget reloads, so a change the widget cannot see must not rewrite its snapshot.
+    @Test func widgetSnapshotOnlyChangesWhenVisible() throws {
+        let session = makeSession()
+        let file = widgetDirectory.appending(path: "widget.json")
+        session.mode = .relax
+        let written = try #require(WidgetState.load(from: widgetDirectory))
+        let stamp = try FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date
+        session.intensity = .high
+        session.binaural = true
+        session.volume = 0.2
+        #expect(try FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date == stamp)
+        #expect(written.matches(WidgetState.load(from: widgetDirectory)))
+        session.setLayer(.drone, on: true)
+        #expect(WidgetState.load(from: widgetDirectory)?.sound == "Pad + Drone")
+    }
+
     @Test func countdownGrowsPastAnHour() {
         #expect(899.countdown == "14:59")
         #expect(3600.countdown == "1:00:00")
