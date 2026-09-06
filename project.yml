@@ -127,6 +127,7 @@ targets:
           - CFBundleURLName: no.espenbye.entrain
             CFBundleURLSchemes: [entrain]
         UIBackgroundModes: [audio]
+        NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
         # The backdrop's top colour, so launch does not flash white before the dark UI.
         UILaunchScreen:
           UIColorName: LaunchBackground
@@ -141,6 +142,8 @@ targets:
       path: iOS/Entrain.entitlements
       properties:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     dependencies:
       - target: EntrainWidgetiOS
       - target: EntrainWatch
@@ -181,10 +184,13 @@ targets:
         WKApplication: true
         WKCompanionAppBundleIdentifier: no.espenbye.entrain
         WKBackgroundModes: [audio]
+        NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
     entitlements:
       path: watchOS/Entrain.entitlements
       properties:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     dependencies:
       - target: EntrainWidgetWatch
     settings:
