@@ -24,10 +24,10 @@ struct EntrainApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("Entrain", id: PlayerWindow.id) {
-            PlayerWindow(session: session)
+        Window("Entrain", id: PlayerScreen.windowID) {
+            PlayerScreen(session: session)
         }
-        .defaultSize(width: 320, height: 560)
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
     }
 }
@@ -93,7 +93,7 @@ private struct ReopenPlayerWindow: ViewModifier {
     @Environment(\.openWindow) private var openWindow
 
     func body(content: Content) -> some View {
-        content.onAppear { delegate.openPlayer = { openWindow(id: PlayerWindow.id) } }
+        content.onAppear { delegate.openPlayer = { openWindow(id: PlayerScreen.windowID) } }
     }
 }
 

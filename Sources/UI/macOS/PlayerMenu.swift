@@ -9,10 +9,10 @@ struct PlayerMenu: View {
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
-        PlayerControls(session: session, inMenu: true)
+        PlayerControls(session: session)
         Divider()
         Button("Open Entrain…") {
-            openWindow(id: PlayerWindow.id)
+            openWindow(id: PlayerScreen.windowID)
             NSApplication.shared.activate()
         }
         .keyboardShortcut("o")
@@ -56,6 +56,75 @@ struct MenuBarLabel: View {
                         .monospacedDigit()
                 } else {
                     Text(mode.title)
+                }
+            }
+        }
+    }
+}
+
+/// Transport, mode and settings as menu items, for the menu bar menu.
+struct PlayerControls: View {
+    @Bindable var session: Session
+
+    var body: some View {
+        TransportSection(
+            isPlaying: session.isPlaying,
+            title: session.title,
+            remaining: session.remaining,
+            error: session.error,
+            toggle: session.toggle
+        )
+        ModeSection(selection: $session.mode)
+        SettingsSection(
+            layers: session.layers,
+            setLayer: session.setLayer,
+            intensity: $session.intensity,
+            length: $session.length,
+            binaural: $session.binaural,
+            sleep: session.mode.isSleep
+        )
+        VolumeSection(volume: $session.volume)
+    }
+}
+
+struct SettingsSection: View {
+    let layers: Set<Soundscape>
+    let setLayer: (Soundscape, Bool) -> Void
+    @Binding var intensity: Intensity
+    @Binding var length: SessionLength
+    @Binding var binaural: Bool
+    /// Sleep modes play a fixed bed; sound and intensity have nothing to set.
+    let sleep: Bool
+
+    var body: some View {
+        Section {
+            Menu("Sound") { LayerToggles(layers: layers, setLayer: setLayer) }.disabled(sleep)
+            Picker("Intensity", selection: $intensity) {
+                ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+            }
+            .disabled(sleep)
+            Picker("Timer", selection: $length) {
+                ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
+            }
+            Toggle("Binaural Beats", isOn: $binaural)
+        }
+    }
+}
+
+/// Menus cannot host a slider, so volume is a submenu of steps.
+struct VolumeSection: View {
+    @Binding var volume: Double
+
+    private static let steps: [Double] = [0.25, 0.5, 0.75, 1]
+
+    var body: some View {
+        Section {
+            Picker("Volume", selection: Binding(
+                get: { Self.steps.min { abs($0 - volume) < abs($1 - volume) } ?? 1 },
+                set: { volume = $0 }
+            )) {
+                ForEach(Self.steps, id: \.self) { step in
+                    Text(step, format: .percent).tag(step)
                 }
             }
         }

@@ -29,7 +29,7 @@ Settings persist between launches. Play/pause works from the menu bar menu, from
 
 ## iPhone, iPad and Apple Watch
 
-The same session, synth and intents run on every platform; only the shell differs. On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. The "Lock Screen & Control Center" toggle plays the same role as the Mac's Now Playing toggle: on, Entrain takes the playback controls and pauses other audio; off, it mixes under whatever is playing. A phone call pauses the session, and it stays paused.
+The same session, synth and intents run on every platform; only the shell differs. On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. Entrain blends under music and podcasts by default. The "Lock Screen Controls" toggle is the Mac's Now Playing toggle under another name: on, Entrain takes the Lock Screen and Control Center playback controls and pauses other audio, because iOS gives those controls only to an app that does not mix. A phone call pauses the session, and it stays paused.
 
 The watch app is embedded in the iPhone app but plays on its own, through paired headphones: it uses the long-form audio policy so the session continues with the wrist down, and asks which headphones to use when none are connected. The Smart Stack widget shows the mode and countdown; tapping it opens the app. The watch has no reverb or EQ units, so the bed goes straight to the mixer there. Each device keeps its own session; nothing syncs between the phone and the watch. Volume on the watch is the Digital Crown in the system Now Playing view.
 
@@ -42,7 +42,7 @@ The four soundscapes are trimmed to the same K-weighted loudness (-22 LUFS, ITU-
 ```
 Sources/
   App/       One entry point per platform: macOS (MenuBarExtra, global shortcut), iOS, watchOS
-  UI/        Shared player controls; the menu bar menu under macOS/, the watch screen under watchOS/
+  UI/        PlayerScreen (Mac window, iPhone, iPad) and the pieces the watch reuses; the menu bar menu under macOS/, the watch screen under watchOS/
   Session/   Session state, modes, App Intents, Now Playing and widget snapshot
   Audio/     Engine, audio session, synth voices, DSP primitives, shared parameters
 Widget/      WidgetKit extension built once per platform; shares Mode, Intents and WidgetState with the app

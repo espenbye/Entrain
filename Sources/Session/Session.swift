@@ -82,7 +82,7 @@ final class Session {
         binaural = defaults.object(forKey: "binaural") as? Bool ?? false
         length = SessionLength(rawValue: defaults.integer(forKey: "length")) ?? .endless
         volume = defaults.object(forKey: "volume") as? Double ?? 1
-        nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? true
+        nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? Self.nowPlayingByDefault
         layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
             let stored = defaults.string(forKey: "layers.\(mode.rawValue)")?.split(separator: ",") ?? []
             let layers = Set(stored.compactMap { Soundscape(rawValue: String($0)) })
@@ -101,6 +101,17 @@ final class Session {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.pause() }
         }
+        #endif
+    }
+
+    /// On the Mac, Now Playing costs nothing but the media keys. On iOS it
+    /// costs the blend: an app that owns the Lock Screen controls cannot mix
+    /// under other audio, so there the soundscape sits under music by default.
+    private static var nowPlayingByDefault: Bool {
+        #if os(iOS)
+        false
+        #else
+        true
         #endif
     }
 
