@@ -4,17 +4,23 @@ import Foundation
 /// change and reloads the widget; the widget only ever reads. Timed sessions
 /// carry the wall-clock deadline so the widget counts down on its own.
 ///
-/// It lives in a folder both sandboxes open through a path exception rather
-/// than in an App Group: group containers need a certificate-backed identity
-/// to sign and to pass the privacy check, which a development build lacks.
+/// On the Mac it lives in a folder both sandboxes open through a path
+/// exception rather than in an App Group: group containers need a
+/// certificate-backed identity to sign and to pass the privacy check, which a
+/// development build lacks. iOS and watchOS have no such exception, so they
+/// use the group container; device builds there need a team anyway.
 struct WidgetState: Codable, Sendable {
     static let kind = "no.espenbye.entrain.widget"
 
-    /// `~/Library/Application Support/Entrain` in the real home, which the
-    /// sandbox otherwise hides behind the container.
     static var directory: URL? {
+        #if os(macOS)
+        // `~/Library/Application Support/Entrain` in the real home, which the
+        // sandbox otherwise hides behind the container.
         guard let home = getpwuid(getuid())?.pointee.pw_dir else { return nil }
         return URL(filePath: String(cString: home)).appending(path: "Library/Application Support/Entrain")
+        #else
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.no.espenbye.entrain")
+        #endif
     }
 
     var mode: Mode

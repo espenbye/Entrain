@@ -13,3 +13,4 @@ jobs:
       - run: brew install xcodegen
       - run: xcodegen generate
       - run: xcodebuild -project Entrain.xcodeproj -scheme Entrain -destination 'platform=macOS' test CODE_SIGNING_ALLOWED=NO
+      - run: xcodebuild -project Entrain.xcodeproj -scheme EntrainiOS -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO

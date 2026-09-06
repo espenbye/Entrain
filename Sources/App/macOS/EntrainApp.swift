@@ -10,7 +10,7 @@ struct EntrainApp: App {
         let defaults = UserDefaults.standard
         DockIcon.apply(defaults.bool(forKey: DockIcon.key))
         if defaults.bool(forKey: HotKey.key) {
-            HotKey.enable { Session.shared.toggle() }
+            HotKey.enable { Task { await Session.shared.toggle() } }
         }
     }
 
@@ -20,14 +20,14 @@ struct EntrainApp: App {
         } label: {
             MenuBarLabel(isPlaying: session.isPlaying, mode: session.mode, remaining: session.remaining)
                 .reopensPlayerWindow(delegate)
-                .onOpenURL { url in URLCommand(url)?.run(on: session) }
+                .onOpenURL { url in Task { await URLCommand(url)?.run(on: session) } }
         }
         .menuBarExtraStyle(.menu)
 
-        Window("Entrain", id: PlayerWindow.id) {
-            PlayerWindow(session: session)
+        Window("Entrain", id: PlayerScreen.windowID) {
+            PlayerScreen(session: session)
         }
-        .defaultSize(width: 320, height: 560)
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
     }
 }
@@ -93,7 +93,7 @@ private struct ReopenPlayerWindow: ViewModifier {
     @Environment(\.openWindow) private var openWindow
 
     func body(content: Content) -> some View {
-        content.onAppear { delegate.openPlayer = { openWindow(id: PlayerWindow.id) } }
+        content.onAppear { delegate.openPlayer = { openWindow(id: PlayerScreen.windowID) } }
     }
 }
 

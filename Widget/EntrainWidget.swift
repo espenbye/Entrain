@@ -6,16 +6,30 @@ import WidgetKit
 struct EntrainWidgets: WidgetBundle {
     var body: some Widget {
         EntrainWidget()
+        #if !os(watchOS)
         FocusControl()
         GammaControl()
         RelaxControl()
         MeditateControl()
         SleepControl()
         DeepSleepControl()
+        #endif
     }
 }
 
 struct EntrainWidget: Widget {
+    /// Desktop and Home Screen sizes where they exist, plus the Lock Screen
+    /// and Smart Stack accessories on iPhone and watch.
+    private static let families: [WidgetFamily] = {
+        #if os(macOS)
+        [.systemSmall, .systemMedium]
+        #elseif os(iOS)
+        [.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline]
+        #else
+        [.accessoryCircular, .accessoryCorner, .accessoryRectangular, .accessoryInline]
+        #endif
+    }()
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: WidgetState.kind, provider: Provider()) { entry in
             WidgetView(state: entry.state)
@@ -23,7 +37,7 @@ struct EntrainWidget: Widget {
         }
         .configurationDisplayName("Entrain")
         .description("Play, pause and switch modes.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies(Self.families)
     }
 }
 
@@ -55,10 +69,38 @@ struct WidgetView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        HStack(spacing: 12) {
-            status
-            if family == .systemMedium {
-                modes
+        switch family {
+        case .accessoryInline:
+            Label {
+                Text("\(state.mode.title) ") + countdownText
+            } icon: {
+                Image(systemName: state.mode.symbol)
+            }
+        case .accessoryRectangular:
+            VStack(alignment: .leading, spacing: 2) {
+                Label(state.mode.title, systemImage: state.mode.symbol)
+                    .font(.headline)
+                Text(state.sound)
+                    .foregroundStyle(.secondary)
+                countdown
+                    .font(.body.monospacedDigit())
+            }
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        #if os(watchOS)
+        case .accessoryCircular, .accessoryCorner:
+            Image(systemName: state.isPlaying ? state.mode.symbol : "pause.fill")
+                .font(.title2)
+                .widgetLabel { countdownText }
+        #endif
+        default:
+            HStack(spacing: 12) {
+                status
+                #if !os(watchOS)
+                if family == .systemMedium {
+                    modes
+                }
+                #endif
             }
         }
     }
@@ -76,12 +118,14 @@ struct WidgetView: View {
             countdown
                 .font(.title3.monospacedDigit())
                 .lineLimit(1)
+            #if !os(watchOS)
             Button(intent: ToggleSessionIntent()) {
                 Label(state.isPlaying ? "Pause" : "Play", systemImage: state.isPlaying ? "pause.fill" : "play.fill")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
             .tint(.accentColor)
+            #endif
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
@@ -98,6 +142,18 @@ struct WidgetView: View {
         }
     }
 
+    /// The countdown as one Text, for the places that concatenate.
+    private var countdownText: Text {
+        if state.isPlaying, let deadline = state.deadline {
+            Text(timerInterval: Date.now...deadline, countsDown: true)
+        } else if let remaining = state.remaining {
+            Text(remaining.countdown)
+        } else {
+            Text(state.isPlaying ? "Playing" : "Paused")
+        }
+    }
+
+    #if !os(watchOS)
     /// Icon-only, three across: the names would not fit, and the current
     /// mode is spelled out on the left.
     private var modes: some View {
@@ -113,8 +169,10 @@ struct WidgetView: View {
         }
         .fixedSize(horizontal: true, vertical: false)
     }
+    #endif
 }
 
+#if !os(watchOS)
 struct ModeButton: View {
     let mode: Mode
     let active: Bool
@@ -171,3 +229,4 @@ struct RelaxControl: ControlWidget { var body: some ControlWidgetConfiguration {
 struct MeditateControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.meditate) } }
 struct SleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.sleep) } }
 struct DeepSleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.deepSleep) } }
+#endif

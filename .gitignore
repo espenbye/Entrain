@@ -10,6 +10,10 @@ build/
 .DS_Store
 .prettiercache
 
+# Generated per-platform widget plists and entitlements
+Widget.plist
+Widget.entitlements
+
 t3.json
 
 # Local signing override (see project.yml)

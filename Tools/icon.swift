@@ -5,7 +5,8 @@ import AppKit
 ///     swift Tools/icon.swift
 ///
 /// The wave is what the app does: a carrier tone whose loudness swells and
-/// fades at the entrainment rate. Writes every macOS size into
+/// fades at the entrainment rate. Writes every macOS size, plus the single
+/// full-bleed 1024 px icon iOS and watchOS mask themselves, into
 /// Resources/Assets.xcassets/AppIcon.appiconset.
 let sizes: [(points: Int, scale: Int)] = [
     (16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2), (256, 1), (256, 2), (512, 1), (512, 2),
@@ -13,7 +14,7 @@ let sizes: [(points: Int, scale: Int)] = [
 let directory = URL(fileURLWithPath: "Resources/Assets.xcassets/AppIcon.appiconset")
 try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-func render(pixels: Int) -> Data {
+func render(pixels: Int, fullBleed: Bool = false) -> Data {
     // Draw into an explicit bitmap so the pixel size does not follow the screen's scale.
     let bitmap = NSBitmapImageRep(
         bitmapDataPlanes: nil, pixelsWide: pixels, pixelsHigh: pixels, bitsPerSample: 8,
@@ -25,9 +26,11 @@ func render(pixels: Int) -> Data {
     let context = NSGraphicsContext.current!.cgContext
     let side = CGFloat(pixels)
     // macOS icons leave a margin inside the canvas; the rounded square fills 80%.
-    let inset = side * 0.1
+    // iOS and watchOS want the whole canvas and round the corners themselves.
+    let inset = fullBleed ? 0 : side * 0.1
     let rect = NSRect(x: inset, y: inset, width: side - 2 * inset, height: side - 2 * inset)
-    let tile = NSBezierPath(roundedRect: rect, xRadius: rect.width * 0.225, yRadius: rect.width * 0.225)
+    let radius = fullBleed ? 0 : rect.width * 0.225
+    let tile = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
 
     // Night sky: deep indigo at the top into a dark teal at the bottom.
     NSGradient(
@@ -107,6 +110,10 @@ for (points, scale) in sizes {
     let filename = "icon_\(points)x\(points)@\(scale)x.png"
     try render(pixels: points * scale).write(to: directory.appendingPathComponent(filename))
     images.append(["idiom": "mac", "size": "\(points)x\(points)", "scale": "\(scale)x", "filename": filename])
+}
+try render(pixels: 1024, fullBleed: true).write(to: directory.appendingPathComponent("icon_1024.png"))
+for idiom in ["ios", "watchos"] {
+    images.append(["idiom": "universal", "platform": idiom, "size": "1024x1024", "filename": "icon_1024.png"])
 }
 let contents: [String: Any] = ["images": images, "info": ["version": 1, "author": "xcode"]]
 let json = try JSONSerialization.data(withJSONObject: contents, options: [.prettyPrinted, .sortedKeys])

@@ -12,14 +12,14 @@ enum NowPlaying {
     static func attach(to session: Session) {
         guard !attached else { return }
         let center = MPRemoteCommandCenter.shared()
-        let commands: [(MPRemoteCommand, @MainActor () -> Void)] = [
+        let commands: [(MPRemoteCommand, @MainActor () async -> Void)] = [
             (center.playCommand, session.play),
             (center.pauseCommand, session.pause),
             (center.togglePlayPauseCommand, session.toggle),
         ]
         targets = commands.map { command, action in
             (command, command.addTarget { _ in
-                Task { @MainActor in action() }
+                Task { @MainActor in await action() }
                 return .success
             })
         }

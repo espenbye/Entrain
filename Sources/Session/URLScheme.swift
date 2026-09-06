@@ -37,14 +37,14 @@ enum URLCommand: Equatable {
     }
 
     @MainActor
-    func run(on session: Session) {
+    func run(on session: Session) async {
         switch self {
         case .play(let mode, let length):
             if let mode { session.mode = mode }
             if let length { session.length = length }
-            session.play()
+            await session.play()
         case .pause: session.pause()
-        case .toggle: session.toggle()
+        case .toggle: await session.toggle()
         }
     }
 }

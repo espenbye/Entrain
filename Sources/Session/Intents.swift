@@ -3,13 +3,14 @@ import AppIntents
 /// Shortcuts, Siri and the widget. Each intent hops to the main actor:
 /// Session lives there. The widget compiles these too, to build its buttons,
 /// but every run is pinned to the app process where the session is, so the
-/// widget copies never perform.
-struct StartSessionIntent: AppIntent {
+/// widget copies never perform. `AudioPlaybackIntent` lets iOS launch the app
+/// in the background from a widget or Control Center and start audio there.
+struct StartSessionIntent: AppIntent, AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Start Session"
     static let description = IntentDescription("Plays a mode, optionally for a set length.")
     static var supportedModes: IntentModes { .background }
     #if compiler(>=6.4)
-    @available(macOS 27, *)
+    @available(macOS 27, iOS 27, watchOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
     #endif
 
@@ -34,19 +35,19 @@ struct StartSessionIntent: AppIntent {
         let session = Session.shared
         session.mode = mode
         if let length { session.length = length }
-        session.play()
+        await session.play()
         guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
         #endif
         return .result()
     }
 }
 
-struct StopSessionIntent: AppIntent {
+struct StopSessionIntent: AppIntent, AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Stop Session"
     static let description = IntentDescription("Pauses playback. The timer keeps its place.")
     static var supportedModes: IntentModes { .background }
     #if compiler(>=6.4)
-    @available(macOS 27, *)
+    @available(macOS 27, iOS 27, watchOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
     #endif
 
@@ -59,12 +60,12 @@ struct StopSessionIntent: AppIntent {
     }
 }
 
-struct ToggleSessionIntent: AppIntent {
+struct ToggleSessionIntent: AppIntent, AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Play or Pause"
     static let description = IntentDescription("Toggles playback of the current mode.")
     static var supportedModes: IntentModes { .background }
     #if compiler(>=6.4)
-    @available(macOS 27, *)
+    @available(macOS 27, iOS 27, watchOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
     #endif
 
@@ -72,7 +73,7 @@ struct ToggleSessionIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         #if !WIDGET
         let session = Session.shared
-        session.toggle()
+        await session.toggle()
         if let error = session.error { throw SessionIntentError.failed(error) }
         #endif
         return .result()
@@ -80,11 +81,11 @@ struct ToggleSessionIntent: AppIntent {
 }
 
 /// Behind each Control Center toggle: on starts the mode, off pauses.
-struct SetModePlayingIntent: SetValueIntent {
+struct SetModePlayingIntent: SetValueIntent, AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Set Mode Playing"
     static var supportedModes: IntentModes { .background }
     #if compiler(>=6.4)
-    @available(macOS 27, *)
+    @available(macOS 27, iOS 27, watchOS 27, *)
     static var allowedExecutionTargets: IntentExecutionTargets { .main }
     #endif
 
@@ -103,7 +104,7 @@ struct SetModePlayingIntent: SetValueIntent {
         let session = Session.shared
         if value {
             session.mode = mode
-            session.play()
+            await session.play()
             guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
         } else {
             session.pause()
