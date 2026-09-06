@@ -602,6 +602,26 @@
           }
         }
       }
+    },
+    "Wake" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Våkne"
+          }
+        }
+      }
+    },
+    "Wind Down" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ro ned"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

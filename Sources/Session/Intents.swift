@@ -165,6 +165,8 @@ extension Mode: AppEnum {
         .meditate: "Meditate",
         .sleep: "Sleep",
         .deepSleep: "Deep Sleep",
+        .windDown: "Wind Down",
+        .wake: "Wake",
     ]
 }
 

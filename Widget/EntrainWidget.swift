@@ -13,6 +13,8 @@ struct EntrainWidgets: WidgetBundle {
         MeditateControl()
         SleepControl()
         DeepSleepControl()
+        WindDownControl()
+        WakeControl()
         #endif
     }
 }
@@ -229,4 +231,6 @@ struct RelaxControl: ControlWidget { var body: some ControlWidgetConfiguration {
 struct MeditateControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.meditate) } }
 struct SleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.sleep) } }
 struct DeepSleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.deepSleep) } }
+struct WindDownControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.windDown) } }
+struct WakeControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.wake) } }
 #endif

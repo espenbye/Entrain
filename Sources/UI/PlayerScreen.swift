@@ -224,6 +224,8 @@ extension Mode {
         case .meditate: Color(red: 0.72, green: 0.55, blue: 1.0)
         case .sleep: Color(red: 0.45, green: 0.50, blue: 0.95)
         case .deepSleep: Color(red: 0.30, green: 0.32, blue: 0.75)
+        case .windDown: Color(red: 0.95, green: 0.55, blue: 0.50)
+        case .wake: Color(red: 1.0, green: 0.85, blue: 0.45)
         }
     }
 }
