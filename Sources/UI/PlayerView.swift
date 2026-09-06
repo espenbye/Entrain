@@ -3,7 +3,7 @@ import SwiftUI
 struct TransportSection: View {
     let isPlaying: Bool
     let title: String
-    let remaining: Int?
+    let countdown: Text?
     let error: String?
     let toggle: () async -> Void
 
@@ -16,12 +16,25 @@ struct TransportSection: View {
         } header: {
             if let error {
                 Text(verbatim: "\(title) · \(error)")
-            } else if let remaining {
-                Text("\(title) · \(remaining.countdown) left")
+            } else if let countdown {
+                Text("\(title) · \(countdown) left")
             } else {
                 Text(title)
             }
         }
+    }
+}
+
+extension Session {
+    /// The countdown as text. While playing it is drawn from the deadline,
+    /// so it ticks without a re-render; paused it is the frozen remainder.
+    var countdown: Text? {
+        if let deadline {
+            return Text(timerInterval: Date.now...max(Date.now, deadline), countsDown: true)
+        }
+        // Not observed, but every change to it while paused comes with a
+        // change to `length` or `isPlaying`, which every caller reads.
+        return remaining.map { Text($0.countdown) }
     }
 }
 
