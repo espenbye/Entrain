@@ -22,6 +22,13 @@ struct SessionTests {
         func stop() { stops += 1 }
     }
 
+    final class FakeMindful: MindfulLog {
+        var prepared = 0
+        var segments: [DateInterval] = []
+        func prepare() { prepared += 1 }
+        func log(_ segment: DateInterval) { segments.append(segment) }
+    }
+
     let defaults: UserDefaults
     let widgetDirectory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let audio = FakeAudio()
@@ -221,6 +228,32 @@ struct SessionTests {
         #expect(written.matches(WidgetState.load(from: widgetDirectory)))
         session.setLayer(.drone, on: true)
         #expect(WidgetState.load(from: widgetDirectory)?.sound == "Pad + Drone")
+    }
+
+    @Test func meditateSegmentsReachTheMindfulLog() async {
+        let mindful = FakeMindful()
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory, mindful: mindful) { [audio] _ in audio }
+        session.mode = .focus
+        await session.play()
+        session.pause()
+        #expect(mindful.prepared == 0)
+        #expect(mindful.segments.isEmpty)
+
+        session.mode = .meditate
+        await session.play()
+        #expect(mindful.prepared == 1)
+        session.pause()
+        #expect(mindful.segments.count == 1)
+
+        // Switching mode mid-play closes the segment; switching back opens a new one.
+        await session.play()
+        session.mode = .relax
+        #expect(mindful.segments.count == 2)
+        session.mode = .meditate
+        #expect(mindful.prepared == 3)
+        session.pause()
+        #expect(mindful.segments.count == 3)
+        #expect(mindful.segments.allSatisfy { $0.duration >= 0 && $0.end <= .now })
     }
 
     @Test func countdownGrowsPastAnHour() {
