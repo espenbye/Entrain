@@ -78,27 +78,26 @@ struct PlayerScreen: View {
     }
 
     private var settings: some View {
-        let sleep = session.mode.isSleep
-        return VStack(spacing: 0) {
-            Row("Sound") {
-                LayerToggles(layers: session.layers, setLayer: session.setLayer)
-                    .toggleStyle(.button)
-                    .buttonStyle(.glass)
-                    .tint(session.mode.tint)
-                    .font(.footnote.weight(.medium))
-            }
-            .disabled(sleep)
-            Divider()
-            Row("Intensity") {
-                Picker("Intensity", selection: $session.intensity) {
-                    ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+        VStack(spacing: 0) {
+            if !session.mode.isSleep {
+                Row("Sound") {
+                    LayerToggles(layers: session.layers, setLayer: session.setLayer)
+                        .toggleStyle(.button)
+                        .buttonStyle(.glass)
+                        .tint(session.mode.tint)
+                        .font(.footnote.weight(.medium))
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: 220)
+                Divider()
+                Row("Intensity") {
+                    Picker("Intensity", selection: $session.intensity) {
+                        ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(maxWidth: 220)
+                }
+                Divider()
             }
-            .disabled(sleep)
-            Divider()
             Row("Timer") {
                 Picker("Timer", selection: $session.length) {
                     ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
