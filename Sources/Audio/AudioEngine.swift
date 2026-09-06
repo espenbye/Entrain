@@ -35,6 +35,10 @@ final class AudioEngine: SessionAudio {
     private var shouldRun = false
     private var observers: [NSObjectProtocol] = []
 
+    isolated deinit {
+        observers.forEach(NotificationCenter.default.removeObserver)
+    }
+
     init(parameters: AudioParameters) {
         Self.configureSession(mixesWithOthers: false)
         // Zero when no output device exists; the synths still need a real rate.
@@ -114,9 +118,12 @@ final class AudioEngine: SessionAudio {
         try engine.start()
     }
 
+    /// `stop()` rather than `pause()`: a paused engine keeps its output unit
+    /// initialised, which leaves the process attached to the device (and in
+    /// coreaudiod's overload reports) for as long as it lives.
     func stop() {
         shouldRun = false
-        engine.pause()
+        engine.stop()
         #if !os(macOS)
         // Hands the output back so the music underneath resumes.
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)

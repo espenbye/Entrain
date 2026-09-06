@@ -154,10 +154,13 @@ final class Session {
         stopTimer()
         applyMaster()
         broadcast()
-        stopTask = Task { [engine] in
+        // After the fade the engine is released outright, so an idle app holds
+        // no audio hardware. `play()` builds a fresh one.
+        stopTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1.5))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, let self else { return }
             engine?.stop()
+            engine = nil
         }
     }
 
