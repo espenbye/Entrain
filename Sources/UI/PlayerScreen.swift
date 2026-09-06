@@ -7,6 +7,9 @@ import SwiftUI
 struct PlayerScreen: View {
     static let windowID = "player"
     @Bindable var session: Session
+    #if canImport(AlarmKit)
+    @Bindable private var alarm = WakeAlarm.shared
+    #endif
 
     var body: some View {
         ScrollView {
@@ -107,6 +110,35 @@ struct PlayerScreen: View {
                 .labelsHidden()
                 .tint(.primary)
             }
+            #if canImport(AlarmKit)
+            if session.mode == .wake {
+                Divider()
+                Row("Alarm") {
+                    DatePicker("Alarm", selection: $alarm.time, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                    Toggle("Alarm", isOn: Binding(
+                        get: { alarm.isOn },
+                        set: { alarm.set(on: $0) }
+                    ))
+                    .labelsHidden()
+                }
+                WeekdayPicker(selection: $alarm.days)
+                    .padding(.bottom, 12)
+                Group {
+                    if alarm.denied {
+                        Text("Allow alarms for Entrain in Settings to use the Wake alarm.")
+                    } else if let error = alarm.error {
+                        Text(verbatim: error)
+                    } else {
+                        Text(verbatim: alarm.summary + " ") + Text("Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes.")
+                    }
+                }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 12)
+            }
+            #endif
             Divider()
             Row("Binaural Beats") {
                 Toggle("Binaural Beats", isOn: $session.binaural).labelsHidden()
@@ -163,6 +195,36 @@ private struct Row<Content: View>: View {
     }
 }
 
+#if canImport(AlarmKit)
+/// Seven circles, Monday first where the locale says so. None selected
+/// means the alarm rings once.
+private struct WeekdayPicker: View {
+    @Binding var selection: Set<Locale.Weekday>
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(Locale.Weekday.ordered, id: \.self) { day in
+                let on = selection.contains(day)
+                Button {
+                    if on { selection.remove(day) } else { selection.insert(day) }
+                } label: {
+                    Text(day.letter)
+                        .font(.footnote.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
+                        .contentShape(.circle)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(on ? .regular.tint(Mode.wake.tint).interactive() : .regular.interactive(), in: .circle)
+                .foregroundStyle(on ? Mode.wake.onTint : .primary)
+                .accessibilityLabel(day.shortName)
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+    }
+}
+#endif
+
 /// Six modes as one scrolling row of glass chips. The current one is filled
 /// with its tint; the rest stay translucent.
 private struct ModeChips: View {
@@ -184,7 +246,7 @@ private struct ModeChips: View {
                         }
                         .buttonStyle(.plain)
                         .glassEffect(mode == selection ? .regular.tint(mode.tint).interactive() : .regular.interactive(), in: .capsule)
-                        .foregroundStyle(mode == selection ? .white : .primary)
+                        .foregroundStyle(mode == selection ? mode.onTint : .primary)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -212,21 +274,5 @@ private struct Backdrop: View {
             )
         }
         .ignoresSafeArea()
-    }
-}
-
-extension Mode {
-    /// One colour per mode, cool for the calm end and warm for the alert end.
-    var tint: Color {
-        switch self {
-        case .focus: Color(red: 0.35, green: 0.62, blue: 1.0)
-        case .gamma: Color(red: 1.0, green: 0.72, blue: 0.30)
-        case .relax: Color(red: 0.45, green: 0.85, blue: 0.62)
-        case .meditate: Color(red: 0.72, green: 0.55, blue: 1.0)
-        case .sleep: Color(red: 0.45, green: 0.50, blue: 0.95)
-        case .deepSleep: Color(red: 0.30, green: 0.32, blue: 0.75)
-        case .windDown: Color(red: 0.95, green: 0.55, blue: 0.50)
-        case .wake: Color(red: 1.0, green: 0.85, blue: 0.45)
-        }
     }
 }

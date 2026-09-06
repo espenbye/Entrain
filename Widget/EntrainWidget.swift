@@ -6,6 +6,9 @@ import WidgetKit
 struct EntrainWidgets: WidgetBundle {
     var body: some Widget {
         EntrainWidget()
+        #if canImport(AlarmKit)
+        WakeActivity()
+        #endif
         #if !os(watchOS)
         FocusControl()
         GammaControl()
