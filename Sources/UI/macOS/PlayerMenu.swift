@@ -45,14 +45,14 @@ struct PlayerMenu: View {
 struct MenuBarLabel: View {
     let isPlaying: Bool
     let mode: Mode
-    let remaining: Int?
+    let deadline: Date?
 
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "waveform")
             if isPlaying {
-                if let remaining {
-                    Text(verbatim: "\(mode.title) \(remaining.countdown)")
+                if let deadline {
+                    Text("\(mode.title) \(Text(timerInterval: Date.now...max(Date.now, deadline), countsDown: true))")
                         .monospacedDigit()
                 } else {
                     Text(mode.title)
@@ -70,7 +70,7 @@ struct PlayerControls: View {
         TransportSection(
             isPlaying: session.isPlaying,
             title: session.title,
-            remaining: session.remaining,
+            countdown: session.countdown,
             error: session.error,
             toggle: session.toggle
         )

@@ -53,8 +53,8 @@ struct PlayerScreen: View {
                     .foregroundStyle(.secondary)
             }
 
-            if let remaining = session.remaining {
-                Text(remaining.countdown)
+            if let countdown = session.countdown {
+                countdown
                     .font(.system(size: countdownSize, weight: .light, design: .rounded).monospacedDigit())
                     .contentTransition(.numericText())
             }

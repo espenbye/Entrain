@@ -126,7 +126,9 @@ struct SessionTests {
         let session = makeSession()
         session.length = .sixty
         await session.play()
+        #expect(session.deadline != nil)
         session.pause()
+        #expect(session.deadline == nil)
         #expect(session.remaining == SessionLength.sixty.seconds)
         session.length = .fifteen
         #expect(session.remaining == SessionLength.fifteen.seconds)
