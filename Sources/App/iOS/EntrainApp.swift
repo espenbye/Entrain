@@ -7,6 +7,7 @@ struct EntrainApp: App {
     var body: some Scene {
         WindowGroup {
             PlayerScreen(session: session)
+                .onOpenURL { url in Task { await URLCommand(url)?.run(on: session) } }
         }
     }
 }
