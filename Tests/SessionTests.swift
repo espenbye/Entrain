@@ -127,6 +127,27 @@ struct SessionTests {
         #expect(session.remaining == nil)
     }
 
+    @Test func rampModesWalkTheRate() {
+        #expect(Mode.windDown.rate(elapsed: 0) == 10)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60) == 6)
+        #expect(Mode.windDown.rate(elapsed: 60 * 60) == 2)
+        #expect(Mode.wake.rate(elapsed: 0) == 2)
+        #expect(Mode.wake.rate(elapsed: 15 * 60) == 16)
+        #expect(Mode.focus.rate(elapsed: 60 * 60) == 16)
+    }
+
+    @Test func rampModesStartAtTheirFirstRate() {
+        let session = makeSession()
+        session.mode = .windDown
+        #expect(session.parameters.modulationRate.load(ordering: .relaxed) == 10)
+        #expect(session.layers == [.rain])
+        session.setLayer(.noise, on: true)
+        #expect(session.layers == [.rain, .noise])
+        #expect(session.mode.fadeOut == 300)
+        session.mode = .wake
+        #expect(session.parameters.modulationRate.load(ordering: .relaxed) == 2)
+    }
+
     @Test func modeDrivesTheAudioParameters() {
         let session = makeSession()
         session.mode = .focus

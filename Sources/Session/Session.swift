@@ -10,7 +10,13 @@ import WidgetKit
 final class Session {
     static let shared = Session(defaults: .standard) { AudioEngine(parameters: $0) }
 
-    var mode: Mode { didSet { apply() } }
+    var mode: Mode {
+        didSet {
+            played = 0
+            playStart = isPlaying ? .now : nil
+            apply()
+        }
+    }
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
     var length: SessionLength { didSet { resetTimer(); save() } }
@@ -63,6 +69,10 @@ final class Session {
     /// Wall-clock end of the running timed session. Remaining is derived from
     /// it, so the countdown cannot drift.
     private var deadline: ContinuousClock.Instant?
+    /// Play time in this mode, which is what a ramp walks along. `played`
+    /// accumulates across pauses; `playStart` is set while playing.
+    private var played: Double = 0
+    private var playStart: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
     #if os(macOS)
@@ -120,6 +130,11 @@ final class Session {
     /// Seconds into the current timed session. Nil when endless.
     var elapsed: Int? { remaining.map { length.seconds - $0 } }
 
+    /// Seconds this mode has played, across pauses.
+    private var playTime: Double {
+        played + (playStart.map { Self.seconds(since: $0) } ?? 0)
+    }
+
     func toggle() async {
         if isPlaying { pause() } else { await play() }
     }
@@ -143,6 +158,7 @@ final class Session {
             return
         }
         isPlaying = true
+        playStart = .now
         startTimer()
         applyMaster()
         broadcast()
@@ -151,6 +167,8 @@ final class Session {
     func pause() {
         guard isPlaying else { return }
         isPlaying = false
+        played = playTime
+        playStart = nil
         stopTimer()
         applyMaster()
         broadcast()
@@ -172,7 +190,7 @@ final class Session {
 
     private func apply() {
         let p = parameters
-        p.modulationRate.store(mode.rate, ordering: .relaxed)
+        applyRate()
         p.modulationDepth.store(mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural ? 0.12 : 0, ordering: .relaxed)
@@ -180,6 +198,10 @@ final class Session {
         applyMaster()
         save()
         broadcast()
+    }
+
+    private func applyRate() {
+        parameters.modulationRate.store(mode.rate(elapsed: playTime), ordering: .relaxed)
     }
 
     private func save() {
@@ -232,12 +254,18 @@ final class Session {
         broadcast()
     }
 
+    /// Ticks once a second while there is a countdown to keep or a ramp to walk.
     private func startTimer() {
-        guard let remaining else { return }
-        let deadline = ContinuousClock.now + .seconds(remaining)
+        let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
+        guard deadline != nil || mode.ramp != nil else { return }
         self.deadline = deadline
         tickTask = Task {
             while !Task.isCancelled {
+                applyRate()
+                guard let deadline else {
+                    try? await Task.sleep(for: .seconds(1))
+                    continue
+                }
                 let left = Self.secondsLeft(until: deadline)
                 self.remaining = left
                 applyMaster()
@@ -264,8 +292,11 @@ final class Session {
     }
 
     private static func secondsLeft(until deadline: ContinuousClock.Instant) -> Int {
-        let parts = (deadline - .now).components
-        let seconds = Double(parts.seconds) + Double(parts.attoseconds) / 1e18
-        return max(0, Int(seconds.rounded(.up)))
+        max(0, Int(seconds(since: .now, until: deadline).rounded(.up)))
+    }
+
+    private static func seconds(since start: ContinuousClock.Instant, until end: ContinuousClock.Instant = .now) -> Double {
+        let parts = (end - start).components
+        return Double(parts.seconds) + Double(parts.attoseconds) / 1e18
     }
 }

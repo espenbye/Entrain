@@ -1,7 +1,7 @@
 import Foundation
 
 enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
-    case focus, gamma, relax, meditate, sleep, deepSleep
+    case focus, gamma, relax, meditate, sleep, deepSleep, windDown, wake
 
     var id: Self { self }
     var title: String { String(localized: name) }
@@ -15,21 +15,43 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         case .meditate: "Meditate"
         case .sleep: "Sleep"
         case .deepSleep: "Deep Sleep"
+        case .windDown: "Wind Down"
+        case .wake: "Wake"
         }
     }
 
     /// Modulation rate in Hz. Drives both the amplitude LFO and the binaural beat.
     /// Gamma sits at 40 Hz, the best-replicated auditory steady-state response;
     /// Deep Sleep at the ~1 Hz slow-oscillation rate used in sleep-sound studies.
+    /// Ramping modes start here; see `ramp`.
     var rate: Double {
         switch self {
         case .focus: 16
         case .gamma: 40
         case .relax: 10
         case .meditate: 6
-        case .sleep: 2
+        case .sleep, .wake: 2
         case .deepSleep: 1
+        case .windDown: 10
         }
+    }
+
+    /// Where a ramping mode ends and how long it takes to get there, then it
+    /// holds. Wind Down walks alpha to delta at bedtime; Wake walks delta back
+    /// to beta after a nap. Nil for steady modes.
+    var ramp: (to: Double, seconds: Double)? {
+        switch self {
+        case .windDown: (2, 20 * 60)
+        case .wake: (16, 15 * 60)
+        default: nil
+        }
+    }
+
+    /// Rate after `elapsed` seconds of play. Linear in Hz, clamped at the end.
+    func rate(elapsed: Double) -> Double {
+        guard let ramp else { return rate }
+        let progress = min(1, max(0, elapsed / ramp.seconds))
+        return rate + (ramp.to - rate) * progress
     }
 
     /// Amplitude modulation depth at medium intensity, 0...1.
@@ -44,6 +66,8 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         case .meditate: 0.5
         case .sleep: 0
         case .deepSleep: 0.5
+        case .windDown: 0.4
+        case .wake: 0.5
         }
     }
 
@@ -56,14 +80,15 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Gamma starts on the pad: a smooth carrier keeps 40 Hz from sounding rough.
     var defaultLayers: Set<Soundscape> {
         switch self {
-        case .focus: [.rain]
-        case .gamma, .relax, .meditate: [.pad]
+        case .focus, .windDown: [.rain]
+        case .gamma, .relax, .meditate, .wake: [.pad]
         case .sleep, .deepSleep: [.noise]
         }
     }
 
     /// Seconds over which a timed session tapers to silence before it ends.
-    var fadeOut: Double { isSleep ? 300 : 1 }
+    /// Wind Down tapers like the sleep modes: its timer ends in bed.
+    var fadeOut: Double { isSleep || self == .windDown ? 300 : 1 }
 
     /// Binaural carrier frequency in Hz for the left ear. Right ear is carrier + rate.
     var carrier: Double { isSleep ? 100 : 200 }
@@ -76,6 +101,8 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         case .meditate: "circle.dotted"
         case .sleep: "moon"
         case .deepSleep: "moon.zzz"
+        case .windDown: "sunset"
+        case .wake: "sunrise"
         }
     }
 }
