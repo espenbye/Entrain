@@ -98,11 +98,12 @@ struct SettingsSection: View {
 
     var body: some View {
         Section {
-            Menu("Sound") { LayerToggles(layers: layers, setLayer: setLayer) }.disabled(sleep)
-            Picker("Intensity", selection: $intensity) {
-                ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+            if !sleep {
+                Menu("Sound") { LayerToggles(layers: layers, setLayer: setLayer) }
+                Picker("Intensity", selection: $intensity) {
+                    ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+                }
             }
-            .disabled(sleep)
             Picker("Timer", selection: $length) {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
             }
