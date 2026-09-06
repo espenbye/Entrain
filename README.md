@@ -12,10 +12,12 @@ A Mac, iPhone, iPad and Apple Watch app that plays a generated soundscape with r
 | Meditate   | 6 Hz  | 0.5    | Deep, inward attention  |
 | Sleep      | 2 Hz  | steady | Drifting off            |
 | Deep Sleep | 1 Hz  | 0.5    | Slow-wave sleep         |
+| Wind Down  | 10 → 2 Hz over 20 min | 0.4 | Bedtime, alpha down to delta |
+| Wake       | 2 → 16 Hz over 15 min | 0.5 | After a nap, delta back up to beta |
 
 Each mode sets the modulation rate and depth. On top of that you pick:
 
-- **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus starts on Rain, Gamma, Relax and Meditate on Pad. A mix is scaled so it sits at the level of a single sound.
+- **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus and Wind Down start on Rain, Gamma, Relax, Meditate and Wake on Pad. A mix is scaled so it sits at the level of a single sound.
 - **Intensity**: Low, Medium, High (scales modulation depth; High is a small step above Medium)
 - **Timer**: Endless, 15 to 90 minutes, or 2, 4 or 8 hours. A timed session fades out when it ends. Pausing keeps the countdown; it resumes where it stopped.
 - **Binaural**: optional binaural beat at the same rate (headphones required)
@@ -23,9 +25,19 @@ Each mode sets the modulation rate and depth. On top of that you pick:
 
 Gamma is shallow on purpose: 40 Hz is the most reproducible rate for driving a steady-state response on EEG, but at ordinary depth it sounds like a buzz.
 
+Wind Down and Wake ramp their rate linearly over play time, then hold; pausing stops the clock, and switching mode restarts it. Wind Down starts on Rain and tapers over the last five minutes of a timed session like the sleep modes; Wake starts on Pad.
+
 The two sleep modes play a fixed brown noise bed, ignore intensity, and taper over the last five minutes of a timed session instead of stopping. Sleep is unmodulated; its 2 Hz rate only matters if binaural is on. Deep Sleep swells the bed once a second, the slow-oscillation rate that rhythmic sound studies use to deepen slow-wave sleep. When the Mac goes to sleep the session pauses, so it does not resume on wake.
 
-Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, and optionally from a system-wide ⌃⌥E shortcut. The small widget shows the mode, sound and countdown with a play/pause button; the medium one adds a button per mode. Control Center offers a toggle per mode, lit while that mode plays. The media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default.
+Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, from `entrain://` URLs, and optionally from a system-wide ⌃⌥E shortcut. The small widget shows the mode, sound and countdown with a play/pause button; the medium one adds a button per mode. Control Center offers a toggle per mode, lit while that mode plays. The media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default. The UI is in English and Norwegian.
+
+For Raycast, Alfred and shell scripts, the app answers `entrain://` URLs on Mac, iPhone and iPad, using the same mode and length values as the intents:
+
+```
+open "entrain://play?mode=focus&length=30"
+open entrain://pause
+open entrain://toggle
+```
 
 ## iPhone, iPad and Apple Watch
 
@@ -43,8 +55,9 @@ The four soundscapes are trimmed to the same K-weighted loudness (-22 LUFS, ITU-
 Sources/
   App/       One entry point per platform: macOS (MenuBarExtra, global shortcut), iOS, watchOS
   UI/        PlayerScreen (Mac window, iPhone, iPad) and the pieces the watch reuses; the menu bar menu under macOS/, the watch screen under watchOS/
-  Session/   Session state, modes, App Intents, Now Playing and widget snapshot
+  Session/   Session state, modes, App Intents, entrain:// URL commands, Now Playing and widget snapshot
   Audio/     Engine, audio session, synth voices, DSP primitives, shared parameters
+Resources/   Asset catalog and the English/Norwegian string catalogs
 Widget/      WidgetKit extension built once per platform; shares Mode, Intents and WidgetState with the app
 iOS/, watchOS/  Generated Info.plist and entitlements for those targets
 Tests/       Loudness, synth and session tests (Swift Testing, run on macOS)
@@ -65,7 +78,7 @@ xcodegen generate
 open Entrain.xcodeproj
 ```
 
-The project signs to run locally by default. To sign with your own team (needed for the widget's buttons), add a gitignored `Local.xcconfig` next to `project.yml` before generating:
+The project signs to run locally by default. To sign with your own team (needed for the widget's buttons), add a gitignored `Local.xcconfig` next to `project.yml` before generating; `Signing.xcconfig` includes it when present:
 
 ```
 DEVELOPMENT_TEAM = ABCDE12345
@@ -82,7 +95,7 @@ Launch at Login uses `SMAppService`, which needs the app to run from a stable lo
 
 On iOS and watchOS the snapshot lives in the `group.no.espenbye.entrain` App Group instead, so device builds there need a development team; simulator builds do not.
 
-Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on macOS and builds the iOS and watch apps on every push.
+Session logic is tested against a fake engine and a throwaway defaults suite; `Session` takes both in its initializer. CI runs the full test suite on macOS and builds the iOS and watch apps on every push and pull request, with code signing disabled.
 
 ## Releasing
 
