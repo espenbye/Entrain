@@ -75,6 +75,9 @@ final class Session {
     private var playStart: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
+    /// What the widget last got. iOS budgets a few dozen reloads a day, so
+    /// only a snapshot that differs from it is written and reloaded.
+    private var widgetState: WidgetState?
     #if os(macOS)
     private var sleepObserver: NSObjectProtocol?
     #endif
@@ -87,6 +90,7 @@ final class Session {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
         self.makeEngine = makeEngine
+        widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
         intensity = Intensity(rawValue: defaults.string(forKey: "intensity") ?? "") ?? .medium
         binaural = defaults.object(forKey: "binaural") as? Bool ?? false
@@ -228,13 +232,16 @@ final class Session {
     /// Both read the snapshot file, so they need no live connection.
     private func broadcast() {
         NowPlaying.update(self)
-        WidgetState(
+        let state = WidgetState(
             mode: mode,
             sound: layers.title,
             isPlaying: isPlaying,
             remaining: remaining,
             deadline: isPlaying ? remaining.map { Date.now.addingTimeInterval(Double($0)) } : nil
-        ).save(to: widgetDirectory)
+        )
+        guard !state.matches(widgetState) else { return }
+        widgetState = state
+        state.save(to: widgetDirectory)
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetState.kind)
         ControlCenter.shared.reloadAllControls()
     }
@@ -254,7 +261,8 @@ final class Session {
         broadcast()
     }
 
-    /// Ticks once a second while there is a countdown to keep or a ramp to walk.
+    /// Ticks once a second while there is a countdown to keep or a ramp to
+    /// walk. An endless session stops ticking once its ramp has arrived.
     private func startTimer() {
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
         guard deadline != nil || mode.ramp != nil else { return }
@@ -263,6 +271,10 @@ final class Session {
             while !Task.isCancelled {
                 applyRate()
                 guard let deadline else {
+                    if let ramp = mode.ramp, playTime >= ramp.seconds {
+                        tickTask = nil
+                        return
+                    }
                     try? await Task.sleep(for: .seconds(1))
                     continue
                 }
