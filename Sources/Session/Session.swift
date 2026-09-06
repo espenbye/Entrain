@@ -8,12 +8,14 @@ import WidgetKit
 @MainActor
 @Observable
 final class Session {
-    static let shared = Session(defaults: .standard) { AudioEngine(parameters: $0) }
+    static let shared = Session(defaults: .standard, mindful: health) { AudioEngine(parameters: $0) }
 
     var mode: Mode {
         didSet {
+            endMindful()
             played = 0
             playStart = isPlaying ? .now : nil
+            if isPlaying { startMindful() }
             apply()
         }
     }
@@ -64,6 +66,9 @@ final class Session {
     /// The folder the widget reads. Tests pass a scratch directory.
     private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
+    private let mindful: (any MindfulLog)?
+    /// Wall-clock start of the Meditate segment playing now.
+    private var mindfulStart: Date?
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
     /// Wall-clock end of the running timed session. Remaining is derived from
@@ -85,10 +90,12 @@ final class Session {
     init(
         defaults: UserDefaults,
         widgetDirectory: URL? = WidgetState.directory,
+        mindful: (any MindfulLog)? = nil,
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
+        self.mindful = mindful
         self.makeEngine = makeEngine
         widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
@@ -115,6 +122,14 @@ final class Session {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.pause() }
         }
+        #endif
+    }
+
+    private static var health: (any MindfulLog)? {
+        #if os(iOS) || os(watchOS)
+        MindfulMinutes()
+        #else
+        nil
         #endif
     }
 
@@ -163,6 +178,7 @@ final class Session {
         }
         isPlaying = true
         playStart = .now
+        startMindful()
         startTimer()
         applyMaster()
         broadcast()
@@ -173,6 +189,7 @@ final class Session {
         isPlaying = false
         played = playTime
         playStart = nil
+        endMindful()
         stopTimer()
         applyMaster()
         broadcast()
@@ -190,6 +207,22 @@ final class Session {
     private func interrupted() {
         pause()
         error = String(localized: "Audio stopped")
+    }
+
+    // MARK: Mindful minutes
+
+    /// Meditate is the one mode Health has a place for. Each stretch of play
+    /// is its own segment, so a pause is a break, not part of the session.
+    private func startMindful() {
+        guard mode == .meditate else { return }
+        mindfulStart = .now
+        mindful?.prepare()
+    }
+
+    private func endMindful() {
+        guard let start = mindfulStart else { return }
+        mindfulStart = nil
+        mindful?.log(DateInterval(start: start, end: .now))
     }
 
     private func apply() {
