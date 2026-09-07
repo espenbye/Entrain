@@ -88,18 +88,30 @@ struct WidgetView: View {
                 Image(systemName: state.mode.symbol)
             }
         case .accessoryRectangular:
-            VStack(alignment: .leading, spacing: 2) {
-                Label(state.mode.title, systemImage: state.mode.symbol)
-                    .font(.headline)
-                Text(state.sound)
-                    .foregroundStyle(.secondary)
-                countdown
-                    .font(.body.monospacedDigit())
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(state.mode.title, systemImage: state.mode.symbol)
+                        .font(.headline)
+                    Text(state.sound)
+                        .foregroundStyle(.secondary)
+                    countdown
+                        .font(.body.monospacedDigit())
+                }
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                #if os(watchOS)
+                toggle
+                    .font(.title2)
+                #endif
             }
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
         #if os(watchOS)
-        case .accessoryCircular, .accessoryCorner:
+        // The Smart Stack runs widget buttons; the Lock Screen on iOS does not,
+        // so only the watch gets one. The circular is nothing but the button;
+        // the corner keeps its curved label and opens the app.
+        case .accessoryCircular:
+            toggle
+                .font(.title2)
+        case .accessoryCorner:
             Image(systemName: state.isPlaying ? state.mode.symbol : "pause.fill")
                 .font(.title2)
                 .widgetLabel { countdownText }
@@ -140,6 +152,17 @@ struct WidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
+
+    #if os(watchOS)
+    private var toggle: some View {
+        Button(intent: ToggleSessionIntent()) {
+            Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.circle)
+        .accessibilityLabel(state.isPlaying ? "Pause" : "Play")
+    }
+    #endif
 
     @ViewBuilder
     private var countdown: some View {
