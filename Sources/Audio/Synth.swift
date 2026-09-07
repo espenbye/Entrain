@@ -146,6 +146,82 @@ final class BedSynth: @unchecked Sendable {
     }
 }
 
+/// The breathing cues: one short tone per phase, straight to the mixer so
+/// it is not modulated with the bed. Breathe in glides up a fifth, hold
+/// sits on one note, breathe out glides back down, and the end of the
+/// exercise is a longer note. Silent between cues, and after `master`
+/// like everything else, so a pause cuts a cue with the bed. Owned by the
+/// render thread.
+final class CueSynth: @unchecked Sendable {
+    /// Peak amplitude of a cue. The beds sit near -22 LUFS, so this is
+    /// clearly above them without startling.
+    static let level: Float = 0.22
+
+    private let parameters: AudioParameters
+    private let sampleRate: Float
+    private var lastCue: Int
+    private var phasor = Phasor()
+    private var master: Smoother
+    private var volume: Smoother
+    /// The note under way: samples left and its total, and its glide.
+    private var remaining = 0
+    private var length = 1
+    private var startHz: Float = 0
+    private var endHz: Float = 0
+
+    init(parameters: AudioParameters, sampleRate: Double) {
+        self.parameters = parameters
+        self.sampleRate = Float(sampleRate)
+        lastCue = parameters.cue.load(ordering: .relaxed)
+        master = Smoother(0, seconds: 1, sampleRate: sampleRate)
+        volume = Smoother(1, seconds: 0.05, sampleRate: sampleRate)
+    }
+
+    /// Start frequency, end frequency and length of each cue's tone.
+    static func tone(for cue: BreathCue) -> (start: Float, end: Float, seconds: Float) {
+        switch cue {
+        case .inhale: (392, 587.33, 1.0)
+        case .hold: (523.25, 523.25, 0.6)
+        case .exhale: (587.33, 392, 1.0)
+        case .finished: (440, 440, 1.8)
+        }
+    }
+
+    func render(frames: Int, left outL: UnsafeMutablePointer<Float>, right outR: UnsafeMutablePointer<Float>) {
+        let cue = parameters.cue.load(ordering: .relaxed)
+        if cue != lastCue {
+            lastCue = cue
+            let tone = Self.tone(for: BreathCue.decode(cue))
+            startHz = tone.start
+            endHz = tone.end
+            length = max(1, Int(tone.seconds * sampleRate))
+            remaining = length
+            phasor = Phasor()
+        }
+        master.target = Float(parameters.master.load(ordering: .relaxed))
+        volume.target = Float(parameters.volume.load(ordering: .relaxed))
+
+        for i in 0..<frames {
+            let trim = master.next() * volume.next()
+            guard remaining > 0 else {
+                outL[i] = 0
+                outR[i] = 0
+                continue
+            }
+            // A raised-cosine window over the whole note: no attack or release
+            // edge to click, and it swells the way a breath does.
+            let t = 1 - Float(remaining) / Float(length)
+            let envelope = 0.5 - 0.5 * SineTable.sin(cycles: t + 0.25)
+            let hz = startHz + (endHz - startHz) * t
+            let p = phasor.next(hz / sampleRate)
+            let s = (SineTable.sin(cycles: p) + 0.3 * SineTable.sin(cycles: 2 * p)) * envelope * Self.level * trim
+            outL[i] = s
+            outR[i] = s
+            remaining -= 1
+        }
+    }
+}
+
 /// Pure tones, one per ear, offset by the mode's rate. Bypasses modulation,
 /// the room and its reverb: the beat only works when the two carriers reach
 /// the ears unmixed.

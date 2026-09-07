@@ -47,6 +47,8 @@ final class AudioEngine: SessionAudio {
 
     private let engine = AVAudioEngine()
     private let binauralNode: AVAudioSourceNode
+    /// The breathing cues, stereo and outside the room like the beat.
+    private let cueNode: AVAudioSourceNode
     #if os(watchOS)
     private let bedNode: AVAudioSourceNode
     #else
@@ -109,7 +111,19 @@ final class AudioEngine: SessionAudio {
             return noErr
         }
 
+        let cues = CueSynth(parameters: parameters, sampleRate: sampleRate)
+        cueNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, audioBufferList in
+            let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            cues.render(
+                frames: Int(frameCount),
+                left: buffers[0].mData!.assumingMemoryBound(to: Float.self),
+                right: buffers[1].mData!.assumingMemoryBound(to: Float.self)
+            )
+            return noErr
+        }
+
         engine.attach(binauralNode)
+        engine.attach(cueNode)
         #if os(watchOS)
         // watchOS has no environment node; the bed goes straight to the mixer.
         engine.attach(bedNode)
@@ -143,6 +157,7 @@ final class AudioEngine: SessionAudio {
         engine.connect(eq, to: engine.mainMixerNode, format: format)
         #endif
         engine.connect(binauralNode, to: engine.mainMixerNode, format: format)
+        engine.connect(cueNode, to: engine.mainMixerNode, format: format)
         engine.prepare()
 
         // Plugging in headphones or switching outputs stops the engine.
