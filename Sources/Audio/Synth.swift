@@ -26,6 +26,9 @@ final class VoiceSynth: @unchecked Sendable {
     private var layerGain: Smoother
 
     private var modulation = Phasor()
+    /// Where in the modulation cycle this soundscape sits. See
+    /// `modulationOffset`.
+    private let modulationOffset: Float
     /// The shape of one modulation cycle, set by the mode.
     private var shape: PulseShape
     private var depth: Smoother
@@ -60,6 +63,7 @@ final class VoiceSynth: @unchecked Sendable {
         // A seed per voice, so two noise-based voices never share a stream.
         rng = XorShift(state: 0x9E37_79B9 &+ UInt32(soundscape.index) &* 0x632B_E5AB)
         layerGain = Smoother(0, seconds: 1.5, sampleRate: sampleRate)
+        modulationOffset = Self.modulationOffset(soundscape)
         shape = PulseShape(peak: 0.5, sampleRate: sampleRate)
         depth = Smoother(0.5, seconds: 0.05, sampleRate: sampleRate)
         master = Smoother(0, seconds: 1, sampleRate: sampleRate)
@@ -68,6 +72,26 @@ final class VoiceSynth: @unchecked Sendable {
         brightnessRate = 1 / (2 * Float(sampleRate))
         bandLowCoefficient = OnePoleLowpass.coefficient(cutoff: 200, sampleRate: Float(sampleRate))
         bandHighCoefficient = OnePoleLowpass.coefficient(cutoff: 1000, sampleRate: Float(sampleRate))
+    }
+
+    /// The slice of the modulation cycle a soundscape's envelope is rotated
+    /// by, so two layers do not pulse in lockstep. Four voices falling
+    /// together doubles the mechanical quality of the pulse; rotated, total
+    /// energy stays roughly where it was and the emphasis moves between them
+    /// instead. Pad sits opposite Rain and Drone between the two. Noise is
+    /// the sleep bed, which never plays with anything else, so it has no one
+    /// to be offset from.
+    ///
+    /// This is applied at the lookup, not to the phasor: every voice keeps
+    /// the same clock, so a rate change still lands identically on all four
+    /// and a session started later is in the same relationship.
+    private static func modulationOffset(_ soundscape: Soundscape) -> Float {
+        switch soundscape {
+        case .rain: 0
+        case .pad: 0.5
+        case .drone: 0.25
+        case .noise: 0
+        }
     }
 
     /// Writes `frames` samples to `out`, replacing what was there.
@@ -98,7 +122,8 @@ final class VoiceSynth: @unchecked Sendable {
 
         for i in 0..<frames {
             let gain = layerGain.next()
-            let pulse = depth.next() * shape.next(phase: modulation.next(rateIncrement))
+            let rotated = modulation.next(rateIncrement) + modulationOffset
+            let pulse = depth.next() * shape.next(phase: rotated < 1 ? rotated : rotated - 1)
             let trim = master.next() * volume.next()
             // A silent voice still advances its clocks, so it comes back in phase.
             guard gain > 0.0005 else {
