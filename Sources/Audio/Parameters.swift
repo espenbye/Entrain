@@ -28,6 +28,12 @@ final class AudioParameters: Sendable {
     /// the voice that leads the bed. Haptics read it rather than keeping a
     /// clock of their own, so touch and sound cannot drift apart over a night.
     let modulationPhase = Atomic<Double>(0)
+
+    /// How much room the mode is heard in, 0...1. On iPhone and Mac the
+    /// environment node carries the space and this is what the watch, which
+    /// has no such node, gives its own diffuser instead.
+    let space = Atomic<Double>(Double(Room.space(for: .focus).blend))
+
     /// A cue, `Cue.encode`d: every new value plays one tone. The trigger
     /// count in the high bits makes a repeat of the same cue a change.
     let cue = Atomic<Int>(0)

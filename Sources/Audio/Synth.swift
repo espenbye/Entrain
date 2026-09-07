@@ -154,19 +154,27 @@ final class VoiceSynth: @unchecked Sendable {
 /// watch has no environment node, so it plays this straight into the mixer.
 /// Owned by the render thread.
 final class BedSynth: @unchecked Sendable {
+    private let parameters: AudioParameters
     private let voices: [VoiceSynth]
     private var drift = Phasor()
     private let driftIncrement: Float
+    /// The watch's whole sense of space: see `Diffuser`.
+    private var diffuser: Diffuser
     /// Scratch for one voice's block. Sized once for the largest block the
     /// hardware asks for, so the render path never allocates.
     private var scratch = [Float](repeating: 0, count: 4096)
 
     init(parameters: AudioParameters, sampleRate: Double) {
+        self.parameters = parameters
         voices = Soundscape.allCases.map { VoiceSynth($0, parameters: parameters, sampleRate: sampleRate) }
         driftIncrement = 1 / (900 * Float(sampleRate))
+        diffuser = Diffuser(
+            sampleRate: sampleRate, blend: Float(parameters.space.load(ordering: .relaxed))
+        )
     }
 
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        diffuser.target = Float(parameters.space.load(ordering: .relaxed))
         let pan = 0.3 * sin(twoPi * drift.next(driftIncrement * Float(frames)))
         let panL = cos((pan + 1) * Float.pi / 4)
         let panR = sin((pan + 1) * Float.pi / 4)
@@ -180,8 +188,7 @@ final class BedSynth: @unchecked Sendable {
         }
         for i in 0..<frames {
             let out = left[i]
-            left[i] = out * panL
-            right[i] = out * panR
+            (left[i], right[i]) = diffuser.next(out * panL, out * panR)
         }
     }
 }
