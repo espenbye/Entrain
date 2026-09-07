@@ -7,6 +7,7 @@ import Testing
 struct SessionTests {
     final class FakeAudio: SessionAudio {
         var onInterruption: (() -> Void)?
+        var onInterruptionEnded: ((Bool) async -> Void)?
         var mixesWithOthers = false
         var starts = 0
         var stops = 0
@@ -120,6 +121,33 @@ struct SessionTests {
         #expect(session.error == String(localized: "Audio stopped"))
         #expect(session.parameters.master.load(ordering: .relaxed) == 0)
         #expect(session.remaining == SessionLength.fifteen.seconds)
+    }
+
+    @Test func interruptionResumesOnlyWhenTheSystemSaysSo() async {
+        let session = makeSession()
+        session.length = .fifteen
+        await session.play()
+        audio.onInterruption?()
+        #expect(!session.isPlaying)
+        #expect(audio.stops == 0)
+
+        await audio.onInterruptionEnded?(true)
+        #expect(session.isPlaying)
+        #expect(session.error == nil)
+        #expect(audio.starts == 2)
+        #expect(session.deadline != nil)
+
+        // Without the resume flag the session stays paused and lets the engine go.
+        audio.onInterruption?()
+        await audio.onInterruptionEnded?(false)
+        #expect(!session.isPlaying)
+        #expect(audio.stops == 1)
+
+        // A spurious end after the user resumed changes nothing.
+        await session.play()
+        await audio.onInterruptionEnded?(false)
+        #expect(session.isPlaying)
+        #expect(audio.stops == 1)
     }
 
     @Test func pauseKeepsTheCountdownAndNewLengthResetsIt() async {

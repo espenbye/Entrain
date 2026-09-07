@@ -8,6 +8,9 @@ protocol SessionAudio: AnyObject {
     /// such as an output device going away and the engine failing to restart,
     /// or a phone call taking the output.
     var onInterruption: (() -> Void)? { get set }
+    /// Called when the interruption is over. True when the system says the
+    /// app should pick up where it left off, as after a call it paused.
+    var onInterruptionEnded: ((_ shouldResume: Bool) async -> Void)? { get set }
     /// Whether other apps keep playing underneath. On iOS a session that mixes
     /// gives up Now Playing, so this follows the Now Playing toggle.
     var mixesWithOthers: Bool { get set }
@@ -18,6 +21,7 @@ protocol SessionAudio: AnyObject {
 @MainActor
 final class AudioEngine: SessionAudio {
     var onInterruption: (() -> Void)?
+    var onInterruptionEnded: ((Bool) async -> Void)?
     var mixesWithOthers = false {
         didSet { Self.configureSession(mixesWithOthers: mixesWithOthers) }
     }
@@ -99,14 +103,23 @@ final class AudioEngine: SessionAudio {
             Task { @MainActor in self?.recover() }
         })
         #if !os(macOS)
-        // A call or another app's audio takes the output. The session pauses
-        // and stays paused: nothing resumes unattended, as on Mac sleep.
+        // A call or another app's audio takes the output. The session pauses;
+        // it comes back only when the system says so, which it does after a
+        // call and not after the user started something else.
         observers.append(NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification, object: nil, queue: nil
         ) { [weak self] note in
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
-            guard raw.flatMap(AVAudioSession.InterruptionType.init) == .began else { return }
-            Task { @MainActor in self?.interrupted() }
+            switch raw.flatMap(AVAudioSession.InterruptionType.init) {
+            case .began:
+                Task { @MainActor in self?.interrupted() }
+            case .ended:
+                let options = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+                let shouldResume = AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume)
+                Task { @MainActor in await self?.onInterruptionEnded?(shouldResume) }
+            default:
+                break
+            }
         })
         #endif
     }

@@ -85,6 +85,9 @@ final class Session {
     private var playStart: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
+    /// Set while a system interruption holds the session paused; cleared by
+    /// anything the user does, so only the interruption's end resumes.
+    private var interruptedByAudio = false
     /// What the widget last got. iOS budgets a few dozen reloads a day, so
     /// only a snapshot that differs from it is written and reloaded.
     private var widgetState: WidgetState?
@@ -170,6 +173,7 @@ final class Session {
         let engine = self.engine ?? {
             let engine = makeEngine(parameters)
             engine.onInterruption = { [weak self] in self?.interrupted() }
+            engine.onInterruptionEnded = { [weak self] in await self?.interruptionEnded(shouldResume: $0) }
             engine.mixesWithOthers = !nowPlaying
             self.engine = engine
             return engine
@@ -181,6 +185,7 @@ final class Session {
             self.error = String(localized: "Audio unavailable")
             return
         }
+        interruptedByAudio = false
         isPlaying = true
         playStart = .now
         startMindful()
@@ -208,10 +213,26 @@ final class Session {
         }
     }
 
-    /// The engine stopped on its own and could not come back.
+    /// The engine stopped on its own. The engine is kept so the end of a
+    /// system interruption still reaches it; a deliberate pause releases it.
     private func interrupted() {
         pause()
+        stopTask?.cancel()
+        interruptedByAudio = true
         error = String(localized: "Audio stopped")
+    }
+
+    /// Resumes when the system says so and nothing else happened in between;
+    /// otherwise the idle engine is released like after any other pause.
+    private func interruptionEnded(shouldResume: Bool) async {
+        guard interruptedByAudio else { return }
+        interruptedByAudio = false
+        if shouldResume {
+            await play()
+        } else {
+            engine?.stop()
+            engine = nil
+        }
     }
 
     // MARK: Mindful minutes
