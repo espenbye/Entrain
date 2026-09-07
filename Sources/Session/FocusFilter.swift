@@ -4,7 +4,7 @@ import AppIntents
 /// mode when it turns on, and can pause the session when it turns off. The
 /// system runs it in the app process on every Focus change; when no Focus
 /// is on it arrives with every parameter at its default.
-struct EntrainFocusFilter: SetFocusFilterIntent {
+struct EntrainFocusFilter: SetFocusFilterIntent, StartsSession {
     static let title: LocalizedStringResource = "Focus Filter"
     static let description = IntentDescription("Starts a mode when the Focus turns on.")
     static var supportedModes: IntentModes { .background }

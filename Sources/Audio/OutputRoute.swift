@@ -110,7 +110,8 @@ final class OutputRoute {
         switch transport {
         case kAudioDeviceTransportTypeBuiltIn:
             // 'hdpn' is the jack; 'ispk' the internal speakers.
-            return read(device, dataSource) == UInt32(0x6864_706E)
+            guard let source: UInt32 = read(device, dataSource) else { return true }
+            return source == UInt32(0x6864_706E)
         case kAudioDeviceTransportTypeHDMI, kAudioDeviceTransportTypeDisplayPort, kAudioDeviceTransportTypeAirPlay:
             return false
         default:

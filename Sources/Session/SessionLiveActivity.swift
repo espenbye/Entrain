@@ -22,7 +22,9 @@ final class SessionLiveActivity {
 
     func update(_ state: SessionActivityAttributes.ContentState?) {
         guard let state else { return end() }
-        let content = ActivityContent(state: state, staleDate: state.deadline)
+        // A playing session is stale once its deadline passes; a paused one
+        // is frozen on purpose and never goes stale.
+        let content = ActivityContent(state: state, staleDate: state.isPlaying ? state.deadline : nil)
         if let activity {
             guard state != self.state else { return }
             // `Activity` is not Sendable, but its calls only hop off the

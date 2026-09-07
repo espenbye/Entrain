@@ -1,11 +1,20 @@
 import AppIntents
 
+/// An intent that may start a session from the background. On iOS that
+/// start also opens the session's Live Activity, which `Activity.request`
+/// only allows from a `LiveActivityIntent`; the other platforms have none.
+#if os(iOS)
+protocol StartsSession: LiveActivityIntent {}
+#else
+protocol StartsSession: AppIntent {}
+#endif
+
 /// Shortcuts, Siri and the widget. Each intent hops to the main actor:
 /// Session lives there. The widget compiles these too, to build its buttons,
 /// but every run is pinned to the app process where the session is, so the
 /// widget copies never perform. `AudioPlaybackIntent` lets iOS launch the app
 /// in the background from a widget or Control Center and start audio there.
-struct StartSessionIntent: AppIntent, AudioPlaybackIntent {
+struct StartSessionIntent: AppIntent, AudioPlaybackIntent, StartsSession {
     static let title: LocalizedStringResource = "Start Session"
     static let description = IntentDescription("Plays a mode, optionally for a set length.")
     static var supportedModes: IntentModes { .background }
@@ -60,7 +69,7 @@ struct StopSessionIntent: AppIntent, AudioPlaybackIntent {
     }
 }
 
-struct ToggleSessionIntent: AppIntent, AudioPlaybackIntent {
+struct ToggleSessionIntent: AppIntent, AudioPlaybackIntent, StartsSession {
     static let title: LocalizedStringResource = "Play or Pause"
     static let description = IntentDescription("Toggles playback of the current mode.")
     static var supportedModes: IntentModes { .background }
@@ -81,7 +90,7 @@ struct ToggleSessionIntent: AppIntent, AudioPlaybackIntent {
 }
 
 /// Behind each Control Center toggle: on starts the mode, off pauses.
-struct SetModePlayingIntent: SetValueIntent, AudioPlaybackIntent {
+struct SetModePlayingIntent: SetValueIntent, AudioPlaybackIntent, StartsSession {
     static let title: LocalizedStringResource = "Set Mode Playing"
     static var supportedModes: IntentModes { .background }
     #if compiler(>=6.4)
