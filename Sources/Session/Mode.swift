@@ -37,9 +37,9 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// Where a ramping mode ends and how long it takes to get there, then it
-    /// holds. Wind Down walks alpha to delta at bedtime; Wake walks delta back
-    /// to beta after a nap. Nil for steady modes.
+    /// Where a ramping mode ends and how long an endless session takes to get
+    /// there, then it holds. Wind Down walks alpha to delta at bedtime; Wake
+    /// walks delta back to beta after a nap. Nil for steady modes.
     var ramp: (to: Double, seconds: Double)? {
         switch self {
         case .windDown: (2, 20 * 60)
@@ -48,10 +48,19 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// How long the ramp takes: a timed session ramps over the whole timer,
+    /// less the taper, so Wind Down arrives at 2 Hz before it fades out.
+    /// Endless sessions use the fixed length. Nil for steady modes.
+    func rampSeconds(for length: SessionLength) -> Double? {
+        guard let ramp else { return nil }
+        guard length != .endless else { return ramp.seconds }
+        return Double(length.seconds) - (tapers ? fadeOut : 0)
+    }
+
     /// Rate after `elapsed` seconds of play. Linear in Hz, clamped at the end.
-    func rate(elapsed: Double) -> Double {
-        guard let ramp else { return rate }
-        let progress = min(1, max(0, elapsed / ramp.seconds))
+    func rate(elapsed: Double, length: SessionLength) -> Double {
+        guard let ramp, let seconds = rampSeconds(for: length) else { return rate }
+        let progress = min(1, max(0, elapsed / seconds))
         return rate + (ramp.to - rate) * progress
     }
 
@@ -87,9 +96,12 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// Seconds over which a timed session tapers to silence before it ends.
-    /// Wind Down tapers like the sleep modes: its timer ends in bed.
-    var fadeOut: Double { isSleep || self == .windDown ? 300 : 1 }
+    /// Whether a timed session tapers over its last minutes rather than
+    /// stopping. Wind Down tapers like the sleep modes: its timer ends in bed.
+    var tapers: Bool { isSleep || self == .windDown }
+
+    /// Seconds over which a timed session fades to silence before it ends.
+    var fadeOut: Double { tapers ? 300 : 1 }
 
     /// Binaural carrier frequency in Hz for the left ear. Right ear is carrier + rate.
     var carrier: Double { isSleep ? 100 : 200 }

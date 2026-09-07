@@ -12,8 +12,8 @@ A Mac, iPhone, iPad and Apple Watch app that plays a generated soundscape with r
 | Meditate   | 6 Hz                  | 0.5    | Deep, inward attention             |
 | Sleep      | 2 Hz                  | steady | Drifting off                       |
 | Deep Sleep | 1 Hz                  | 0.5    | Slow-wave sleep                    |
-| Wind Down  | 10 → 2 Hz over 20 min | 0.4    | Bedtime, alpha down to delta       |
-| Wake       | 2 → 16 Hz over 15 min | 0.5    | After a nap, delta back up to beta |
+| Wind Down  | 10 → 2 Hz over the timer | 0.4    | Bedtime, alpha down to delta       |
+| Wake       | 2 → 16 Hz over the timer | 0.5    | After a nap, delta back up to beta |
 
 Each mode sets the modulation rate and depth. On top of that you pick:
 
@@ -25,7 +25,7 @@ Each mode sets the modulation rate and depth. On top of that you pick:
 
 Gamma is shallow on purpose: 40 Hz is the most reproducible rate for driving a steady-state response on EEG, but at ordinary depth it sounds like a buzz.
 
-Wind Down and Wake ramp their rate linearly over play time, then hold; pausing stops the clock, and switching mode restarts it. Wind Down starts on Rain and tapers over the last five minutes of a timed session like the sleep modes; Wake starts on Pad.
+Wind Down and Wake ramp their rate linearly over play time, then hold; pausing stops the clock, and switching mode restarts it. A timed session ramps over the whole timer: Wake arrives at 16 Hz as the timer ends, Wind Down at 2 Hz as its five-minute taper begins, so a 30-minute Wind Down walks 10 to 2 Hz in 25 minutes. Endless sessions ramp over 20 minutes (Wind Down) and 15 (Wake). Wind Down starts on Rain and tapers over the last five minutes of a timed session like the sleep modes; Wake starts on Pad.
 
 The two sleep modes play a fixed brown noise bed, ignore intensity, and taper over the last five minutes of a timed session instead of stopping. Sleep is unmodulated; its 2 Hz rate only matters if binaural is on. Deep Sleep swells the bed once a second, the slow-oscillation rate that rhythmic sound studies use to deepen slow-wave sleep. When the Mac goes to sleep the session pauses, so it does not resume on wake.
 

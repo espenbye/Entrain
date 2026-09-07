@@ -270,7 +270,7 @@ final class Session {
     }
 
     private func applyRate() {
-        parameters.modulationRate.store(mode.rate(elapsed: playTime), ordering: .relaxed)
+        parameters.modulationRate.store(mode.rate(elapsed: playTime, length: length), ordering: .relaxed)
     }
 
     private func save() {
@@ -322,6 +322,7 @@ final class Session {
         stopTimer()
         remaining = length == .endless ? nil : length.seconds
         if isPlaying { startTimer() }
+        applyRate()
         applyMaster()
         broadcast()
     }
@@ -330,14 +331,15 @@ final class Session {
     /// walk. An endless session stops ticking once its ramp has arrived.
     private func startTimer() {
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
-        guard deadline != nil || mode.ramp != nil else { return }
+        let rampSeconds = mode.rampSeconds(for: length)
+        guard deadline != nil || rampSeconds != nil else { return }
         tickDeadline = deadline
         self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
                 applyRate()
                 guard let deadline else {
-                    if let ramp = mode.ramp, playTime >= ramp.seconds {
+                    if let rampSeconds, playTime >= rampSeconds {
                         tickTask = nil
                         return
                     }

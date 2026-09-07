@@ -164,13 +164,26 @@ struct SessionTests {
         #expect(session.remaining == nil)
     }
 
-    @Test func rampModesWalkTheRate() {
-        #expect(Mode.windDown.rate(elapsed: 0) == 10)
-        #expect(Mode.windDown.rate(elapsed: 10 * 60) == 6)
-        #expect(Mode.windDown.rate(elapsed: 60 * 60) == 2)
-        #expect(Mode.wake.rate(elapsed: 0) == 2)
-        #expect(Mode.wake.rate(elapsed: 15 * 60) == 16)
-        #expect(Mode.focus.rate(elapsed: 60 * 60) == 16)
+    @Test func endlessRampsWalkTheirFixedLength() {
+        #expect(Mode.windDown.rate(elapsed: 0, length: .endless) == 10)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .endless) == 6)
+        #expect(Mode.windDown.rate(elapsed: 60 * 60, length: .endless) == 2)
+        #expect(Mode.wake.rate(elapsed: 0, length: .endless) == 2)
+        #expect(Mode.wake.rate(elapsed: 15 * 60, length: .endless) == 16)
+        #expect(Mode.focus.rate(elapsed: 60 * 60, length: .endless) == 16)
+        #expect(Mode.focus.rampSeconds(for: .sixty) == nil)
+    }
+
+    @Test func timedRampsFollowTheTimer() {
+        // Wake ramps over the whole timer.
+        #expect(Mode.wake.rampSeconds(for: .sixty) == 60 * 60)
+        #expect(Mode.wake.rate(elapsed: 30 * 60, length: .sixty) == 9)
+        #expect(Mode.wake.rate(elapsed: 60 * 60, length: .sixty) == 16)
+        // Wind Down reaches 2 Hz when its five-minute taper begins.
+        #expect(Mode.windDown.rampSeconds(for: .fifteen) == 10 * 60)
+        #expect(Mode.windDown.rate(elapsed: 5 * 60, length: .fifteen) == 6)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .fifteen) == 2)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .eightHours) > 9)
     }
 
     @Test func rampModesStartAtTheirFirstRate() {
