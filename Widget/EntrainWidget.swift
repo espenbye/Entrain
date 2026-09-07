@@ -8,6 +8,7 @@ struct EntrainWidgets: WidgetBundle {
         EntrainWidget()
         #if canImport(AlarmKit)
         WakeActivity()
+        SessionActivity()
         #endif
         #if !os(watchOS)
         FocusControl()

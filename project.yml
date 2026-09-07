@@ -39,8 +39,10 @@ targetTemplates:
     sources:
       - Widget/EntrainWidget.swift
       - Widget/WakeActivity.swift
+      - Widget/SessionActivity.swift
       - Sources/Session/Mode.swift
       - Sources/Session/WakeAlarmMetadata.swift
+      - Sources/Session/SessionActivityAttributes.swift
       - Sources/Session/WidgetState.swift
       - Sources/Session/Intents.swift
       - Resources/Localizable.xcstrings

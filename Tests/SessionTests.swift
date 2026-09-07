@@ -358,4 +358,21 @@ struct SessionTests {
         #expect(SessionLength.eightHours.seconds.countdown == "8:00:00")
         #expect(SessionLength.eightHours.title == String(localized: "\(8) h"))
     }
+
+    @Test func liveActivityFollowsTheTimer() {
+        let now = Date.now
+        let deadline = now.addingTimeInterval(600)
+        #expect(SessionActivityAttributes.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: nil, deadline: nil) == nil)
+
+        let playing = SessionActivityAttributes.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: 600, deadline: deadline, now: now)
+        #expect(playing?.attributes == SessionActivityAttributes(mode: .focus, sound: "Rain"))
+        #expect(playing?.state.deadline == deadline)
+        #expect(playing?.state.isPlaying == true)
+
+        // Paused: the countdown freezes at `now`, showing the seconds kept.
+        let paused = SessionActivityAttributes.snapshot(mode: .focus, sound: "Rain", isPlaying: false, remaining: 600, deadline: nil, now: now)
+        #expect(paused?.state.pausedAt == now)
+        #expect(paused?.state.deadline == deadline)
+        #expect(paused?.state.isPlaying == false)
+    }
 }

@@ -95,6 +95,9 @@ final class Session {
     /// What the widget last got. iOS budgets a few dozen reloads a day, so
     /// only a snapshot that differs from it is written and reloaded.
     private var widgetState: WidgetState?
+    #if os(iOS)
+    private let activity = SessionLiveActivity()
+    #endif
     #if os(macOS)
     private var sleepObserver: NSObjectProtocol?
     #endif
@@ -313,10 +316,16 @@ final class Session {
         parameters.master.store(gain, ordering: .relaxed)
     }
 
-    /// Tells Now Playing, the widget and Control Center about a state change.
-    /// Both read the snapshot file, so they need no live connection.
+    /// Tells Now Playing, the Live Activity, the widget and Control Center
+    /// about a state change. The last two read the snapshot file, so they
+    /// need no live connection.
     private func broadcast() {
         NowPlaying.update(self)
+        #if os(iOS)
+        activity.update(SessionActivityAttributes.snapshot(
+            mode: mode, sound: layers.title, isPlaying: isPlaying, remaining: remaining, deadline: deadline
+        ))
+        #endif
         let state = WidgetState(
             mode: mode,
             sound: layers.title,
@@ -389,6 +398,9 @@ final class Session {
     private func finish() {
         pause()
         remaining = length.seconds
+        #if os(iOS)
+        activity.end()
+        #endif
         broadcast()
     }
 
