@@ -53,6 +53,10 @@ final class Session {
     private var cues = 0
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
+    /// Whether the beat is felt as well as heard. On by default on the
+    /// devices that can: the phone is in the bed and the watch is on the
+    /// wrist, and a pulse you can feel is the point of a slow bed.
+    var haptics: Bool { didSet { applyAdjustment(); save() } }
     /// Whether the output is headphones. Binaural beats need one carrier per
     /// ear, so over speakers the layer is muted and the UI says why.
     var headphones: Bool { didSet { apply() } }
@@ -114,6 +118,8 @@ final class Session {
     private(set) var error: String?
 
     let parameters = AudioParameters()
+    /// The modulation as touch, phase-locked to the render clock.
+    private let hapticPlayer: HapticPlayer
     private let defaults: UserDefaults
     /// The folder the widget reads. Tests pass a scratch directory.
     private let widgetDirectory: URL?
@@ -178,6 +184,8 @@ final class Session {
         headTracking = defaults.bool(forKey: "headTracking")
         breathing = BreathingPattern(rawValue: defaults.string(forKey: "breathing") ?? "") ?? .none
         breathingLength = BreathingLength(rawValue: defaults.integer(forKey: "breathingLength")) ?? .session
+        haptics = defaults.object(forKey: "haptics") as? Bool ?? true
+        hapticPlayer = HapticPlayer(parameters: parameters)
         #if canImport(CoreMotion) && !os(watchOS)
         headTrackingAvailable = HeadTracker.isAvailable
         #else
@@ -299,6 +307,7 @@ final class Session {
         playStart = nil
         endMindful()
         breath.stop()
+        hapticPlayer.stop()
         inputs.forEach { $0.stop() }
         stopTimer()
         applyMaster()
@@ -426,6 +435,11 @@ final class Session {
         let depth = mode.isSleep ? base : min(0.9, base * intensity.multiplier * adjustment.depth)
         parameters.modulationDepth.store(depth, ordering: .relaxed)
         parameters.brightness.store(adjustment.brightness + mode.brightness(elapsed: elapsed), ordering: .relaxed)
+        // The same depth is handed to the actuator, so touch and sound are
+        // one waveform. Zero unless the session is playing a beat slow
+        // enough to feel and the listener asked to feel it.
+        let felt = haptics && isPlaying && mode.feelsBeat(at: elapsed, length: length)
+        hapticPlayer.update(depth: felt ? depth : 0)
     }
 
     private func applyRate() {
@@ -440,6 +454,7 @@ final class Session {
         store(volume, forKey: "volume")
         store(breathing.rawValue, forKey: "breathing")
         store(breathingLength.rawValue, forKey: "breathingLength")
+        store(haptics, forKey: "haptics")
         // Now Playing means something else on each platform, so it stays local.
         defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
@@ -457,7 +472,7 @@ final class Session {
         cloud.set(value, forKey: key)
     }
 
-    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength"]
+    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength", "haptics"]
         + Mode.allCases.map { layersKey($0) }
 
     nonisolated private static func layersKey(_ mode: Mode) -> String { "layers.\(mode.rawValue)" }
@@ -482,6 +497,8 @@ final class Session {
                 if let value = (cloud.object(forKey: key) as? String).flatMap(Intensity.init), value != intensity { intensity = value }
             case "binaural":
                 if let value = cloud.object(forKey: key) as? Bool, value != binaural { binaural = value }
+            case "haptics":
+                if let value = cloud.object(forKey: key) as? Bool, value != haptics { haptics = value }
             case "length":
                 if let value = (cloud.object(forKey: key) as? Int).flatMap(SessionLength.init), value != length { length = value }
             case "volume":

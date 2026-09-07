@@ -21,68 +21,6 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// Modulation rate in Hz. Drives both the amplitude LFO and the binaural beat.
-    /// Gamma sits at 40 Hz, the best-replicated auditory steady-state response;
-    /// Deep Sleep at the ~1 Hz slow-oscillation rate used in sleep-sound studies.
-    /// Ramping modes start here; see `ramp`.
-    var rate: Double {
-        switch self {
-        case .focus: 16
-        case .gamma: 40
-        case .relax: 10
-        case .meditate: 6
-        case .sleep, .wake: 2
-        case .deepSleep: 1
-        case .windDown: 10
-        }
-    }
-
-    /// Where a ramping mode ends and how long an endless session takes to get
-    /// there, then it holds. Wind Down walks alpha to delta at bedtime; Wake
-    /// walks delta back to beta after a nap. Nil for steady modes.
-    var ramp: (to: Double, seconds: Double)? {
-        switch self {
-        case .windDown: (2, 20 * 60)
-        case .wake: (16, 15 * 60)
-        default: nil
-        }
-    }
-
-    /// How long the ramp takes: a timed session ramps over the whole timer,
-    /// less the taper, so Wind Down arrives at 2 Hz before it fades out.
-    /// Endless sessions use the fixed length. Nil for steady modes.
-    func rampSeconds(for length: SessionLength) -> Double? {
-        guard let ramp else { return nil }
-        guard length != .endless else { return ramp.seconds }
-        return Double(length.seconds) - (tapers ? fadeOut : 0)
-    }
-
-    /// Rate after `elapsed` seconds of play. Linear in Hz, clamped at the end.
-    func rate(elapsed: Double, length: SessionLength) -> Double {
-        guard let ramp, let seconds = rampSeconds(for: length) else { return rate }
-        let progress = min(1, max(0, elapsed / seconds))
-        return rate + (ramp.to - rate) * progress
-    }
-
-    /// Amplitude modulation depth at medium intensity, 0...1. The sleep
-    /// beds move over the night (see `depth(elapsed:)`): Sleep rests
-    /// unmodulated once the listener is past onset, since a steady bed
-    /// habituates, and Deep Sleep peaks here mid-cycle. Gamma is shallow
-    /// because 40 Hz modulation sits in the roughness range and turns into
-    /// a buzz at ordinary depth.
-    var depth: Double {
-        switch self {
-        case .focus: 0.5
-        case .gamma: 0.3
-        case .relax: 0.4
-        case .meditate: 0.5
-        case .sleep: 0
-        case .deepSleep: 0.5
-        case .windDown: 0.4
-        case .wake: 0.5
-        }
-    }
-
     /// Sleep modes play a fixed noise bed that walks its own arc over the
     /// night, so soundscape and intensity are not tunable, the adaptive
     /// inputs stay out, and a timed session tapers rather than stops.

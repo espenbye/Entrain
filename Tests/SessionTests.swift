@@ -399,6 +399,48 @@ struct SessionTests {
         #expect(Mode.windDown.evolves(at: 20 * 60, length: .eightHours))
     }
 
+    /// The keyframe tables against the closed forms they replaced: the
+    /// twenty-minute onset, the ninety-minute Deep Sleep cycle and the linear
+    /// rate ramps, sampled where a night is interesting.
+    @Test func keyframeArcsMatchTheOldClosedForms() {
+        /// The raised cosine each onset segment was blended with.
+        func onset(_ elapsed: Double, from: Double, to: Double) -> Double {
+            let t = min(1, elapsed / Mode.onsetSeconds)
+            return from + (to - from) * (0.5 - 0.5 * cos(t * .pi))
+        }
+        func cycle(_ elapsed: Double) -> Double {
+            0.15 + (0.5 - 0.15) * (0.5 - 0.5 * cos(2 * .pi * elapsed / Mode.cycleSeconds))
+        }
+        func ramp(_ elapsed: Double, from: Double, to: Double, over seconds: Double) -> Double {
+            from + (to - from) * min(1, max(0, elapsed / seconds))
+        }
+
+        for minutes in [0.0, 10, 20, 45, 90] {
+            let t = minutes * 60
+            #expect(abs(Mode.sleep.depth(elapsed: t) - onset(t, from: 0.3, to: 0)) < 1e-12)
+            #expect(abs(Mode.sleep.brightness(elapsed: t) - onset(t, from: 0.3, to: -0.6)) < 1e-12)
+            #expect(abs(Mode.sleep.level(elapsed: t) - onset(t, from: 1, to: 0.6)) < 1e-12)
+
+            #expect(abs(Mode.deepSleep.depth(elapsed: t) - cycle(t)) < 1e-12)
+            #expect(abs(Mode.deepSleep.brightness(elapsed: t) - onset(t, from: 0.3, to: -0.6)) < 1e-12)
+            #expect(abs(Mode.deepSleep.level(elapsed: t) - onset(t, from: 1, to: 0.6)) < 1e-12)
+
+            let windDown = Mode.windDown.rate(elapsed: t, length: .endless)
+            #expect(abs(windDown - ramp(t, from: 10, to: 2, over: 20 * 60)) < 1e-12)
+            let wake = Mode.wake.rate(elapsed: t, length: .endless)
+            #expect(abs(wake - ramp(t, from: 2, to: 16, over: 15 * 60)) < 1e-12)
+            // A timed session stretches the same ramp over its own timer.
+            let timed = Mode.windDown.rate(elapsed: t, length: .ninety)
+            #expect(abs(timed - ramp(t, from: 10, to: 2, over: 90 * 60 - 300)) < 1e-12)
+
+            // Steady modes hold every channel, whatever the play time.
+            #expect(Mode.focus.depth(elapsed: t) == 0.5)
+            #expect(Mode.gamma.depth(elapsed: t) == 0.3)
+            #expect(Mode.relax.rate(elapsed: t, length: .endless) == 10)
+            #expect(Mode.meditate.rate(elapsed: t, length: .endless) == 6)
+        }
+    }
+
     /// The sleep beds ignore the inputs; the arc is the whole story there.
     @Test func inputsStayOutOfTheSleepBeds() async {
         final class Dim: AdaptiveInput {

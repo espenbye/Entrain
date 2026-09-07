@@ -13,6 +13,10 @@ final class VoiceSynth: @unchecked Sendable {
     private let parameters: AudioParameters
     private let sampleRate: Float
     private let soundscape: Soundscape
+    /// Whether this voice publishes the modulation phase. Every voice keeps
+    /// the same clock, so one of them speaks for the bed; a silenced voice
+    /// still advances, so it does not matter which layers are playing.
+    private let leads: Bool
 
     private var rain: Rain
     private var pad: Pad
@@ -46,6 +50,7 @@ final class VoiceSynth: @unchecked Sendable {
         self.parameters = parameters
         self.sampleRate = Float(sampleRate)
         self.soundscape = soundscape
+        leads = soundscape == Soundscape.allCases.first
         rain = Rain(sampleRate: sampleRate)
         pad = Pad(sampleRate: sampleRate)
         drone = Drone(sampleRate: sampleRate)
@@ -107,6 +112,7 @@ final class VoiceSynth: @unchecked Sendable {
             let mid = bandHigh.process(s, bandHighCoefficient) - low
             out[i] = (s - mid * pulse) * trim
         }
+        if leads { parameters.modulationPhase.store(Double(modulation.phase), ordering: .relaxed) }
     }
 }
 
