@@ -13,6 +13,11 @@ import Foundation
 /// a December one is dinner. Without a settled signature — a fresh install,
 /// a Mac, or a refusal, which look the same — the sun stands in, which is
 /// where this started.
+///
+/// The body gets one say, and only over the two work modes: on a day well
+/// outside this person's own range, Focus and Gamma become Relax. Nothing
+/// else moves — an unusual day is no reason to change what a night should
+/// sound like, and the suggestion is a suggestion either way.
 struct Suggestion: Equatable, Sendable {
     var mode: Mode
     var reason: LocalizedStringResource
@@ -24,9 +29,27 @@ struct Suggestion: Equatable, Sendable {
     static let windDownLead: TimeInterval = 3 * 3600
     /// How long before waking Wake is the suggestion.
     static let wakeLead: TimeInterval = 2 * 3600
+    /// How far outside this person's own range a day has to sit before the
+    /// body gets a say. One and a half standard deviations is the
+    /// conventional band for "unusual for this person", and below it the
+    /// day-to-day noise in both metrics is larger than anything they mean.
+    static let strain = 1.5
+
+    /// Whether today is unusual enough to be worth a lighter mode. Low
+    /// variability and a high resting heart rate are the same argument from
+    /// two directions: both track what a poor night, an illness or a hard
+    /// day before costs the autonomic system (Task Force of the ESC and
+    /// NASPE 1996; Buchheit 2014). Either on its own is enough, and neither
+    /// is a diagnosis — it is one day against sixty of this person's own.
+    static func isStrained(_ vitals: [BodyMetric: BodySignal]) -> Bool {
+        if let variability = vitals[.heartRateVariability], variability.deviation <= -strain { return true }
+        if let resting = vitals[.restingHeartRate], resting.deviation >= strain { return true }
+        return false
+    }
 
     static func at(
-        _ date: Date, day: (Date) -> SolarDay, sleep: SleepSignature? = nil, calendar: Calendar = .current
+        _ date: Date, day: (Date) -> SolarDay, sleep: SleepSignature? = nil,
+        vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
     ) -> Suggestion {
         let signature = sleep?.isSettled == true ? sleep : nil
         let today = day(date)
@@ -46,6 +69,9 @@ struct Suggestion: Equatable, Sendable {
             // stays at the far end of the afternoon until Wind Down takes over.
             let span = today.sunset.timeIntervalSince(today.sunrise)
             let p = span > 0 ? min(1, max(0, date.timeIntervalSince(today.sunrise) / span)) : 1
+            if isStrained(vitals) && p < 0.6 {
+                return Suggestion(mode: .relax, reason: "Suggested for a day below your usual")
+            }
             if p < 0.4 { return Suggestion(mode: .focus, reason: "Suggested for a bright morning") }
             if p < 0.6 { return Suggestion(mode: .gamma, reason: "Suggested for midday") }
             return Suggestion(mode: .relax, reason: "Suggested for the afternoon")

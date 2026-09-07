@@ -167,7 +167,9 @@ private struct SuggestionCard: View {
     var body: some View {
         if !session.isPlaying {
             TimelineView(.everyMinute) { context in
-                let suggestion = Suggestion.at(context.date, day: daylight.day(on:), sleep: health.sleep)
+                let suggestion = Suggestion.at(
+                    context.date, day: daylight.day(on:), sleep: health.sleep, vitals: health.vitals
+                )
                 HStack(spacing: 12) {
                     Image(systemName: suggestion.mode.symbol)
                         .font(.body.weight(.medium))

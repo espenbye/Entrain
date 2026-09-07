@@ -1432,6 +1432,16 @@
         }
       }
     },
+    "Suggested for a day below your usual" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått for en dag under det vanlige"
+          }
+        }
+      }
+    },
     "Suggested for midday" : {
       "localizations" : {
         "nb" : {

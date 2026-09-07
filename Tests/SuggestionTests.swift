@@ -58,6 +58,42 @@ struct SuggestionTests {
         #expect(Self.at(5, sleep: scattered) == .wake)
     }
 
+    // MARK: The body's one say
+
+    static func vitals(_ metric: BodyMetric, _ deviation: Double) -> [BodyMetric: BodySignal] {
+        [metric: BodySignal(metric: metric, today: 0, baseline: 0, deviation: deviation, days: 30)]
+    }
+
+    static func at(_ hour: Int, vitals: [BodyMetric: BodySignal]) -> Mode {
+        Suggestion.at(
+            date(hour), day: { SolarDay.clock(on: $0, calendar: calendar) },
+            vitals: vitals, calendar: calendar
+        ).mode
+    }
+
+    /// A day well below this person's own variability, or well above their
+    /// own resting heart rate, argues the work modes down to Relax.
+    @Test func aStrainedDayTradesTheWorkModesForRelax() {
+        #expect(Self.at(9, vitals: Self.vitals(.heartRateVariability, -2)) == .relax)
+        #expect(Self.at(13, vitals: Self.vitals(.heartRateVariability, -2)) == .relax)
+        #expect(Self.at(9, vitals: Self.vitals(.restingHeartRate, 2)) == .relax)
+    }
+
+    /// It gets no say anywhere else, and none at all inside the ordinary range.
+    @Test func theBodyOnlyEverArguesWithTheWorkModes() {
+        let strained = Self.vitals(.heartRateVariability, -2)
+        #expect(Self.at(16, vitals: strained) == .relax)
+        #expect(Self.at(20, vitals: strained) == .windDown)
+        #expect(Self.at(23, vitals: strained) == .sleep)
+        #expect(Self.at(5, vitals: strained) == .wake)
+
+        // Inside the range, and the wrong way round, change nothing.
+        #expect(Self.at(9, vitals: Self.vitals(.heartRateVariability, -1)) == .focus)
+        #expect(Self.at(9, vitals: Self.vitals(.heartRateVariability, 2)) == .focus)
+        #expect(Self.at(9, vitals: Self.vitals(.restingHeartRate, -2)) == .focus)
+        #expect(Self.at(13, vitals: [:]) == .gamma)
+    }
+
     /// Every minute of the day lands on exactly one mode, with a signature
     /// and without: no hour falls through the night's edges into nothing.
     @Test func everyMinuteHasASuggestion() {
