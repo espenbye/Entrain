@@ -10,7 +10,7 @@ import WidgetKit
 final class Session {
     static let shared = Session(
         defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default,
-        inputs: [Circadian(daylight: Daylight.shared)]
+        inputs: [Circadian(daylight: Daylight.shared)], health: HealthSignals.shared
     ) {
         AudioEngine(parameters: $0)
     }
@@ -22,6 +22,7 @@ final class Session {
             playStart = isPlaying ? .now : nil
             if isPlaying {
                 startMindful()
+                startBody()
                 // An input may care which mode it serves; it starts over.
                 inputs.forEach { $0.stop() }
                 inputs.forEach { $0.start(for: mode) }
@@ -125,6 +126,10 @@ final class Session {
     private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     private let mindful: (any MindfulLog)?
+    /// What Health has to say about this body. Nil in tests and on the Mac,
+    /// and empty until there is anything to say, in which case every arc
+    /// below falls back to the figure it always used.
+    private let health: HealthSignals?
     /// Context and body inputs, running only while the session plays. Each
     /// contributes an `Adjustment`; `applyAdjustment` composes them.
     private let inputs: [any AdaptiveInput]
@@ -152,6 +157,8 @@ final class Session {
     /// What the widget last got. iOS budgets a few dozen reloads a day, so
     /// only a snapshot that differs from it is written and reloaded.
     private var widgetState: WidgetState?
+    /// The current mode's arc, compiled around this listener's own onset.
+    private var arc = Mode.focus.arc
     #if os(iOS)
     private let activity = SessionLiveActivity()
     #endif
@@ -165,11 +172,13 @@ final class Session {
         mindful: (any MindfulLog)? = nil,
         cloud: (any SettingsStore)? = nil,
         inputs: [any AdaptiveInput] = [],
+        health: HealthSignals? = nil,
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
         self.mindful = mindful
+        self.health = health
         self.cloud = cloud
         self.inputs = inputs
         self.makeEngine = makeEngine
@@ -262,6 +271,14 @@ final class Session {
         played + (playStart.map { Self.seconds(since: $0) } ?? 0)
     }
 
+    /// How long the sleep bed takes to settle: this listener's own habitual
+    /// sleep latency when Health knows it, the population figure otherwise.
+    private var onset: Double { health?.sleep?.onset ?? Mode.onsetSeconds }
+
+    /// The mode's keyframe table compiled around that onset. Rebuilt when
+    /// the mode or the settings change, never on the once-a-second tick.
+    private func compileArc() { arc = mode.arc(onset: onset) }
+
     func toggle() async {
         if isPlaying { pause() } else { await play() }
     }
@@ -291,9 +308,11 @@ final class Session {
         isPlaying = true
         playStart = .now
         startMindful()
+        startBody()
         startBreathing()
         inputs.forEach { $0.start(for: mode) }
         startTimer()
+        compileArc()
         applyArc()
         playCue()
         broadcast()
@@ -306,6 +325,7 @@ final class Session {
         played = playTime
         playStart = nil
         endMindful()
+        stopBody()
         breath.stop()
         hapticPlayer.stop()
         inputs.forEach { $0.stop() }
@@ -380,6 +400,27 @@ final class Session {
         mindful?.log(DateInterval(start: start, end: .now))
     }
 
+    // MARK: Body
+
+    /// A mode that ends in bed just started, which is the one moment
+    /// reading last night is obviously the point, so it is when Health may
+    /// ask. Like the mindful log it never blocks the session, and a refusal
+    /// looks exactly like an empty Health store, which everything downstream
+    /// already handles. On the watch, a rest mode also starts the heart.
+    private func startBody() {
+        if mode.purpose == .sleep { health?.prepare() }
+        #if os(watchOS)
+        let mode = mode
+        Task { await LiveHeartRate.shared.start(for: mode) }
+        #endif
+    }
+
+    private func stopBody() {
+        #if os(watchOS)
+        LiveHeartRate.shared.stop()
+        #endif
+    }
+
     // MARK: Breathing
 
     /// The exercise runs while Meditate plays with a pattern chosen, from
@@ -406,6 +447,7 @@ final class Session {
 
     private func apply() {
         let p = parameters
+        compileArc()
         applyArc()
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
@@ -430,11 +472,11 @@ final class Session {
     /// top would only blur it.
     private func applyAdjustment() {
         let elapsed = playTime
-        let base = mode.depth(elapsed: elapsed)
+        let base = arc.depth.value(at: elapsed)
         let adjustment = mode.isSleep ? .none : inputs.reduce(Adjustment.none) { $0.combined(with: $1.adjustment) }
         let depth = mode.isSleep ? base : min(0.9, base * intensity.multiplier * adjustment.depth)
         parameters.modulationDepth.store(depth, ordering: .relaxed)
-        parameters.brightness.store(adjustment.brightness + mode.brightness(elapsed: elapsed), ordering: .relaxed)
+        parameters.brightness.store(adjustment.brightness + arc.brightness.value(at: elapsed), ordering: .relaxed)
         // The same depth is handed to the actuator, so touch and sound are
         // one waveform. Zero unless the session is playing a beat slow
         // enough to feel and the listener asked to feel it.
@@ -522,7 +564,9 @@ final class Session {
     /// The mode's level over play time, tapering linearly over its fade-out
     /// as a timed session runs down. The synths smooth the one-second steps.
     private func applyMaster() {
-        let gain = isPlaying ? Self.masterGain(remaining: remaining, fadeOut: mode.fadeOut) * mode.level(elapsed: playTime) : 0
+        let gain = isPlaying
+            ? Self.masterGain(remaining: remaining, fadeOut: mode.fadeOut) * arc.level.value(at: playTime)
+            : 0
         parameters.master.store(gain, ordering: .relaxed)
     }
 
@@ -577,7 +621,7 @@ final class Session {
         tickTask?.cancel()
         tickTask = nil
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
-        guard deadline != nil || mode.evolves(at: playTime, length: length) else { return }
+        guard deadline != nil || mode.evolves(at: playTime, length: length, in: arc) else { return }
         self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
@@ -585,7 +629,7 @@ final class Session {
                 if let left { remaining = left }
                 applyArc()
                 guard let deadline, let left else {
-                    if !mode.evolves(at: playTime, length: length) {
+                    if !mode.evolves(at: playTime, length: length, in: arc) {
                         tickTask = nil
                         return
                     }

@@ -4,28 +4,33 @@ import Foundation
 /// mode. Nothing here reads the clock: the session passes play time in, so
 /// pausing holds the arc and switching mode starts it over.
 ///
-/// The first twenty minutes of a sleep bed are the onset. Sleep latency in
-/// the healthy adult is ten to twenty minutes, so the bed is at its most
+/// The first stretch of a sleep bed is the onset. Sleep latency in the
+/// healthy adult is ten to twenty minutes, so the bed is at its most
 /// present when the listener is awake and processing the room, and settles
 /// once they are past that: a little slow modulation to follow, a brighter
 /// bed that masks more, at full level; then no modulation, a darker bed, a
 /// few decibels down. Sound that stays loud past onset lifts arousals for
 /// the rest of the night, and a bed that is featureless from the first
-/// second gives the waking mind nothing to hold on to.
+/// second gives the waking mind nothing to hold on to. Twenty minutes is
+/// the population figure; where Health knows how long this listener
+/// actually takes to fall asleep, the session builds the table around that
+/// instead (`SleepSignature.onset`).
 ///
 /// Deep Sleep swells the bed at 1 Hz, the slow-oscillation rate, but not
 /// evenly: slow-wave sleep peaks in the middle of each ninety-minute cycle
 /// and gives way to REM at its end, so the depth follows that cycle, deep
-/// around the forty-fifth minute of each and shallow between. Open-loop
-/// modulation cannot find the up-phase the way closed-loop stimulation
-/// does, so it stays moderate and steps out of the way where the cycle is
-/// lightest rather than pushing all night.
+/// around the forty-fifth minute of each and shallow between. The cycle is
+/// counted from sleep onset, which is where the sleep literature measures
+/// it from, and not from the tap that started the sound, so it waits the
+/// onset out first. Open-loop modulation cannot find the up-phase the way
+/// closed-loop stimulation does, so it stays moderate and steps out of the
+/// way where the cycle is lightest rather than pushing all night.
 ///
 /// Wind Down walks alpha to delta at bedtime and Wake walks delta back to
 /// beta after a nap. Their rate keyframes are written over a nominal ramp
 /// and stretched to the session's; see `rampSeconds(for:)`.
 extension Mode {
-    /// Seconds over which a sleep bed settles.
+    /// Seconds over which a sleep bed settles, before Health knows better.
     static let onsetSeconds: Double = 20 * 60
     /// One sleep cycle.
     static let cycleSeconds: Double = 90 * 60
@@ -33,7 +38,7 @@ extension Mode {
     /// The whole of a mode's behaviour over time. Every mode names its rate
     /// and depth at time zero; a channel no keyframe names holds its default,
     /// which is a flat bed at full level.
-    var keyframes: [Keyframe] {
+    func keyframes(onset: Double = Mode.onsetSeconds) -> [Keyframe] {
         switch self {
         case .focus: [Keyframe(0, rate: 16, depth: 0.5)]
         // Gamma sits at 40 Hz, the best-replicated auditory steady-state
@@ -44,13 +49,15 @@ extension Mode {
         case .meditate: [Keyframe(0, rate: 6, depth: 0.5)]
         case .sleep: [
             Keyframe(0, rate: 2, depth: 0.3, brightness: 0.3, level: 1),
-            Keyframe(Self.onsetSeconds, depth: 0, brightness: -0.6, level: 0.6),
+            Keyframe(onset, depth: 0, brightness: -0.6, level: 0.6),
         ]
+        // The depth keyframes run from the onset, so the cycle starts where
+        // sleep does; `Track` repeats over the last cycle's worth of them.
         case .deepSleep: [
             Keyframe(0, rate: 1, depth: 0.15, brightness: 0.3, level: 1),
-            Keyframe(Self.onsetSeconds, brightness: -0.6, level: 0.6),
-            Keyframe(Self.cycleSeconds / 2, depth: 0.5),
-            Keyframe(Self.cycleSeconds, depth: 0.15),
+            Keyframe(onset, depth: 0.15, brightness: -0.6, level: 0.6),
+            Keyframe(onset + Self.cycleSeconds / 2, depth: 0.5),
+            Keyframe(onset + Self.cycleSeconds, depth: 0.15),
         ]
         case .windDown: [Keyframe(0, rate: 10, depth: 0.4), Keyframe(20 * 60, rate: 2)]
         case .wake: [Keyframe(0, rate: 2, depth: 0.5), Keyframe(15 * 60, rate: 16)]
@@ -61,8 +68,17 @@ extension Mode {
     /// cycle, and only its depth reaches the end of it, so only its depth repeats.
     var arc: Arc { Self.arcs[self]! }
 
+    /// The same, around a listener's own sleep onset. The usual twenty
+    /// minutes is compiled once per mode at launch; anything else is built
+    /// here, so the session holds the result rather than asking each tick.
+    func arc(onset: Double) -> Arc {
+        onset == Self.onsetSeconds
+            ? arc
+            : Arc(keyframes(onset: onset), cycle: self == .deepSleep ? Self.cycleSeconds : nil)
+    }
+
     private static let arcs: [Mode: Arc] = Dictionary(uniqueKeysWithValues: Mode.allCases.map {
-        ($0, Arc($0.keyframes, cycle: $0 == .deepSleep ? cycleSeconds : nil))
+        ($0, Arc($0.keyframes(), cycle: $0 == .deepSleep ? cycleSeconds : nil))
     })
 
     /// How long the rate ramp takes: a timed session ramps over the whole
@@ -95,9 +111,9 @@ extension Mode {
     /// Whether the sound is still moving on its own `elapsed` seconds in: a
     /// rate ramp under way, an onset settling, or the Deep Sleep cycle,
     /// which never rests. An endless session stops ticking once this is false.
-    func evolves(at elapsed: Double, length: SessionLength) -> Bool {
+    func evolves(at elapsed: Double, length: SessionLength, in arc: Arc? = nil) -> Bool {
         if let seconds = rampSeconds(for: length), elapsed < seconds { return true }
-        return elapsed < arc.settles
+        return elapsed < (arc ?? self.arc).settles
     }
 
     /// The signature that opens the modes that end in bed. Always the same
@@ -140,9 +156,10 @@ struct Arc: Sendable {
     /// while a track repeats.
     let settles: Double
 
-    /// A track that reaches `cycle` repeats from there; one that ends sooner
-    /// holds its last value, which is what keeps the Deep Sleep onset from
-    /// starting over every ninety minutes.
+    /// A track whose keyframes span `cycle` repeats over its last cycle's
+    /// worth of them; one that ends sooner holds its last value, which is
+    /// what keeps the Deep Sleep onset from starting over every ninety
+    /// minutes.
     init(_ keyframes: [Keyframe], cycle: Double? = nil) {
         rate = Track(keyframes, \.rate, default: 0, shape: .linear, cycle: cycle)
         depth = Track(keyframes, \.depth, default: 0, cycle: cycle)
@@ -155,8 +172,10 @@ struct Arc: Sendable {
 /// One channel of an arc.
 struct Track: Sendable {
     private let curve: Curve
-    /// Set when the track repeats, and how long one turn takes.
-    private let cycle: Double?
+    /// Set when the track repeats: how long one turn takes, and when the
+    /// first one begins. Deep Sleep's cycle starts at sleep onset rather
+    /// than at the tap, so the repeat needs a start as well as a length.
+    private let cycle: (length: Double, start: Double)?
     /// The last keyframe that names this channel. Zero when it never moves.
     let end: Double
 
@@ -166,15 +185,17 @@ struct Track: Sendable {
     ) {
         let points = keyframes.compactMap { key in key[keyPath: channel].map { (key.time, $0) } }
         curve = Curve(points.isEmpty ? [(0, fallback)] : points, shape: shape)
-        end = points.last?.0 ?? 0
-        self.cycle = end > 0 && end == cycle ? cycle : nil
+        let last = points.last?.0 ?? 0
+        end = last
+        self.cycle = cycle.flatMap { $0 > 0 && last >= $0 ? (length: $0, start: last - $0) : nil }
     }
 
     /// Play seconds after which the track holds still.
     var settles: Double { cycle == nil ? end : .infinity }
 
     func value(at time: Double) -> Double {
-        curve.value(at: cycle.map { time.truncatingRemainder(dividingBy: $0) } ?? time)
+        guard let cycle, time > cycle.start else { return curve.value(at: time) }
+        return curve.value(at: cycle.start + (time - cycle.start).truncatingRemainder(dividingBy: cycle.length))
     }
 }
 
