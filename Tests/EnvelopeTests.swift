@@ -59,8 +59,8 @@ struct EnvelopeTests {
     /// gain any either.
     @Test(arguments: [Mode.gamma, .sleep, .deepSleep])
     func theSmoothModesDoNotGainRoughness(_ mode: Mode) {
-        let sine = Roughness.of(Spectrum(peak: 0.5), rate: mode.rate, depth: mode.depth)
-        let shaped = Roughness.of(Spectrum(peak: Float(mode.envelope)), rate: mode.rate, depth: mode.depth)
+        let sine = Roughness.of(Spectrum(peak: 0.5), rate: Self.start(of: mode), depth: Self.deepest(mode))
+        let shaped = Roughness.of(Spectrum(peak: Float(mode.envelope)), rate: Self.start(of: mode), depth: Self.deepest(mode))
         #expect(shaped <= sine, "\(mode.title) roughness rose from \(sine) to \(shaped)")
     }
 
@@ -70,14 +70,25 @@ struct EnvelopeTests {
     /// checked at every rate they pass through, not just the one they start on.
     @Test(arguments: Mode.allCases)
     func noModeIsRougherThanGammaAlreadyWas(_ mode: Mode) {
-        let ceiling = Roughness.of(Spectrum(peak: 0.5), rate: Mode.gamma.rate, depth: Mode.gamma.depth)
+        let ceiling = Roughness.of(Spectrum(peak: 0.5), rate: Self.start(of: .gamma), depth: Self.deepest(.gamma))
         let spectrum = Spectrum(peak: Float(mode.envelope))
-        let last = mode.ramp?.to ?? mode.rate
+        let first = Self.start(of: mode)
+        let last = mode.arc.rate.value(at: mode.arc.rate.end)
         for step in 0...8 {
-            let rate = mode.rate + (last - mode.rate) * Double(step) / 8
-            let measured = Roughness.of(spectrum, rate: rate, depth: mode.depth)
+            let rate = first + (last - first) * Double(step) / 8
+            let measured = Roughness.of(spectrum, rate: rate, depth: Self.deepest(mode))
             #expect(measured <= ceiling, "\(mode.title) at \(rate) Hz measures \(measured), ceiling \(ceiling)")
         }
+    }
+
+    /// The rate a mode opens on, before any ramp.
+    private static func start(of mode: Mode) -> Double { mode.rate(elapsed: 0, length: .endless) }
+
+    /// The deepest a mode ever modulates. The sleep beds move over the night,
+    /// and roughness grows with depth, so the ceiling has to be checked where
+    /// each mode is at its worst rather than where it starts.
+    private static func deepest(_ mode: Mode) -> Double {
+        stride(from: 0.0, through: 3 * 3600, by: 60).map { mode.depth(elapsed: $0) }.max() ?? 0
     }
 }
 

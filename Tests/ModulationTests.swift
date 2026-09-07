@@ -30,8 +30,8 @@ struct ModulationTests {
     }
 
     static func store(_ mode: Mode, into parameters: AudioParameters) {
-        parameters.modulationRate.store(mode.rate, ordering: .relaxed)
-        parameters.modulationDepth.store(mode.depth, ordering: .relaxed)
+        parameters.modulationRate.store(mode.rate(elapsed: 0, length: .endless), ordering: .relaxed)
+        parameters.modulationDepth.store(mode.depth(elapsed: 0), ordering: .relaxed)
         parameters.modulationShape.store(mode.envelope, ordering: .relaxed)
         parameters.tonality.store(mode.tonality.rawValue, ordering: .relaxed)
     }

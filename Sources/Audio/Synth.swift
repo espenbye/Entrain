@@ -146,6 +146,9 @@ final class VoiceSynth: @unchecked Sendable {
             let mid = bandHigh.process(s, bandHighCoefficient) - low
             out[i] = (s - mid * pulse) * trim
         }
+        // The leading soundscape is the one with no rotation, so the phase
+        // the haptics follow is the phase they would have followed before
+        // the layers were spread around the cycle.
         if leads { parameters.modulationPhase.store(Double(modulation.phase), ordering: .relaxed) }
     }
 }
