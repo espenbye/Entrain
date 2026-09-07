@@ -153,7 +153,8 @@ targets:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
-        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        # No iCloud key-value store: personal teams cannot provision it, so
+        # settings sync comes from an archive signed with AppStore/EntrainiOS.entitlements.
     dependencies:
       - target: EntrainWidgetiOS
       - target: EntrainWatch
@@ -201,8 +202,7 @@ targets:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
-        # The phone's store, so the watch shares its settings.
-        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)no.espenbye.entrain
+        # iCloud key-value store only in AppStore/EntrainWatch.entitlements, as on iOS.
     dependencies:
       - target: EntrainWidgetWatch
     settings:
