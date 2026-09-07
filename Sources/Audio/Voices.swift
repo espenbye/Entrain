@@ -1,5 +1,68 @@
 import Foundation
 
+/// The intervals and the register the tuned voices share in a mode. Mood is
+/// carried by the interval set more than by any filter: a minor scale reads
+/// melancholic wherever the cutoff sits, which is the wrong thing to hand
+/// someone who asked to be woken up. The pad and the drone read the same
+/// one, so the two can no longer end up a fourth apart by accident.
+///
+/// Register is part of it. The tonic moves only a few semitones between the
+/// three, enough to sit differently without moving either voice far enough
+/// to need its own trim; `LoudnessTests` measures all three.
+enum Tonality: Int, CaseIterable, Sendable {
+    /// Fourths and fifths and no third at all, so nothing states major or
+    /// minor. Nothing to feel about, and wide enough spacing that little of
+    /// the pad lands where speech does.
+    case open
+    /// Major pentatonic. However the pad walks it every pair of degrees is
+    /// consonant, and there is no leading tone anywhere to pull.
+    case warm
+    /// Minor pentatonic, low and narrow: the dark end, and near enough to
+    /// static that a note change barely registers.
+    case dark
+
+    /// The tonic in Hz, in the octave the drone holds. The pad plays the
+    /// same tonic an octave above it.
+    var root: Float {
+        switch self {
+        case .open: 73.42   // D2
+        case .warm: 82.41   // E2
+        case .dark: 65.41   // C2
+        }
+    }
+
+    /// Semitones above the pad's root. Static storage: a literal here would
+    /// allocate on the render thread every time the pad asked.
+    var degrees: [Float] {
+        switch self {
+        case .open: Self.openDegrees
+        case .warm: Self.warmDegrees
+        case .dark: Self.darkDegrees
+        }
+    }
+
+    private static let openDegrees: [Float] = [0, 5, 7, 12, 17, 19, 24]
+    private static let warmDegrees: [Float] = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21]
+    private static let darkDegrees: [Float] = [0, 3, 5, 7, 10, 12, 15, 17, 19, 22]
+}
+
+extension Mode {
+    /// The intervals and register the pad and the drone share here. Only a
+    /// filter cutoff used to move between modes, which left every mode on the
+    /// same minor pentatonic: melancholic under Wake, and arguable under
+    /// Relax. Work gets an open set with no third to read anything into, rest
+    /// and waking a warm one, and what ends in bed keeps the dark one. It
+    /// lives here rather than beside the rest of `Mode`, which the widget
+    /// compiles too and which has no business knowing about oscillators.
+    var tonality: Tonality {
+        switch self {
+        case .focus, .gamma: .open
+        case .relax, .meditate, .wake: .warm
+        case .windDown, .sleep, .deepSleep: .dark
+        }
+    }
+}
+
 /// Filtered pink noise with sparse high droplets.
 struct Rain {
     private var noise = PinkNoise()
@@ -44,45 +107,65 @@ struct Rain {
     }
 }
 
-/// Four detuned sine pairs walking a minor pentatonic scale.
+/// Four detuned sine pairs walking the mode's scale, an octave above the
+/// root the drone holds.
 struct Pad {
-    private static let scale: [Float] = [0, 3, 5, 7, 10, 12, 15, 17, 19, 22]
-    private static let root: Float = 110
-
     private struct Voice {
         var a = Phasor()
         var b = Phasor()
         var increment: Float = 0
         var level: Smoother
         var pendingNote: Int?
+        /// Samples until this voice starts moving to a new tonality. Zero
+        /// when there is nothing to move to.
+        var retuneIn = 0
     }
 
     private var voices: [Voice]
     private var lowpass = OnePoleLowpass()
     private var coefficient: Float = 0
     private var untilChange: Int
+    private var tonality: Tonality
+    /// The current tonality's degrees, held here rather than reached for
+    /// through the enum, so the render path only touches stored properties.
+    private var degrees: [Float]
     private let sampleRate: Float
+    /// How far apart the four voices start moving when the tonality changes.
+    /// Retuning fades a voice out and back, so staggering them keeps at most
+    /// two down at once instead of taking the whole pad away for three seconds.
+    private let retuneStagger: Int
 
-    init(sampleRate: Double) {
+    init(sampleRate: Double, tonality: Tonality = .open) {
         self.sampleRate = Float(sampleRate)
+        self.tonality = tonality
+        degrees = tonality.degrees
         untilChange = Int(sampleRate * 4)
+        retuneStagger = Int(sampleRate * 0.6)
         var rng = XorShift(state: 0xA53C_9F17)
+        let scale = tonality.degrees
         voices = (0..<4).map { i in
             var v = Voice(level: Smoother(1, seconds: 3, sampleRate: sampleRate))
-            v.increment = Pad.frequency(note: i * 2 + Int(rng.unit() * 2)) / Float(sampleRate)
+            let note = i * scale.count / 4 + Int(rng.unit() * 2)
+            v.increment = Pad.frequency(note: note, of: tonality, degrees: scale) / Float(sampleRate)
             return v
         }
-        prepare(lfo: 0)
+        prepare(lfo: 0, tonality: tonality)
     }
 
-    private static func frequency(note: Int) -> Float {
-        root * pow(2, scale[note % scale.count] / 12)
+    /// The pad sits an octave above the tonic the drone holds.
+    private static func frequency(note: Int, of tonality: Tonality, degrees: [Float]) -> Float {
+        2 * tonality.root * pow(2, degrees[note % degrees.count] / 12)
     }
 
     /// Once per block. `lfo` in -1...1 moves the filter cutoff; `brightness`
-    /// scales it, 1 being where the voice was tuned.
-    mutating func prepare(lfo: Float, brightness: Float = 1) {
+    /// scales it, 1 being where the voice was tuned. A new `tonality` sends
+    /// the four voices to it one after another.
+    mutating func prepare(lfo: Float, brightness: Float = 1, tonality: Tonality) {
         coefficient = OnePoleLowpass.coefficient(cutoff: (900 + 500 * lfo) * brightness, sampleRate: sampleRate)
+        guard tonality != self.tonality else { return }
+        self.tonality = tonality
+        degrees = tonality.degrees
+        for i in voices.indices { voices[i].retuneIn = i * retuneStagger + 1 }
     }
 
     mutating func next(rng: inout XorShift) -> Float {
@@ -91,16 +174,23 @@ struct Pad {
             untilChange = Int(sampleRate * (8 + 12 * rng.unit()))
             let i = Int(rng.unit() * 4) % 4
             if voices[i].pendingNote == nil {
-                voices[i].pendingNote = Int(rng.unit() * Float(Pad.scale.count))
+                voices[i].pendingNote = Int(rng.unit() * Float(degrees.count))
                 voices[i].level.target = 0
             }
         }
 
         var s: Float = 0
         for i in voices.indices {
+            if voices[i].retuneIn > 0 {
+                voices[i].retuneIn -= 1
+                if voices[i].retuneIn == 0, voices[i].pendingNote == nil {
+                    voices[i].pendingNote = i * degrees.count / 4
+                    voices[i].level.target = 0
+                }
+            }
             let level = voices[i].level.next()
             if let note = voices[i].pendingNote, level < 0.005 {
-                voices[i].increment = Pad.frequency(note: note) / sampleRate
+                voices[i].increment = Pad.frequency(note: note, of: tonality, degrees: degrees) / sampleRate
                 voices[i].pendingNote = nil
                 voices[i].level.target = 1
             }
@@ -114,9 +204,8 @@ struct Pad {
     }
 }
 
-/// Root plus fifth with slowly beating harmonics.
+/// The mode's tonic plus its fifth, with slowly beating harmonics.
 struct Drone {
-    private static let base: Float = 82.41
     /// Harmonic gains 1/n^1.4 for n in 1...6.
     private static let harmonicGains: [Float] = (1...6).map { pow(Float($0), -1.4) }
 
@@ -125,29 +214,39 @@ struct Drone {
     private var fifthDetuned = Phasor()
     private var lowpass = OnePoleLowpass()
     private var coefficient: Float = 0
-    private var detunedIncrement: Float = 0
-    private let rootIncrement: Float
-    private let fifthIncrement: Float
-    private let sampleRate: Float
+    /// How far the second fifth sits off the first, in Hz: what beats.
+    private var detune: Float = 0
+    /// The tonic. Glided rather than stepped, so a mode change moves the
+    /// drone without a discontinuity and without a fade.
+    private var base: Smoother
+    private var tonality: Tonality
+    private let perSample: Float
 
-    init(sampleRate: Double) {
-        self.sampleRate = Float(sampleRate)
-        rootIncrement = Drone.base / Float(sampleRate)
-        fifthIncrement = Drone.base * 1.5 / Float(sampleRate)
-        prepare(lfo: 0)
+    init(sampleRate: Double, tonality: Tonality = .open) {
+        self.tonality = tonality
+        perSample = 1 / Float(sampleRate)
+        base = Smoother(tonality.root, seconds: 2, sampleRate: sampleRate)
+        prepare(lfo: 0, tonality: tonality)
     }
 
     /// Once per block. `lfo` in -1...1 moves the filter cutoff and the beat
-    /// rate; `brightness` scales the cutoff, 1 being where the voice was tuned.
-    mutating func prepare(lfo: Float, brightness: Float = 1) {
-        coefficient = OnePoleLowpass.coefficient(cutoff: (500 + 200 * lfo) * brightness, sampleRate: sampleRate)
-        detunedIncrement = (Drone.base * 1.5 + 0.3 + 0.2 * lfo) / sampleRate
+    /// rate; `brightness` scales the cutoff, 1 being where the voice was
+    /// tuned. A new `tonality` starts the glide to its tonic.
+    mutating func prepare(lfo: Float, brightness: Float = 1, tonality: Tonality) {
+        coefficient = OnePoleLowpass.coefficient(
+            cutoff: (500 + 200 * lfo) * brightness, sampleRate: 1 / perSample
+        )
+        detune = 0.3 + 0.2 * lfo
+        guard tonality != self.tonality else { return }
+        self.tonality = tonality
+        base.target = tonality.root
     }
 
     mutating func next() -> Float {
-        let r = root.next(rootIncrement)
-        let f = fifth.next(fifthIncrement)
-        let fd = fifthDetuned.next(detunedIncrement)
+        let hz = base.next()
+        let r = root.next(hz * perSample)
+        let f = fifth.next(hz * 1.5 * perSample)
+        let fd = fifthDetuned.next((hz * 1.5 + detune) * perSample)
 
         var s: Float = 0
         for (i, gain) in Drone.harmonicGains.enumerated() {

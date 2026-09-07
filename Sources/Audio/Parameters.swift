@@ -13,6 +13,9 @@ final class AudioParameters: Sendable {
     let brightness = Atomic<Double>(0)
     let binauralCarrier = Atomic<Double>(200)
     let binauralLevel = Atomic<Double>(0)
+    /// The mode's `Tonality`, by raw value: the intervals and root the pad
+    /// and the drone share.
+    let tonality = Atomic<Int>(Tonality.open.rawValue)
     /// Bitmask of active soundscapes, one bit per `Soundscape` index.
     let layers = Atomic<Int>(1)
     /// 0...1. The synths ramp toward it over a second, so play and pause fade

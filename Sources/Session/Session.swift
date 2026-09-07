@@ -450,6 +450,7 @@ final class Session {
         compileArc()
         applyArc()
         p.modulationShape.store(mode.envelope, ordering: .relaxed)
+        p.tonality.store(mode.tonality.rawValue, ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)

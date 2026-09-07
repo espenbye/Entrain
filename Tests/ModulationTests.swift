@@ -22,6 +22,20 @@ struct ModulationTests {
         return parameters
     }
 
+    /// The same, set up as a mode leaves them.
+    static func parameters(layers: Int, mode: Mode) -> AudioParameters {
+        let parameters = parameters(layers: layers)
+        store(mode, into: parameters)
+        return parameters
+    }
+
+    static func store(_ mode: Mode, into parameters: AudioParameters) {
+        parameters.modulationRate.store(mode.rate, ordering: .relaxed)
+        parameters.modulationDepth.store(mode.depth, ordering: .relaxed)
+        parameters.modulationShape.store(mode.envelope, ordering: .relaxed)
+        parameters.tonality.store(mode.tonality.rawValue, ordering: .relaxed)
+    }
+
     /// The offsets are exactly the rotations they are meant to be: Pad half a
     /// cycle from Rain, Drone a quarter, Noise together with Rain. Measured
     /// off the rendered audio, so it covers the lookup as well as the table.
@@ -67,6 +81,67 @@ struct ModulationTests {
             together < 0.7 * min(alone[0], alone[1]),
             "Rain and Pad together modulate \(together), alone \(alone[0]) and \(alone[1])"
         )
+    }
+
+    /// A mode change moves the rate, the envelope shape and the tonality at
+    /// once, none of which may be heard as a click. The two tuned voices are
+    /// the exposed ones, and each is measured alone: the pad has to retune
+    /// four oscillators and the drone has to glide, and neither has noise to
+    /// hide a step under.
+    ///
+    /// A click is an edge the signal could not have produced on its own, so
+    /// the transition is held against both settled ends rather than against
+    /// the one it starts from. The two are not alike: the dark drone's
+    /// partials sit further inside its lowpass than the open drone's, so it
+    /// legitimately carries more edge once it arrives.
+    ///
+    /// It answers to a gross discontinuity, not to a subtle one: both voices
+    /// end in a one-pole lowpass, which damps a step badly enough that a
+    /// single oscillator changing pitch mid-cycle lands well under what the
+    /// voice already carries. What it does catch is a whole voice appearing
+    /// or vanishing, which is what a retune without a fade would be.
+    @Test(arguments: Soundscape.tuned)
+    func changingModeDoesNotClick(_ soundscape: Soundscape) {
+        let ends = [Mode.focus, .windDown].map { mode -> Float in
+            let bed = BedSynth(parameters: Self.parameters(layers: soundscape.bit, mode: mode), sampleRate: Self.sampleRate)
+            _ = Self.sharpestEdge(of: bed, seconds: 5)
+            return Self.sharpestEdge(of: bed, seconds: 10)
+        }
+
+        let parameters = Self.parameters(layers: soundscape.bit, mode: .focus)
+        let bed = BedSynth(parameters: parameters, sampleRate: Self.sampleRate)
+        _ = Self.sharpestEdge(of: bed, seconds: 5)
+        Self.store(Mode.windDown, into: parameters)
+        // Long enough to cover the glide, all four staggered retunes and the
+        // three-second fade the last of them ends with.
+        let changing = Self.sharpestEdge(of: bed, seconds: 10)
+
+        let settled = max(ends[0], ends[1])
+        #expect(changing <= settled * 1.2, "\(soundscape.title) edged \(changing), settled ends edge \(ends)")
+    }
+
+    /// The sharpest edge in the span. A fourth difference is a steep
+    /// high-pass: it all but ignores what these voices are made of, none of
+    /// which survives their own lowpass much above a kilohertz, and answers
+    /// to the near-vertical edge a click is.
+    static func sharpestEdge(of bed: BedSynth, seconds: Double) -> Float {
+        var left = [Float](repeating: 0, count: block)
+        var right = [Float](repeating: 0, count: block)
+        var sharpest: Float = 0
+        var history: (Float, Float, Float, Float) = (0, 0, 0, 0)
+        for _ in 0..<Int(seconds * sampleRate) / block {
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    bed.render(frames: block, left: l.baseAddress!, right: r.baseAddress!)
+                }
+            }
+            for sample in left {
+                let edge = sample - 4 * history.0 + 6 * history.1 - 4 * history.2 + history.3
+                sharpest = max(sharpest, abs(edge))
+                history = (sample, history.0, history.1, history.2)
+            }
+        }
+        return sharpest
     }
 
     /// What the modulation alone does to a voice, one value per block. The

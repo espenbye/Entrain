@@ -19,6 +19,20 @@ struct LoudnessTests {
         #expect(measured.peak < 1, "\(soundscape.title) clips at \(measured.peak)")
     }
 
+    /// The tuned voices change intervals and register with the mode, so each
+    /// tonality is measured on its own: changing mode may not be a change of
+    /// volume. The three roots sit within a few semitones and the trims are
+    /// shared, which only works while they measure alike.
+    @Test(arguments: Soundscape.tuned, Tonality.allCases)
+    func tunedVoicesHoldTheirLevelInEveryTonality(_ soundscape: Soundscape, _ tonality: Tonality) {
+        let measured = Meter.loudness(of: soundscape, sampleRate: Self.sampleRate, seconds: 30, tonality: tonality)
+        #expect(
+            abs(measured.lufs - Self.target) <= Self.tolerance,
+            "\(soundscape.title) on \(tonality) is \(measured.lufs) LUFS, target \(Self.target)"
+        )
+        #expect(measured.peak < 1, "\(soundscape.title) on \(tonality) clips at \(measured.peak)")
+    }
+
     /// Time of day moves the filters half an octave each way. The voices
     /// stay within the same tolerance of the target at both ends, so a
     /// morning session is not a louder one.
@@ -41,11 +55,14 @@ enum Meter {
         var peak: Float
     }
 
-    static func loudness(of soundscape: Soundscape, sampleRate: Double, seconds: Int, brightness: Float = 1) -> Reading {
+    static func loudness(
+        of soundscape: Soundscape, sampleRate: Double, seconds: Int,
+        brightness: Float = 1, tonality: Tonality = .open
+    ) -> Reading {
         var rng = XorShift()
         var rain = Rain(sampleRate: sampleRate)
-        var pad = Pad(sampleRate: sampleRate)
-        var drone = Drone(sampleRate: sampleRate)
+        var pad = Pad(sampleRate: sampleRate, tonality: tonality)
+        var drone = Drone(sampleRate: sampleRate, tonality: tonality)
         var noise = Noise(sampleRate: sampleRate)
         var weighting = KWeighting()
         var sumSquares = 0.0
@@ -58,8 +75,8 @@ enum Meter {
         while i < frames + warmup {
             let lfo = sin(2 * Float.pi * Float(i) / (Float(sampleRate) * 900))
             rain.prepare(lfo: lfo, brightness: brightness)
-            pad.prepare(lfo: lfo, brightness: brightness)
-            drone.prepare(lfo: lfo, brightness: brightness)
+            pad.prepare(lfo: lfo, brightness: brightness, tonality: tonality)
+            drone.prepare(lfo: lfo, brightness: brightness, tonality: tonality)
             noise.prepare(brightness: brightness)
             for _ in 0..<block {
                 let s: Float = switch soundscape {

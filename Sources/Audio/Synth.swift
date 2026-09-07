@@ -57,8 +57,12 @@ final class VoiceSynth: @unchecked Sendable {
         self.soundscape = soundscape
         leads = soundscape == Soundscape.allCases.first
         rain = Rain(sampleRate: sampleRate)
-        pad = Pad(sampleRate: sampleRate)
-        drone = Drone(sampleRate: sampleRate)
+        // Built on the mode's own tonality, so a session that starts in Wind
+        // Down is in its key from the first sample instead of retuning into
+        // it a moment after the fade-in.
+        let tonality = Tonality(rawValue: parameters.tonality.load(ordering: .relaxed)) ?? .open
+        pad = Pad(sampleRate: sampleRate, tonality: tonality)
+        drone = Drone(sampleRate: sampleRate, tonality: tonality)
         noise = Noise(sampleRate: sampleRate)
         // A seed per voice, so two noise-based voices never share a stream.
         rng = XorShift(state: 0x9E37_79B9 &+ UInt32(soundscape.index) &* 0x632B_E5AB)
@@ -113,10 +117,11 @@ final class VoiceSynth: @unchecked Sendable {
         brightness += (target - brightness) * min(1, brightnessRate * Float(frames))
         // Half an octave each way at the ends of the range.
         let scale = exp2(0.5 * brightness)
+        let tonality = Tonality(rawValue: parameters.tonality.load(ordering: .relaxed)) ?? .open
         switch soundscape {
         case .rain: rain.prepare(lfo: lfo, brightness: scale)
-        case .pad: pad.prepare(lfo: lfo, brightness: scale)
-        case .drone: drone.prepare(lfo: lfo, brightness: scale)
+        case .pad: pad.prepare(lfo: lfo, brightness: scale, tonality: tonality)
+        case .drone: drone.prepare(lfo: lfo, brightness: scale, tonality: tonality)
         case .noise: noise.prepare(brightness: scale)
         }
 

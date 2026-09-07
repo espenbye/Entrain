@@ -139,6 +139,8 @@ enum Soundscape: String, CaseIterable, Identifiable {
         case .noise: String(localized: "Noise")
         }
     }
+    /// The two that play notes, and so carry the mode's `Tonality`.
+    static var tuned: [Soundscape] { [.pad, .drone] }
     var index: Int { Self.allCases.firstIndex(of: self)! }
     var bit: Int { 1 << index }
 }
