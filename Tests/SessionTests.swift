@@ -315,17 +315,19 @@ struct SessionTests {
         #expect(p.binauralLevel.load(ordering: .relaxed) == 0.12)
         #expect(p.layers.load(ordering: .relaxed) == Soundscape.rain.bit)
 
+        // The sleep beds start their onset: a little modulation, a brighter bed.
         session.mode = .sleep
         session.setLayer(.pad, on: true)
         #expect(session.layers == [.noise])
-        #expect(p.modulationDepth.load(ordering: .relaxed) == 0)
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.3)
+        #expect(p.brightness.load(ordering: .relaxed) == 0.3)
         #expect(p.layers.load(ordering: .relaxed) == Soundscape.noise.bit)
 
         session.mode = .deepSleep
         session.setLayer(.pad, on: true)
         #expect(session.layers == [.noise])
         #expect(p.modulationRate.load(ordering: .relaxed) == 1)
-        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.5)
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.15)
         #expect(p.binauralCarrier.load(ordering: .relaxed) == 100)
 
         session.mode = .gamma
@@ -333,6 +335,88 @@ struct SessionTests {
         #expect(p.modulationRate.load(ordering: .relaxed) == 40)
         #expect(p.modulationDepth.load(ordering: .relaxed) == 0.3)
         #expect(p.layers.load(ordering: .relaxed) == Soundscape.pad.bit)
+    }
+
+    /// Twenty minutes in, Sleep has no modulation left, sits darker and a
+    /// few decibels down, and holds there; Deep Sleep swells deepest in the
+    /// middle of each ninety-minute cycle and never settles.
+    @Test func sleepBedsWalkTheirArc() {
+        let onset = Mode.onsetSeconds
+        #expect(Mode.sleep.depth(elapsed: 0) == 0.3)
+        #expect(abs(Mode.sleep.depth(elapsed: onset / 2) - 0.15) < 1e-9)
+        #expect(Mode.sleep.depth(elapsed: onset) == 0)
+        #expect(Mode.sleep.depth(elapsed: 8 * 3600) == 0)
+        #expect(Mode.sleep.brightness(elapsed: 0) == 0.3)
+        #expect(Mode.sleep.brightness(elapsed: onset) == -0.6)
+        #expect(Mode.sleep.level(elapsed: 0) == 1)
+        #expect(abs(Mode.sleep.level(elapsed: onset / 2) - 0.8) < 1e-9)
+        #expect(Mode.sleep.level(elapsed: 3 * 3600) == 0.6)
+        #expect(Mode.sleep.evolves(at: onset - 1, length: .endless))
+        #expect(!Mode.sleep.evolves(at: onset, length: .endless))
+
+        let cycle = Mode.cycleSeconds
+        #expect(Mode.deepSleep.depth(elapsed: 0) == 0.15)
+        #expect(abs(Mode.deepSleep.depth(elapsed: cycle / 2) - 0.5) < 1e-9)
+        #expect(abs(Mode.deepSleep.depth(elapsed: cycle) - 0.15) < 1e-9)
+        #expect(abs(Mode.deepSleep.depth(elapsed: 2.5 * cycle) - 0.5) < 1e-9)
+        #expect(Mode.deepSleep.level(elapsed: 0) == 1)
+        #expect(Mode.deepSleep.brightness(elapsed: onset) == -0.6)
+        #expect(Mode.deepSleep.evolves(at: 12 * 3600, length: .endless))
+
+        // Steady modes hold, and Wind Down only moves while its rate ramps.
+        #expect(Mode.focus.depth(elapsed: 3600) == 0.5)
+        #expect(Mode.focus.brightness(elapsed: 3600) == 0)
+        #expect(Mode.focus.level(elapsed: 3600) == 1)
+        #expect(!Mode.focus.evolves(at: 0, length: .endless))
+        #expect(Mode.windDown.evolves(at: 0, length: .endless))
+        #expect(!Mode.windDown.evolves(at: 20 * 60, length: .endless))
+        #expect(Mode.windDown.evolves(at: 20 * 60, length: .eightHours))
+    }
+
+    /// The sleep beds ignore the inputs; the arc is the whole story there.
+    @Test func inputsStayOutOfTheSleepBeds() async {
+        final class Dim: AdaptiveInput {
+            var adjustment = Adjustment(depth: 0.5, brightness: -1)
+            var onChange: (@MainActor () -> Void)?
+            func start(for mode: Mode) {}
+            func stop() {}
+        }
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory, inputs: [Dim()]) { [audio] _ in audio }
+        session.mode = .relax
+        await session.play()
+        #expect(session.parameters.modulationDepth.load(ordering: .relaxed) == 0.2)
+        #expect(session.parameters.brightness.load(ordering: .relaxed) == -1)
+        // A hair into the onset, give or take the microseconds since.
+        session.mode = .sleep
+        #expect(abs(session.parameters.modulationDepth.load(ordering: .relaxed) - 0.3) < 1e-6)
+        #expect(abs(session.parameters.brightness.load(ordering: .relaxed) - 0.3) < 1e-6)
+    }
+
+    /// The bedtime signature plays as a mode that ends in bed starts, and
+    /// only then: a steady mode has none, and a switch to one plays it.
+    @Test func bedtimeCueOpensTheSleepModes() async {
+        let session = makeSession()
+        let p = session.parameters
+        session.mode = .focus
+        await session.play()
+        #expect(p.cue.load(ordering: .relaxed) == 0)
+
+        session.mode = .sleep
+        let first = p.cue.load(ordering: .relaxed)
+        #expect(Cue.decode(first) == .bedtime)
+        session.pause()
+        await session.play()
+        let second = p.cue.load(ordering: .relaxed)
+        #expect(second != first)
+        #expect(Cue.decode(second) == .bedtime)
+
+        session.mode = .relax
+        #expect(p.cue.load(ordering: .relaxed) == second)
+        session.mode = .windDown
+        #expect(Cue.decode(p.cue.load(ordering: .relaxed)) == .bedtime)
+        session.mode = .wake
+        #expect(Cue.decode(p.cue.load(ordering: .relaxed)) == .bedtime)
+        #expect(p.cue.load(ordering: .relaxed) == Cue.encode(.bedtime, trigger: 3))
     }
 
     @Test func masterTapersOverTheFadeOut() {
@@ -519,7 +603,7 @@ extension SessionTests {
 
         session.mode = .deepSleep
         #expect(daylight.starts == 2 && daylight.running == .deepSleep)
-        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.5)
+        #expect(abs(p.modulationDepth.load(ordering: .relaxed) - 0.15) < 1e-6)
 
         session.pause()
         #expect(daylight.running == nil && body.running == nil)

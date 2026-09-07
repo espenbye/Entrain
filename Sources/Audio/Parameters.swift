@@ -18,7 +18,30 @@ final class AudioParameters: Sendable {
     /// 0...1 user volume, independent of the system output level. Smoothed
     /// over 50 ms so a slider drag is immediate but click-free.
     let volume = Atomic<Double>(1)
-    /// A breathing cue, `BreathCue.encode`d: every new value plays one tone.
-    /// The trigger count in the high bits makes a repeat of the same cue a change.
+    /// A cue, `Cue.encode`d: every new value plays one tone. The trigger
+    /// count in the high bits makes a repeat of the same cue a change.
     let cue = Atomic<Int>(0)
+}
+
+/// What the cue synth can play: a breathing phase, or the signature that
+/// opens a mode that ends in bed.
+enum Cue: Equatable, Sendable {
+    case breath(BreathCue)
+    case bedtime
+
+    /// The low three bits carry the cue; the rest count triggers, so the
+    /// same cue twice in a row still reads as a change on the render thread.
+    static func encode(_ cue: Cue, trigger: Int) -> Int { trigger << 3 | cue.code }
+    static func decode(_ value: Int) -> Cue { Cue(code: value & 7) }
+
+    private var code: Int {
+        switch self {
+        case .breath(let phase): phase.rawValue
+        case .bedtime: 4
+        }
+    }
+
+    private init(code: Int) {
+        self = code == 4 ? .bedtime : .breath(BreathCue(rawValue: code & 3)!)
+    }
 }

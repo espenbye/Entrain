@@ -64,10 +64,12 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         return rate + (ramp.to - rate) * progress
     }
 
-    /// Amplitude modulation depth at medium intensity, 0...1.
-    /// Sleep is unmodulated: a steady bed habituates, which is the goal.
-    /// Gamma is shallow because 40 Hz modulation sits in the roughness range
-    /// and turns into a buzz at ordinary depth.
+    /// Amplitude modulation depth at medium intensity, 0...1. The sleep
+    /// beds move over the night (see `depth(elapsed:)`): Sleep rests
+    /// unmodulated once the listener is past onset, since a steady bed
+    /// habituates, and Deep Sleep peaks here mid-cycle. Gamma is shallow
+    /// because 40 Hz modulation sits in the roughness range and turns into
+    /// a buzz at ordinary depth.
     var depth: Double {
         switch self {
         case .focus: 0.5
@@ -81,8 +83,9 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// Sleep modes play a fixed noise bed, so soundscape and intensity are
-    /// not tunable, and a timed session tapers rather than stops.
+    /// Sleep modes play a fixed noise bed that walks its own arc over the
+    /// night, so soundscape and intensity are not tunable, the adaptive
+    /// inputs stay out, and a timed session tapers rather than stops.
     var isSleep: Bool { self == .sleep || self == .deepSleep }
 
     /// Where a mode starts before the user picks. Steady-state carriers for

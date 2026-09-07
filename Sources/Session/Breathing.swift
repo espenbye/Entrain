@@ -108,11 +108,6 @@ enum BreathPhase: Int, CaseIterable, Sendable {
 /// is over. The raw value travels to the render thread in `AudioParameters.cue`.
 enum BreathCue: Int, CaseIterable, Sendable {
     case inhale, hold, exhale, finished
-
-    /// The low two bits carry the cue; the rest count triggers, so the
-    /// same cue twice in a row still reads as a change on the render thread.
-    static func encode(_ cue: BreathCue, trigger: Int) -> Int { trigger << 2 | cue.rawValue }
-    static func decode(_ value: Int) -> BreathCue { BreathCue(rawValue: value & 3)! }
 }
 
 struct BreathPosition: Equatable, Sendable {

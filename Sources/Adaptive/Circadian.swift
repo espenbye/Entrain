@@ -96,24 +96,3 @@ final class Circadian: AdaptiveInput {
         return min(1, max(0, date.timeIntervalSince(start) / span))
     }
 }
-
-/// A curve through points, each segment blended with a raised cosine so
-/// the slope is zero at every point: no corners for the ear to catch.
-struct Curve: Sendable {
-    private let points: [(x: Double, y: Double)]
-
-    init(_ points: [(Double, Double)]) {
-        self.points = points.map { (x: $0.0, y: $0.1) }
-    }
-
-    func value(at x: Double) -> Double {
-        guard let first = points.first, let last = points.last else { return 0 }
-        if x <= first.x { return first.y }
-        if x >= last.x { return last.y }
-        let i = points.firstIndex { $0.x > x }!
-        let (a, b) = (points[i - 1], points[i])
-        let t = (x - a.x) / (b.x - a.x)
-        let blend = 0.5 - 0.5 * cos(t * .pi)
-        return a.y + (b.y - a.y) * blend
-    }
-}

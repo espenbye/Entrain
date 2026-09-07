@@ -25,6 +25,9 @@ final class Session {
                 // An input may care which mode it serves; it starts over.
                 inputs.forEach { $0.stop() }
                 inputs.forEach { $0.start(for: mode) }
+                stopTimer()
+                startTimer()
+                playCue()
             }
             startBreathing()
             apply()
@@ -131,9 +134,6 @@ final class Session {
     private var mindfulStart: Date?
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
-    /// The deadline on the monotonic clock. Remaining is derived from it, so
-    /// the countdown cannot drift.
-    private var tickDeadline: ContinuousClock.Instant?
     /// Play time in this mode, which is what a ramp walks along. `played`
     /// accumulates across pauses; `playStart` is set while playing.
     private var played: Double = 0
@@ -192,7 +192,7 @@ final class Session {
         for input in inputs {
             input.onChange = { [weak self] in self?.applyAdjustment() }
         }
-        breath.onCue = { [weak self] cue in self?.play(cue) }
+        breath.onCue = { [weak self] cue in self?.play(.breath(cue)) }
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
         route = OutputRoute { [weak self] headphones in self?.headphones = headphones }
@@ -285,9 +285,9 @@ final class Session {
         startMindful()
         startBreathing()
         inputs.forEach { $0.start(for: mode) }
-        applyAdjustment()
         startTimer()
-        applyMaster()
+        applyArc()
+        playCue()
         broadcast()
     }
 
@@ -384,34 +384,48 @@ final class Session {
         breath.start(breathing, length: breathingLength)
     }
 
-    private func play(_ cue: BreathCue) {
+    /// The mode's signature, when it has one, as it starts to play.
+    private func playCue() {
+        guard let cue = mode.cue else { return }
+        play(cue)
+    }
+
+    private func play(_ cue: Cue) {
         cues += 1
-        parameters.cue.store(BreathCue.encode(cue, trigger: cues), ordering: .relaxed)
+        parameters.cue.store(Cue.encode(cue, trigger: cues), ordering: .relaxed)
     }
 
     private func apply() {
         let p = parameters
-        applyRate()
-        applyAdjustment()
+        applyArc()
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
         engine?.headphones = headphones
         engine?.headTracking = tracksHead
-        applyMaster()
         save()
         broadcast()
     }
 
-    /// Every input's adjustment composed onto the mode's depth. The sleep
-    /// beds keep their fixed depth, as they ignore intensity: the 1 Hz swell
-    /// is the point of Deep Sleep, not a texture to ease at night. The
-    /// noise bed has no filter, so brightness passes it by on its own.
+    /// Everything that moves with play time: the rate ramp, the depth,
+    /// brightness and level of the sleep arc, and the timer's taper.
+    private func applyArc() {
+        applyRate()
+        applyAdjustment()
+        applyMaster()
+    }
+
+    /// Every input's adjustment composed onto the mode's depth and
+    /// brightness. The sleep beds ignore intensity and the inputs both:
+    /// they walk their own arc over the night, and a daylight nudge on
+    /// top would only blur it.
     private func applyAdjustment() {
-        let adjustment = inputs.reduce(Adjustment.none) { $0.combined(with: $1.adjustment) }
-        let depth = mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier * adjustment.depth)
+        let elapsed = playTime
+        let base = mode.depth(elapsed: elapsed)
+        let adjustment = mode.isSleep ? .none : inputs.reduce(Adjustment.none) { $0.combined(with: $1.adjustment) }
+        let depth = mode.isSleep ? base : min(0.9, base * intensity.multiplier * adjustment.depth)
         parameters.modulationDepth.store(depth, ordering: .relaxed)
-        parameters.brightness.store(adjustment.brightness, ordering: .relaxed)
+        parameters.brightness.store(adjustment.brightness + mode.brightness(elapsed: elapsed), ordering: .relaxed)
     }
 
     private func applyRate() {
@@ -488,10 +502,10 @@ final class Session {
         }
     }
 
-    /// Full level while playing, tapering linearly over the mode's fade-out
+    /// The mode's level over play time, tapering linearly over its fade-out
     /// as a timed session runs down. The synths smooth the one-second steps.
     private func applyMaster() {
-        let gain = isPlaying ? Self.masterGain(remaining: remaining, fadeOut: mode.fadeOut) : 0
+        let gain = isPlaying ? Self.masterGain(remaining: remaining, fadeOut: mode.fadeOut) * mode.level(elapsed: playTime) : 0
         parameters.master.store(gain, ordering: .relaxed)
     }
 
@@ -533,33 +547,29 @@ final class Session {
         played = 0
         playStart = isPlaying ? .now : nil
         if isPlaying { startTimer() }
-        applyRate()
-        applyMaster()
+        applyArc()
         broadcast()
     }
 
-    /// Ticks once a second while there is a countdown to keep or a ramp to
-    /// walk. An endless session stops ticking once its ramp has arrived.
+    /// Ticks once a second while there is a countdown to keep or an arc to
+    /// walk. An endless session stops ticking once its mode has settled.
     private func startTimer() {
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
-        let rampSeconds = mode.rampSeconds(for: length)
-        guard deadline != nil || rampSeconds != nil else { return }
-        tickDeadline = deadline
+        guard deadline != nil || mode.evolves(at: playTime, length: length) else { return }
         self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
-                applyRate()
-                guard let deadline else {
-                    if let rampSeconds, playTime >= rampSeconds {
+                let left = deadline.map(Self.secondsLeft(until:))
+                if let left { remaining = left }
+                applyArc()
+                guard let deadline, let left else {
+                    if !mode.evolves(at: playTime, length: length) {
                         tickTask = nil
                         return
                     }
                     try? await Task.sleep(for: .seconds(1))
                     continue
                 }
-                let left = Self.secondsLeft(until: deadline)
-                self.remaining = left
-                applyMaster()
                 if left <= 0 {
                     finish()
                     return
@@ -572,7 +582,6 @@ final class Session {
     private func stopTimer() {
         tickTask?.cancel()
         tickTask = nil
-        tickDeadline = nil
         deadline = nil
     }
 
