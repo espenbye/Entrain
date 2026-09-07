@@ -28,14 +28,15 @@ struct PlayerScreen: View {
     @ViewBuilder
     private var layout: some View {
         #if os(macOS)
-        HStack(spacing: 0) {
-            VStack(spacing: 28) {
+        // Both columns hang from the same top edge, below the gear.
+        HStack(alignment: .top, spacing: 0) {
+            VStack(spacing: 24) {
                 Hero(session: session)
                 SessionCard(session: session)
             }
             .frame(width: 340)
             .padding(.horizontal, 24)
-            .padding(.top, 40)
+            .padding(.top, 64)
             .padding(.bottom, 24)
             Divider()
             ScrollView {
@@ -43,14 +44,13 @@ struct PlayerScreen: View {
                     SuggestionCard(session: session)
                     ModeGrid(selection: $session.mode)
                 }
-                .padding(.leading, 24)
-                .padding(.trailing, 72)
-                .padding(.top, 40)
+                .padding(.horizontal, 24)
+                .padding(.top, 64)
                 .padding(.bottom, 24)
             }
             .scrollBounceBehavior(.basedOnSize)
         }
-        .frame(minWidth: 720, idealWidth: 760, minHeight: 600, idealHeight: 640)
+        .frame(minWidth: 720, idealWidth: 760, minHeight: 640, idealHeight: 680)
         #else
         ScrollView {
             VStack(spacing: 20) {
@@ -140,7 +140,6 @@ private struct Hero: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.top, 12)
     }
 }
 
@@ -192,7 +191,7 @@ private struct ModeGrid: View {
 
     var body: some View {
         GlassEffectContainer(spacing: 10) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 18) {
                 ForEach(Purpose.allCases) { purpose in
                     VStack(alignment: .leading, spacing: 8) {
                         Text(purpose.title)
@@ -231,7 +230,7 @@ private struct ModeTile: View {
                         .opacity(0.7)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .contentShape(.rect(cornerRadius: 18))
