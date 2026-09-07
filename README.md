@@ -4,16 +4,16 @@ A Mac, iPhone, iPad and Apple Watch app that plays a generated soundscape with r
 
 ## Modes
 
-| Mode       | Rate  | Depth  | Intended state          |
-|------------|-------|--------|-------------------------|
-| Focus      | 16 Hz | 0.5    | Alert, task-oriented    |
-| Gamma      | 40 Hz | 0.3    | Alert; 40 Hz steady-state response |
-| Relax      | 10 Hz | 0.4    | Calm, unwinding         |
-| Meditate   | 6 Hz  | 0.5    | Deep, inward attention  |
-| Sleep      | 2 Hz  | steady | Drifting off            |
-| Deep Sleep | 1 Hz  | 0.5    | Slow-wave sleep         |
-| Wind Down  | 10 → 2 Hz over 20 min | 0.4 | Bedtime, alpha down to delta |
-| Wake       | 2 → 16 Hz over 15 min | 0.5 | After a nap, delta back up to beta |
+| Mode       | Rate                  | Depth  | Intended state                     |
+| ---------- | --------------------- | ------ | ---------------------------------- |
+| Focus      | 16 Hz                 | 0.5    | Alert, task-oriented               |
+| Gamma      | 40 Hz                 | 0.3    | Alert; 40 Hz steady-state response |
+| Relax      | 10 Hz                 | 0.4    | Calm, unwinding                    |
+| Meditate   | 6 Hz                  | 0.5    | Deep, inward attention             |
+| Sleep      | 2 Hz                  | steady | Drifting off                       |
+| Deep Sleep | 1 Hz                  | 0.5    | Slow-wave sleep                    |
+| Wind Down  | 10 → 2 Hz over 20 min | 0.4    | Bedtime, alpha down to delta       |
+| Wake       | 2 → 16 Hz over 15 min | 0.5    | After a nap, delta back up to beta |
 
 Each mode sets the modulation rate and depth. On top of that you pick:
 
@@ -42,6 +42,8 @@ open entrain://toggle
 ## iPhone, iPad and Apple Watch
 
 The same session, synth and intents run on every platform; only the shell differs. On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. Entrain blends under music and podcasts by default. The "Lock Screen Controls" toggle is the Mac's Now Playing toggle under another name: on, Entrain takes the Lock Screen and Control Center playback controls and pauses other audio, because iOS gives those controls only to an app that does not mix. A phone call pauses the session, and it stays paused. On iPhone, iPad and the watch, each stretch of Meditate play a minute or longer is logged to Health as mindful minutes; Health asks for permission the first time Meditate starts.
+
+Wake has an alarm on iPhone and iPad, built on AlarmKit. Pick a time, optionally some weekdays, and switch it on; it rings through silent mode and Focus like a Clock alarm. With no days it rings once at the next occurrence and shows a Live Activity counting down until then, with a Cancel button. With days it repeats weekly, and the system re-arms it after each ring. The alarm's Start Wake button opens Entrain and plays the ramp, for 30 minutes when the timer is endless; Dismiss just silences it. It needs the alarm permission the first time.
 
 The watch app is embedded in the iPhone app but plays on its own, through paired headphones: it uses the long-form audio policy so the session continues with the wrist down, and asks which headphones to use when none are connected. The Smart Stack widget shows the mode and countdown; tapping it opens the app. The watch has no reverb or EQ units, so the bed goes straight to the mixer there. Each device keeps its own session; nothing syncs between the phone and the watch. Volume on the watch is the Digital Crown in the system Now Playing view.
 

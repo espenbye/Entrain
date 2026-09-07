@@ -38,7 +38,9 @@ targetTemplates:
     type: app-extension
     sources:
       - Widget/EntrainWidget.swift
+      - Widget/WakeActivity.swift
       - Sources/Session/Mode.swift
+      - Sources/Session/WakeAlarmMetadata.swift
       - Sources/Session/WidgetState.swift
       - Sources/Session/Intents.swift
       - Resources/Localizable.xcstrings
@@ -128,6 +130,8 @@ targets:
             CFBundleURLSchemes: [entrain]
         UIBackgroundModes: [audio]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
+        NSAlarmKitUsageDescription: Rings the Wake alarm at the time you choose, even on silent.
+        NSSupportsLiveActivities: true
         # The backdrop's top colour, so launch does not flash white before the dark UI.
         UILaunchScreen:
           UIColorName: LaunchBackground

@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%1$@ at %2$@." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ kl. %2$@."
+          }
+        }
+      }
+    },
     "%@\n\nMove Entrain to the Applications folder and try again." : {
       "localizations" : {
         "nb" : {
@@ -111,6 +121,26 @@
         }
       }
     },
+    "Alarm" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alarm"
+          }
+        }
+      }
+    },
+    "Allow alarms for Entrain in Settings to use the Wake alarm." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tillat alarmer for Entrain i Innstillinger for å bruke Våkne-alarmen."
+          }
+        }
+      }
+    },
     "Audio stopped" : {
       "localizations" : {
         "nb" : {
@@ -137,6 +167,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Binaurale toner"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        }
+      }
+    },
+    "Cancel Wake Alarm" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt Våkne-alarm"
           }
         }
       }
@@ -181,6 +231,16 @@
         }
       }
     },
+    "Dismiss" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvis"
+          }
+        }
+      }
+    },
     "Drone" : {
       "localizations" : {
         "nb" : {
@@ -220,6 +280,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entrain kunne ikke starte lyd."
+          }
+        }
+      }
+    },
+    "Every day at %@." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hver dag kl. %@."
           }
         }
       }
@@ -354,12 +424,32 @@
         }
       }
     },
+    "Now" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nå"
+          }
+        }
+      }
+    },
     "Off, Entrain blends under music and podcasts. On, it takes the playback controls and pauses other audio." : {
       "localizations" : {
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Av lar Entrain spille under musikk og podkaster. På tar avspillingskontrollene og setter annen lyd på pause."
+          }
+        }
+      }
+    },
+    "Once, at the next %@." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Én gang, neste %@."
           }
         }
       }
@@ -504,6 +594,26 @@
         }
       }
     },
+    "Rings at %@" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ringer kl. %@"
+          }
+        }
+      }
+    },
+    "Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ringer også i stillemodus. Start Våkne på alarmen spiller rampen i 30 minutter."
+          }
+        }
+      }
+    },
     "Set Mode Playing" : {
       "localizations" : {
         "nb" : {
@@ -564,6 +674,16 @@
         }
       }
     },
+    "Start Wake" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Våkne"
+          }
+        }
+      }
+    },
     "Stop" : {
       "localizations" : {
         "nb" : {
@@ -620,6 +740,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Våkne"
+          }
+        }
+      }
+    },
+    "Weekdays at %@." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hverdager kl. %@."
           }
         }
       }
