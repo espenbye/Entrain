@@ -52,6 +52,8 @@ final class Daylight {
 
     /// One fix, then the stream is closed. Reduced accuracy is all the
     /// Info.plist asks for, so the prompt offers the approximate option only.
+    /// A refusal keeps the stream open: it costs nothing while denied, and
+    /// it is what delivers the fix once the user allows it in Settings.
     private func locate() {
         fetch?.cancel()
         fetch = Task {
@@ -61,9 +63,11 @@ final class Daylight {
                 for try await update in CLLocationUpdate.liveUpdates() {
                     guard !Task.isCancelled else { return }
                     if update.authorizationDenied || update.authorizationDeniedGlobally || update.authorizationRestricted {
-                        denied = true
-                        onChange?()
-                        return
+                        if !denied {
+                            denied = true
+                            onChange?()
+                        }
+                        continue
                     }
                     guard let location = update.location else { continue }
                     denied = false

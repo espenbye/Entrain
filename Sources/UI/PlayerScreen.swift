@@ -159,7 +159,7 @@ struct PlayerScreen: View {
                 Toggle("Daylight", isOn: $daylight.followsLocation).labelsHidden()
             }
             Group {
-                if daylight.denied {
+                if daylight.followsLocation && daylight.denied {
                     Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")
                 } else if daylight.followsLocation {
                     Text("Brighter in the morning, warmer after sunset, from your approximate location.")

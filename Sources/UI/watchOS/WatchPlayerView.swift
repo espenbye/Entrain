@@ -36,7 +36,7 @@ struct WatchPlayerView: View {
                 } footer: {
                     if session.binaural && !session.headphones {
                         Text("Binaural beats need headphones.")
-                    } else if daylight.denied {
+                    } else if daylight.followsLocation && daylight.denied {
                         Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")
                     }
                 }
