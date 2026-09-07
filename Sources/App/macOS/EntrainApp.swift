@@ -29,7 +29,11 @@ struct EntrainApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
-        .defaultSize(width: 380, height: 760)
+        .defaultSize(width: 760, height: 640)
+
+        Settings {
+            SettingsScreen(session: session)
+        }
     }
 }
 

@@ -4,9 +4,6 @@ import SwiftUI
 struct PlayerMenu: View {
     @Bindable var session: Session
     @Environment(\.openWindow) private var openWindow
-    @AppStorage(DockIcon.key) private var showInDock = false
-    @AppStorage(HotKey.key) private var globalShortcut = false
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
         PlayerControls(session: session)
@@ -16,22 +13,8 @@ struct PlayerMenu: View {
             NSApplication.shared.activate()
         }
         .keyboardShortcut("o")
-        Toggle(HotKey.title, isOn: Binding(
-            get: { globalShortcut },
-            set: { on in
-                globalShortcut = on
-                on ? HotKey.enable { Task { await session.toggle() } } : HotKey.disable()
-            }
-        ))
-        Toggle("Control Center & Media Keys", isOn: $session.nowPlaying)
-        Toggle("Show in Dock", isOn: Binding(
-            get: { showInDock },
-            set: { showInDock = $0; DockIcon.apply($0) }
-        ))
-        Toggle("Launch at Login", isOn: Binding(
-            get: { launchAtLogin },
-            set: { LaunchAtLogin.set($0); launchAtLogin = LaunchAtLogin.isEnabled }
-        ))
+        SettingsLink { Text("Settings…") }
+            .keyboardShortcut(",")
         Divider()
         Button("Quit Entrain") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")

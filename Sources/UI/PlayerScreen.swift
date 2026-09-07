@@ -1,57 +1,115 @@
 import SwiftUI
 
-/// The player on iPhone, iPad and in the Mac window. One screen: what is
-/// playing, a big transport, the modes as chips, then the settings in a glass
-/// card. The backdrop takes the mode's tint so switching modes changes the
-/// room, not just a label.
+/// The player on iPhone, iPad and in the Mac window. What is playing and a
+/// transport, the mode the time of day suggests, every mode on three
+/// shelves, then what changes per session in a glass card. Everything set
+/// once lives behind the gear. The backdrop takes the mode's tint so
+/// switching modes changes the room, not just a label. The Mac window is
+/// wide enough for two columns, so nothing scrolls there.
 struct PlayerScreen: View {
     static let windowID = "player"
     @Bindable var session: Session
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ScaledMetric(relativeTo: .largeTitle) private var heroSize = 64.0
-    @ScaledMetric(relativeTo: .title) private var countdownSize = 34.0
-    @ScaledMetric(relativeTo: .title) private var transportSize = 30.0
-    @Bindable private var daylight = Daylight.shared
-    #if canImport(AlarmKit)
-    @Bindable private var alarm = WakeAlarm.shared
+    #if !os(macOS)
+    @State private var showsSettings = false
     #endif
 
     var body: some View {
-        ScrollView {
+        layout
+            .background(Backdrop(mode: session.mode))
+            .preferredColorScheme(.dark)
+            .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: session.mode)
+            .overlay(alignment: .topTrailing) {
+                settingsButton
+                    .padding(16)
+            }
+    }
+
+    @ViewBuilder
+    private var layout: some View {
+        #if os(macOS)
+        HStack(spacing: 0) {
             VStack(spacing: 28) {
-                hero
-                ModeChips(selection: $session.mode)
-                settings
+                Hero(session: session)
+                SessionCard(session: session)
+            }
+            .frame(width: 340)
+            .padding(.horizontal, 24)
+            .padding(.top, 40)
+            .padding(.bottom, 24)
+            Divider()
+            ScrollView {
+                VStack(spacing: 16) {
+                    SuggestionCard(session: session)
+                    ModeGrid(selection: $session.mode)
+                }
+                .padding(.leading, 24)
+                .padding(.trailing, 72)
+                .padding(.top, 40)
+                .padding(.bottom, 24)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .frame(minWidth: 720, idealWidth: 760, minHeight: 600, idealHeight: 640)
+        #else
+        ScrollView {
+            VStack(spacing: 20) {
+                Hero(session: session)
+                SuggestionCard(session: session)
+                ModeGrid(selection: $session.mode)
+                SessionCard(session: session)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 32)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(Backdrop(mode: session.mode))
-        .preferredColorScheme(.dark)
-        .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: session.mode)
-        #if os(macOS)
-        .frame(minWidth: 380, idealWidth: 380, minHeight: 520, idealHeight: 760)
+        .sheet(isPresented: $showsSettings) {
+            SettingsScreen(session: session)
+        }
         #endif
     }
 
-    private var hero: some View {
-        VStack(spacing: 20) {
+    private var settingsButton: some View {
+        Group {
+            #if os(macOS)
+            SettingsLink { Image(systemName: "gearshape") }
+            #else
+            Button("Settings", systemImage: "gearshape") { showsSettings = true }
+                .labelStyle(.iconOnly)
+            #endif
+        }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .controlSize(.large)
+        .accessibilityLabel("Settings")
+    }
+}
+
+/// The current mode, its sound, the countdown and the transport.
+private struct Hero: View {
+    @Bindable var session: Session
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize = 48.0
+    @ScaledMetric(relativeTo: .title) private var countdownSize = 26.0
+    @ScaledMetric(relativeTo: .title) private var transportSize = 24.0
+
+    var body: some View {
+        VStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(session.mode.tint.opacity(0.35))
-                    .blur(radius: 40)
-                    .frame(width: 180, height: 180)
+                    .blur(radius: 30)
+                    .frame(width: 120, height: 120)
                 Image(systemName: session.mode.symbol)
                     .font(.system(size: heroSize, weight: .light))
                     .foregroundStyle(.white)
                     .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying && !reduceMotion)
             }
-            .frame(height: 170)
+            .frame(height: 120)
 
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Text(session.mode.title)
-                    .font(.largeTitle.weight(.semibold))
+                    .font(.title.weight(.semibold))
                 Text(session.layers.title)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -69,7 +127,7 @@ struct PlayerScreen: View {
                 Image(systemName: session.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: transportSize, weight: .semibold))
                     .contentTransition(.symbolEffect(.replace))
-                    .frame(width: transportSize * 2.8, height: transportSize * 2.8)
+                    .frame(width: transportSize * 2.7, height: transportSize * 2.7)
             }
             .buttonStyle(.glassProminent)
             .buttonBorderShape(.circle)
@@ -82,10 +140,117 @@ struct PlayerScreen: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.top, 24)
+        .padding(.top, 12)
     }
+}
 
-    private var settings: some View {
+/// The mode the time of day suggests, with the timer already set: one tap
+/// starts it. Rechecked each minute, and gone while something plays.
+private struct SuggestionCard: View {
+    @Bindable var session: Session
+    @Bindable private var daylight = Daylight.shared
+
+    var body: some View {
+        if !session.isPlaying {
+            TimelineView(.everyMinute) { context in
+                let suggestion = Suggestion.at(context.date, day: daylight.day(on:))
+                HStack(spacing: 12) {
+                    Image(systemName: suggestion.mode.symbol)
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(suggestion.mode.tint)
+                        .frame(width: 36, height: 36)
+                        .background(suggestion.mode.tint.opacity(0.25), in: .circle)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(suggestion.reason)
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        Text("\(suggestion.mode.title), \(session.length.title)")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    Spacer(minLength: 8)
+                    Button("Start") {
+                        session.mode = suggestion.mode
+                        Task { await session.play() }
+                    }
+                    .buttonStyle(.glassProminent)
+                    .tint(suggestion.mode.tint)
+                    .foregroundStyle(suggestion.mode.onTint)
+                    .font(.subheadline.weight(.semibold))
+                }
+                .padding(12)
+                .glassEffect(.regular, in: .rect(cornerRadius: 18))
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+}
+
+/// Every mode on three shelves, two to a row: all of them visible, the
+/// current one filled with its tint, each with a line on what it is for.
+private struct ModeGrid: View {
+    @Binding var selection: Mode
+
+    var body: some View {
+        GlassEffectContainer(spacing: 10) {
+            VStack(alignment: .leading, spacing: 14) {
+                ForEach(Purpose.allCases) { purpose in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(purpose.title)
+                            .font(.caption.weight(.semibold))
+                            .textCase(.uppercase)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 4)
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                            ForEach(purpose.modes) { mode in
+                                ModeTile(mode: mode, selected: mode == selection) { selection = mode }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ModeTile: View {
+    let mode: Mode
+    let selected: Bool
+    let select: () -> Void
+
+    var body: some View {
+        Button(action: select) {
+            VStack(alignment: .leading, spacing: 10) {
+                Image(systemName: mode.symbol)
+                    .font(.body.weight(.medium))
+                Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(mode.title)
+                        .font(.subheadline.weight(.medium))
+                    Text(mode.blurb)
+                        .font(.caption)
+                        .opacity(0.7)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(.rect(cornerRadius: 18))
+        }
+        .buttonStyle(.plain)
+        .glassEffect(selected ? .regular.tint(mode.tint).interactive() : .regular.interactive(), in: .rect(cornerRadius: 18))
+        .foregroundStyle(selected ? mode.onTint : .primary)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// What changes per session: sound, intensity, timer, the Wake alarm, volume.
+private struct SessionCard: View {
+    @Bindable var session: Session
+    #if canImport(AlarmKit)
+    @Bindable private var alarm = WakeAlarm.shared
+    #endif
+
+    var body: some View {
         VStack(spacing: 0) {
             if !session.mode.isSleep {
                 Row("Sound") {
@@ -102,7 +267,7 @@ struct PlayerScreen: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .frame(maxWidth: 220)
+                    .frame(maxWidth: 200)
                 }
                 Divider()
             }
@@ -137,52 +302,19 @@ struct PlayerScreen: View {
                         Text(verbatim: alarm.summary + " ") + Text("Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes.")
                     }
                 }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 12)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 12)
             }
             #endif
-            Divider()
-            Row("Binaural Beats") {
-                Toggle("Binaural Beats", isOn: $session.binaural).labelsHidden()
-            }
             if session.binaural && !session.headphones {
+                Divider()
                 Text("Binaural beats need headphones.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 12)
-            }
-            Divider()
-            Row("Daylight") {
-                Toggle("Daylight", isOn: $daylight.followsLocation).labelsHidden()
-            }
-            Group {
-                if daylight.followsLocation && daylight.denied {
-                    Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")
-                } else if daylight.followsLocation {
-                    Text("Brighter in the morning, warmer after sunset, from your approximate location.")
-                } else {
-                    Text("Brighter in the morning, warmer after sunset, assuming a 7 to 19 day.")
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 12)
-            if session.headTrackingAvailable {
-                Divider()
-                Row("Head Tracking") {
-                    Toggle("Head Tracking", isOn: $session.headTracking).labelsHidden()
-                }
-                if session.headTracking {
-                    Text("Keeps the room in place when you turn your head, with AirPods or Beats. Stays off in Sleep and Wind Down.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.bottom, 12)
-                }
+                    .padding(.vertical, 12)
             }
             Divider()
             HStack(spacing: 12) {
@@ -193,22 +325,7 @@ struct PlayerScreen: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
-            .padding(.vertical, 12)
-            Divider()
-            #if os(macOS)
-            Row("Control Center & Media Keys") {
-                Toggle("Control Center & Media Keys", isOn: $session.nowPlaying).labelsHidden()
-            }
-            #else
-            Row("Lock Screen Controls") {
-                Toggle("Lock Screen Controls", isOn: $session.nowPlaying).labelsHidden()
-            }
-            Text("Off, Entrain blends under music and podcasts. On, it takes the playback controls and pauses other audio.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 12)
-            #endif
+            .padding(.vertical, 14)
         }
         .padding(.horizontal, 16)
         .toggleStyle(.switch)
@@ -266,39 +383,6 @@ private struct WeekdayPicker: View {
     }
 }
 #endif
-
-/// Six modes as one scrolling row of glass chips. The current one is filled
-/// with its tint; the rest stay translucent.
-private struct ModeChips: View {
-    @Binding var selection: Mode
-
-    var body: some View {
-        ScrollView(.horizontal) {
-            GlassEffectContainer(spacing: 10) {
-                HStack(spacing: 10) {
-                    ForEach(Mode.allCases) { mode in
-                        Button {
-                            selection = mode
-                        } label: {
-                            Label(mode.title, systemImage: mode.symbol)
-                                .font(.subheadline.weight(.medium))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .contentShape(.capsule)
-                        }
-                        .buttonStyle(.plain)
-                        .glassEffect(mode == selection ? .regular.tint(mode.tint).interactive() : .regular.interactive(), in: .capsule)
-                        .foregroundStyle(mode == selection ? mode.onTint : .primary)
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-        }
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
-        .padding(.horizontal, -20)
-    }
-}
 
 /// Night gradient from the icon, warmed by the mode's tint at the top.
 private struct Backdrop: View {
