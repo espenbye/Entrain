@@ -31,6 +31,7 @@ The two sleep modes play a fixed brown noise bed, ignore intensity, and taper ov
 
 Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, from `entrain://` URLs, and optionally from a system-wide ⌃⌥E shortcut. Shortcuts can also set the timer, intensity, volume and binaural beats, and ask for the current state ("What is Entrain playing"): mode, whether it is playing, the sound, the seconds left, intensity and binaural, so an automation can branch on them.
 
+Entrain is a Focus filter. In a Focus's settings (Work, Sleep, ...) add the Entrain filter and pick a mode and optionally a length; the mode starts when the Focus turns on. "Stop when this Focus turns off" pauses the session when the Focus ends. With no mode the Focus leaves the session alone. The small widget shows the mode, sound and countdown with a play/pause button; the medium one adds a button per mode. Control Center offers a toggle per mode, lit while that mode plays. The media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default. The UI is in English and Norwegian.
 
 For Raycast, Alfred and shell scripts, the app answers `entrain://` URLs on Mac, iPhone and iPad, using the same mode and length values as the intents:
 

@@ -362,6 +362,16 @@
         }
       }
     },
+    "Focus Filter" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokusfilter"
+          }
+        }
+      }
+    },
     "Gamma" : {
       "localizations" : {
         "nb" : {
@@ -498,6 +508,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Støy"
+          }
+        }
+      }
+    },
+    "Nothing" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingenting"
           }
         }
       }
@@ -842,6 +862,16 @@
         }
       }
     },
+    "Start %@" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start %@"
+          }
+        }
+      }
+    },
     "Start Session" : {
       "localizations" : {
         "nb" : {
@@ -862,6 +892,16 @@
         }
       }
     },
+    "Starts a mode when the Focus turns on." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starter en modus når fokuset slås på."
+          }
+        }
+      }
+    },
     "Stop" : {
       "localizations" : {
         "nb" : {
@@ -878,6 +918,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stopp økt"
+          }
+        }
+      }
+    },
+    "Stop when this Focus turns off" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopp når dette fokuset slås av"
+          }
+        }
+      }
+    },
+    "Stops when the Focus turns off" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper når fokuset slås av"
           }
         }
       }

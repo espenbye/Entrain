@@ -219,6 +219,26 @@ final class Session {
         }
     }
 
+    /// A Focus filter. A mode means its Focus turned on: start it, and
+    /// remember whether it wants the session paused when it turns off. No
+    /// mode and no stop flag is the empty filter the system sends once every
+    /// Focus is off. The flag lives in defaults because that later call
+    /// carries nothing of the filter that set it.
+    func applyFocusFilter(mode: Mode?, length: SessionLength?, stopWhenOff: Bool) async {
+        let key = "focusFilter.stopWhenOff"
+        if let mode {
+            defaults.set(stopWhenOff, forKey: key)
+            self.mode = mode
+            if let length { self.length = length }
+            await play()
+        } else if stopWhenOff {
+            defaults.set(true, forKey: key)
+        } else if defaults.bool(forKey: key) {
+            defaults.set(false, forKey: key)
+            pause()
+        }
+    }
+
     /// The engine stopped on its own. The engine is kept so the end of a
     /// system interruption still reaches it; a deliberate pause releases it.
     private func interrupted() {

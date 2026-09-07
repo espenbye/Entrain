@@ -68,6 +68,36 @@ struct SessionTests {
         #expect(second.layers == [.pad, .drone])
     }
 
+    @Test func focusFilterStartsItsModeAndStopsWhenAsked() async {
+        let session = makeSession()
+        await session.applyFocusFilter(mode: .relax, length: .thirty, stopWhenOff: true)
+        #expect(session.isPlaying)
+        #expect(session.mode == .relax)
+        #expect(session.length == .thirty)
+
+        // Every Focus off: the filter arrives empty.
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(!session.isPlaying)
+
+        // A filter that does not ask to stop leaves the session alone at the end.
+        await session.applyFocusFilter(mode: .focus, length: nil, stopWhenOff: false)
+        #expect(session.length == .thirty)
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(session.isPlaying)
+    }
+
+    @Test func focusFilterStopFlagSurvivesRelaunch() async {
+        await makeSession().applyFocusFilter(mode: nil, length: nil, stopWhenOff: true)
+        let session = makeSession()
+        await session.play()
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(!session.isPlaying)
+        // Consumed: the next empty filter is not a stop.
+        await session.play()
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(session.isPlaying)
+    }
+
     @Test func theLastLayerCannotBeRemoved() {
         let session = makeSession()
         session.mode = .focus
