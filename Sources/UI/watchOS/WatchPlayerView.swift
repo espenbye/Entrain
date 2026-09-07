@@ -42,6 +42,7 @@ struct WatchPlayerView: View {
                         ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
                     }
                     Toggle("Binaural Beats", isOn: $session.binaural)
+                    Toggle("Haptics", isOn: $session.haptics)
                     Toggle("Daylight", isOn: $daylight.followsLocation)
                 } footer: {
                     if session.binaural && !session.headphones {

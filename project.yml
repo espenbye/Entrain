@@ -28,6 +28,7 @@ targetTemplates:
       - Sources/Session
       - Sources/Audio
       - Sources/Adaptive
+      - Sources/Haptics
       - Sources/UI/PlayerView.swift
       - Resources
     settings:

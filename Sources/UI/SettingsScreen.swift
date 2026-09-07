@@ -48,6 +48,13 @@ struct SettingsScreen: View {
                     Text("Brighter in the morning, warmer after sunset, assuming a 7 to 19 day.")
                 }
             }
+            #if os(iOS)
+            Section {
+                Toggle("Haptics", isOn: $session.haptics)
+            } footer: {
+                Text("Taps in time with the sound, for the slow modes. Off above a few beats a second, where the pulse only buzzes.")
+            }
+            #endif
             if session.headTrackingAvailable {
                 Section {
                     Toggle("Head Tracking", isOn: $session.headTracking)
