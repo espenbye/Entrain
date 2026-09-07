@@ -30,6 +30,24 @@ struct SessionTests {
         func log(_ segment: DateInterval) { segments.append(segment) }
     }
 
+    /// The iCloud store as a dictionary. `changed` plays the other device.
+    final class FakeCloud: SettingsStore {
+        var values: [String: Any] = [:]
+        var writes = 0
+        func object(forKey key: String) -> Any? { values[key] }
+        func set(_ value: Any?, forKey key: String) {
+            values[key] = value
+            writes += 1
+        }
+        func synchronize() -> Bool { true }
+        func changed(_ keys: [String]) {
+            NotificationCenter.default.post(
+                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: self,
+                userInfo: [NSUbiquitousKeyValueStoreChangedKeysKey: keys]
+            )
+        }
+    }
+
     let defaults: UserDefaults
     let widgetDirectory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let audio = FakeAudio()
@@ -66,6 +84,44 @@ struct SessionTests {
         #expect(second.layers == [.pad])
         second.mode = .relax
         #expect(second.layers == [.pad, .drone])
+    }
+
+    @Test func settingsReachTheCloudAndComeBack() async {
+        let cloud = FakeCloud()
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory, cloud: cloud) { [audio] _ in audio }
+        session.mode = .relax
+        session.setLayer(.drone, on: true)
+        session.length = .thirty
+        session.nowPlaying = false
+        #expect(cloud.values["mode"] as? String == "relax")
+        #expect(cloud.values["layers.relax"] as? String == "pad,drone")
+        #expect(cloud.values["length"] as? Int == SessionLength.thirty.rawValue)
+        #expect(cloud.values["nowPlaying"] == nil)
+
+        // Another device changed its settings; this one follows without echoing them back.
+        let writes = cloud.writes
+        cloud.values["mode"] = "meditate"
+        cloud.values["intensity"] = "high"
+        cloud.values["binaural"] = true
+        cloud.values["volume"] = 0.3
+        cloud.values["layers.meditate"] = "pad,rain"
+        cloud.changed(["mode", "intensity", "binaural", "volume", "layers.meditate"])
+        #expect(session.mode == .meditate)
+        #expect(session.intensity == .high)
+        #expect(session.binaural)
+        #expect(session.volume == 0.3)
+        #expect(session.layers == [.pad, .rain])
+        #expect(session.parameters.layers.load(ordering: .relaxed) == Soundscape.pad.bit | Soundscape.rain.bit)
+        #expect(cloud.writes == writes)
+        #expect(!session.isPlaying)
+        #expect(audio.starts == 0)
+        #expect(defaults.string(forKey: "mode") == "meditate")
+
+        // A change that arrived while the app was closed is read at launch.
+        cloud.values["length"] = SessionLength.sixty.rawValue
+        let relaunched = Session(defaults: defaults, widgetDirectory: widgetDirectory, cloud: cloud) { [audio] _ in audio }
+        #expect(relaunched.length == .sixty)
+        #expect(relaunched.mode == .meditate)
     }
 
     @Test func focusFilterStartsItsModeAndStopsWhenAsked() async {

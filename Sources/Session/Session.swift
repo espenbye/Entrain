@@ -8,7 +8,9 @@ import WidgetKit
 @MainActor
 @Observable
 final class Session {
-    static let shared = Session(defaults: .standard, mindful: health) { AudioEngine(parameters: $0) }
+    static let shared = Session(defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default) {
+        AudioEngine(parameters: $0)
+    }
 
     var mode: Mode {
         didSet {
@@ -76,6 +78,14 @@ final class Session {
     private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     private let mindful: (any MindfulLog)?
+    /// iCloud's key-value store: a setting changed on one device reaches the
+    /// others. Nil in tests. Without a team or an account the store just does
+    /// not sync, so a development build runs unchanged.
+    private let cloud: (any SettingsStore)?
+    private var cloudObserver: NSObjectProtocol?
+    /// Off until launch has taken the store in, and while a remote change is
+    /// applied, so the store's own values are not sent back over each other.
+    private var mirrors = false
     /// Wall-clock start of the Meditate segment playing now.
     private var mindfulStart: Date?
     /// Created on first play: a login item should not touch audio hardware at launch.
@@ -106,11 +116,13 @@ final class Session {
         defaults: UserDefaults,
         widgetDirectory: URL? = WidgetState.directory,
         mindful: (any MindfulLog)? = nil,
+        cloud: (any SettingsStore)? = nil,
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
         self.mindful = mindful
+        self.cloud = cloud
         self.makeEngine = makeEngine
         widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
@@ -121,8 +133,7 @@ final class Session {
         nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? Self.nowPlayingByDefault
         headphones = OutputRoute.headphones
         layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
-            let stored = defaults.string(forKey: "layers.\(mode.rawValue)")?.split(separator: ",") ?? []
-            let layers = Set(stored.compactMap { Soundscape(rawValue: String($0)) })
+            let layers = Self.layers(from: defaults.string(forKey: Self.layersKey(mode)))
             return layers.isEmpty ? nil : (mode, layers)
         })
         remaining = length == .endless ? nil : length.seconds
@@ -130,6 +141,20 @@ final class Session {
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
         route = OutputRoute { [weak self] headphones in self?.headphones = headphones }
+
+        if let cloud {
+            // Changes that arrived while the app was not running are in the
+            // store already; later ones come as notifications.
+            cloud.synchronize()
+            pull(Self.syncedKeys)
+            mirrors = true
+            cloudObserver = NotificationCenter.default.addObserver(
+                forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: cloud, queue: .main
+            ) { [weak self] note in
+                let keys = note.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] ?? Self.syncedKeys
+                MainActor.assumeIsolated { self?.pull(keys) }
+            }
+        }
 
         #if os(macOS)
         // A session that outlives the Mac's sleep would otherwise resume on
@@ -297,15 +322,63 @@ final class Session {
     }
 
     private func save() {
-        defaults.set(mode.rawValue, forKey: "mode")
-        defaults.set(intensity.rawValue, forKey: "intensity")
-        defaults.set(binaural, forKey: "binaural")
-        defaults.set(length.rawValue, forKey: "length")
-        defaults.set(volume, forKey: "volume")
+        store(mode.rawValue, forKey: "mode")
+        store(intensity.rawValue, forKey: "intensity")
+        store(binaural, forKey: "binaural")
+        store(length.rawValue, forKey: "length")
+        store(volume, forKey: "volume")
+        // Now Playing means something else on each platform, so it stays local.
         defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
-            let stored = Soundscape.allCases.filter(layers.contains).map(\.rawValue).joined(separator: ",")
-            defaults.set(stored, forKey: "layers.\(mode.rawValue)")
+            store(Soundscape.allCases.filter(layers.contains).map(\.rawValue).joined(separator: ","), forKey: Self.layersKey(mode))
+        }
+    }
+
+    // MARK: iCloud
+
+    /// Defaults get every value; the cloud only what differs from it, so a
+    /// value that just arrived from another device is not sent straight back.
+    private func store<V: Equatable>(_ value: V, forKey key: String) {
+        defaults.set(value, forKey: key)
+        guard mirrors, let cloud, cloud.object(forKey: key) as? V != value else { return }
+        cloud.set(value, forKey: key)
+    }
+
+    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume"] + Mode.allCases.map { layersKey($0) }
+
+    nonisolated private static func layersKey(_ mode: Mode) -> String { "layers.\(mode.rawValue)" }
+
+    nonisolated private static func layers(from stored: String?) -> Set<Soundscape> {
+        Set((stored ?? "").split(separator: ",").compactMap { Soundscape(rawValue: String($0)) })
+    }
+
+    /// Takes the store's values for `keys` into the session. Only what differs
+    /// is assigned, so the setters do the rest: defaults, atomics, widget.
+    /// A playing device hears the change; an idle one only remembers it.
+    private func pull(_ keys: [String]) {
+        guard let cloud else { return }
+        let mirrored = mirrors
+        mirrors = false
+        defer { mirrors = mirrored }
+        for key in keys {
+            switch key {
+            case "mode":
+                if let value = (cloud.object(forKey: key) as? String).flatMap(Mode.init), value != mode { mode = value }
+            case "intensity":
+                if let value = (cloud.object(forKey: key) as? String).flatMap(Intensity.init), value != intensity { intensity = value }
+            case "binaural":
+                if let value = cloud.object(forKey: key) as? Bool, value != binaural { binaural = value }
+            case "length":
+                if let value = (cloud.object(forKey: key) as? Int).flatMap(SessionLength.init), value != length { length = value }
+            case "volume":
+                if let value = cloud.object(forKey: key) as? Double, value != volume { volume = value }
+            default:
+                guard key.hasPrefix("layers."), let mode = Mode(rawValue: String(key.dropFirst("layers.".count))) else { continue }
+                let layers = Self.layers(from: cloud.object(forKey: key) as? String)
+                guard !layers.isEmpty, layers != layersByMode[mode] else { continue }
+                layersByMode[mode] = layers
+                mode == self.mode ? apply() : save()
+            }
         }
     }
 

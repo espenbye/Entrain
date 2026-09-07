@@ -87,6 +87,8 @@ targets:
         # CODE_SIGN_ENTITLEMENTS=AppStore/$(TARGET_NAME).entitlements instead.
         com.apple.security.temporary-exception.files.home-relative-path.read-write:
           - /Library/Application Support/Entrain/
+        # Settings sync. Without a team the store simply never syncs.
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
     dependencies:
       - target: EntrainWidget
     settings:
@@ -150,6 +152,7 @@ targets:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
     dependencies:
       - target: EntrainWidgetiOS
       - target: EntrainWatch
@@ -197,6 +200,8 @@ targets:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        # The phone's store, so the watch shares its settings.
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)no.espenbye.entrain
     dependencies:
       - target: EntrainWidgetWatch
     settings:
