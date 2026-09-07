@@ -107,6 +107,42 @@ struct OnePoleLowpass {
     }
 }
 
+/// Two-pole state-variable filter, Chamberlin's form, bandpass tap only.
+/// Two multiply-adds and two adds a sample with no libm anywhere: the tuning
+/// coefficient is a sine, which the table already has.
+///
+/// It is deliberately not a high-Q resonator. A ring long enough to hear as
+/// a tail would need a Q in the hundreds, and a filter that narrow passes a
+/// sine however it is excited, which is the sound this replaced. Held to
+/// single figures it colours a burst of noise instead of replacing it.
+struct Resonator {
+    private var low: Float = 0
+    private var band: Float = 0
+
+    /// The tuning coefficient for a centre frequency. Chamberlin's form goes
+    /// unstable as the centre approaches a sixth of the sample rate, so the
+    /// centre is clamped there; nothing asks for anywhere near it.
+    static func frequency(_ hz: Float, sampleRate: Float) -> Float {
+        2 * SineTable.sin(cycles: 0.5 * min(hz, sampleRate / 6) / sampleRate)
+    }
+
+    /// `q` is the reciprocal of Q, so larger is broader and more damped.
+    static func damping(q: Float) -> Float { 1 / max(0.5, q) }
+
+    mutating func reset() {
+        low = 0
+        band = 0
+    }
+
+    @inline(__always)
+    mutating func process(_ x: Float, frequency f: Float, damping d: Float) -> Float {
+        low += f * band
+        let high = x - low - d * band
+        band += f * high
+        return band * d
+    }
+}
+
 /// The gate applied to one modulation cycle. The curve is the raised cosine
 /// the modulation has always used; what moves is where in the cycle it peaks.
 /// `peak` is that point as a fraction of the period: at 0.5 the warp below is

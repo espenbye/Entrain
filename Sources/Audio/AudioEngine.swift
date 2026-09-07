@@ -155,7 +155,14 @@ final class AudioEngine: SessionAudio {
         }
         applyRendering()
 
-        // A gentle high shelf takes the edge off rain and droplets.
+        // The shelf was put here for the rain's droplets, which no longer
+        // need it: they are noise bursts now, and measure no brighter above
+        // 6 kHz than the pings did — every voice keeps less than half a
+        // percent of its energy up there, so on the dry path the shelf is
+        // worth about a fiftieth of a decibel. It stays because it sits
+        // after the environment node, where it damps the top of the reverb
+        // tail, and the wetter modes now send it a great deal more tail than
+        // one fixed medium room ever did.
         let shelf = eq.bands[0]
         shelf.filterType = .highShelf
         shelf.frequency = 6000

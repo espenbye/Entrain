@@ -63,26 +63,110 @@ extension Mode {
     }
 }
 
-/// Filtered pink noise with sparse high droplets.
+/// The impacts scattered over the rain, kept apart from the bed they fall on
+/// so each can be reasoned about, and measured, on its own.
+///
+/// The drops used to be sine pings, and a sine is the one thing a raindrop
+/// never sounds like: a drop is an impact, broadband and gone. Each one here
+/// is a burst of noise through a resonator, which lands as a click coloured
+/// by whatever it fell on rather than as a tone.
+///
+/// The bigger tell was uniformity. Real rain is heavy-tailed — mostly fine
+/// drops with the occasional fat one, and the fat ones are louder, lower and
+/// longer together, because they are the same physical fact seen three ways.
+/// One draw per drop sets all three, so they stay correlated, and a second
+/// loosens the correlation enough that it does not read as a single knob
+/// being turned. The rate drifts too: rain that arrives at a metronomic rate
+/// is a shaker, not weather.
+struct Drops {
+    private var pool = [Drop](repeating: Drop(), count: 8)
+    /// Multiplier on the arrival rate, redrawn every few seconds and glided
+    /// to, so the fall thickens and thins the way real rain does.
+    private var gust: Smoother
+    private var untilGust: Int
+    private let gustPeriod: Int
+    private let perSample: Float
+    /// Decay coefficients from a tick to a splash, geometrically spaced.
+    /// `exp` is a libm call, so the eight the render path can ask for are
+    /// worked out here once instead.
+    private let decays: [Float]
+    private let sampleRate: Float
+
+    private struct Drop {
+        var filter = Resonator()
+        var frequency: Float = 0
+        var damping: Float = 0
+        var level: Float = 0
+        var decay: Float = 0
+    }
+
+    /// Below this a drop is 66 dB down on its own onset and the slot is free.
+    static let silence: Float = 0.0005
+
+    init(sampleRate: Double) {
+        self.sampleRate = Float(sampleRate)
+        // The gust multiplier averages 1.5, so this is 27 drops a second in
+        // the mean. Noise bursts crowd far better than pings did, which is
+        // what lets the fall be dense enough to read as rain at all.
+        perSample = 18 / Float(sampleRate)
+        gust = Smoother(1.5, seconds: 1.5, sampleRate: sampleRate)
+        gustPeriod = Int(sampleRate * 2.5)
+        untilGust = 0
+        decays = (0..<8).map { i in
+            let seconds = 0.004 * pow(1.42, Double(i))   // 4 ms out to 45 ms
+            return Float(exp(-1 / (seconds * sampleRate)))
+        }
+    }
+
+    mutating func next(rng: inout XorShift) -> Float {
+        untilGust -= 1
+        if untilGust <= 0 {
+            gust.target = 0.4 + 2.2 * rng.unit()
+            untilGust = gustPeriod
+        }
+        if rng.unit() < perSample * gust.next(), let free = pool.firstIndex(where: { $0.level < Self.silence }) {
+            // Reciprocal of a uniform: mostly near one, with a tail that
+            // reaches four times that and no further. Everything about the
+            // drop follows from it, so a fat drop is a fat drop in all of
+            // level, pitch and length at once.
+            let size = 1 / (0.32 + rng.unit())
+            let jitter = 0.6 + 0.8 * rng.unit()
+            let centre = min(7000, max(700, 4000 / size * jitter))
+            let length = Int(min(7, max(0, (size - 0.76) * 2.2 + (jitter - 1) * 2 + 0.5)))
+            pool[free].filter.reset()
+            pool[free].frequency = Resonator.frequency(centre, sampleRate: sampleRate)
+            pool[free].damping = Resonator.damping(q: 2 + 6 * rng.unit())
+            // A bandpass passes a slice of the noise proportional to its own
+            // width, so a low drop keeps back less of what it was given than
+            // a high one, and squaring the size pays that back with enough
+            // left over to leave about 18 dB between the finest drop and the
+            // fattest. The constant is what brings a burst of noise up to the
+            // level the sine it replaced arrived at.
+            pool[free].level = 0.2 * size * size
+            pool[free].decay = decays[length]
+        }
+        var s: Float = 0
+        for i in pool.indices where pool[i].level >= Self.silence {
+            s += pool[i].filter.process(rng.bipolar() * pool[i].level,
+                                        frequency: pool[i].frequency,
+                                        damping: pool[i].damping)
+            pool[i].level *= pool[i].decay
+        }
+        return s
+    }
+}
+
+/// Filtered pink noise with `Drops` falling on it.
 struct Rain {
     private var noise = PinkNoise()
     private var lowpass = OnePoleLowpass()
     private var coefficient: Float = 0
-    private var drops = [Drop](repeating: Drop(), count: 8)
-    private let dropsPerSample: Float
-    private let dropDecay: Float
+    private var drops: Drops
     private let sampleRate: Float
-
-    private struct Drop {
-        var phasor = Phasor()
-        var increment: Float = 0
-        var level: Float = 0
-    }
 
     init(sampleRate: Double) {
         self.sampleRate = Float(sampleRate)
-        dropsPerSample = 10 / Float(sampleRate)
-        dropDecay = Float(exp(-1 / (0.025 * sampleRate)))
+        drops = Drops(sampleRate: sampleRate)
         prepare(lfo: 0)
     }
 
@@ -93,17 +177,7 @@ struct Rain {
     }
 
     mutating func next(rng: inout XorShift) -> Float {
-        var s = lowpass.process(noise.next(&rng), coefficient) * 1.6
-
-        if rng.unit() < dropsPerSample, let free = drops.firstIndex(where: { $0.level < 0.001 }) {
-            drops[free].increment = (1500 + 3000 * rng.unit()) / sampleRate
-            drops[free].level = 0.08 + 0.06 * rng.unit()
-        }
-        for i in drops.indices where drops[i].level >= 0.001 {
-            s += SineTable.sin(cycles: drops[i].phasor.next(drops[i].increment)) * drops[i].level
-            drops[i].level *= dropDecay
-        }
-        return s * Trim.rain
+        (lowpass.process(noise.next(&rng), coefficient) * 1.6 + drops.next(rng: &rng)) * Trim.rain
     }
 }
 
