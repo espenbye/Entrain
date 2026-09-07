@@ -84,7 +84,7 @@ final class VoiceSynth: @unchecked Sendable {
         case .rain: rain.prepare(lfo: lfo, brightness: scale)
         case .pad: pad.prepare(lfo: lfo, brightness: scale)
         case .drone: drone.prepare(lfo: lfo, brightness: scale)
-        case .noise: break
+        case .noise: noise.prepare(brightness: scale)
         }
 
         for i in 0..<frames {
@@ -146,16 +146,20 @@ final class BedSynth: @unchecked Sendable {
     }
 }
 
-/// The breathing cues: one short tone per phase, straight to the mixer so
-/// it is not modulated with the bed. Breathe in glides up a fifth, hold
-/// sits on one note, breathe out glides back down, and the end of the
-/// exercise is a longer note. Silent between cues, and after `master`
-/// like everything else, so a pause cuts a cue with the bed. Owned by the
-/// render thread.
+/// The cues: one tone each, straight to the mixer so it is not modulated
+/// with the bed. Breathe in glides up a fifth, hold sits on one note,
+/// breathe out glides back down, and the end of the exercise is a longer
+/// note. The bedtime signature is nothing like them: a low note sinking a
+/// whole octave over a few seconds, the one sound that only ever means
+/// bed. Silent between cues, and after `master` like everything else, so
+/// a pause cuts a cue with the bed. Owned by the render thread.
 final class CueSynth: @unchecked Sendable {
-    /// Peak amplitude of a cue. The beds sit near -22 LUFS, so this is
-    /// clearly above them without startling.
+    /// Peak amplitude of a breathing cue. The beds sit near -22 LUFS, so
+    /// this is clearly above them without startling.
     static let level: Float = 0.22
+    /// The bedtime signature sits closer to the bed: it is a cue to notice,
+    /// not one to act on.
+    static let bedtimeLevel: Float = 0.15
 
     private let parameters: AudioParameters
     private let sampleRate: Float
@@ -168,6 +172,7 @@ final class CueSynth: @unchecked Sendable {
     private var length = 1
     private var startHz: Float = 0
     private var endHz: Float = 0
+    private var level: Float = 0
 
     init(parameters: AudioParameters, sampleRate: Double) {
         self.parameters = parameters
@@ -177,13 +182,14 @@ final class CueSynth: @unchecked Sendable {
         volume = Smoother(1, seconds: 0.05, sampleRate: sampleRate)
     }
 
-    /// Start frequency, end frequency and length of each cue's tone.
-    static func tone(for cue: BreathCue) -> (start: Float, end: Float, seconds: Float) {
+    /// Start frequency, end frequency, length and peak level of each cue's tone.
+    static func tone(for cue: Cue) -> (start: Float, end: Float, seconds: Float, level: Float) {
         switch cue {
-        case .inhale: (392, 587.33, 1.0)
-        case .hold: (523.25, 523.25, 0.6)
-        case .exhale: (587.33, 392, 1.0)
-        case .finished: (440, 440, 1.8)
+        case .breath(.inhale): (392, 587.33, 1.0, level)
+        case .breath(.hold): (523.25, 523.25, 0.6, level)
+        case .breath(.exhale): (587.33, 392, 1.0, level)
+        case .breath(.finished): (440, 440, 1.8, level)
+        case .bedtime: (220, 110, 3.5, bedtimeLevel)
         }
     }
 
@@ -191,9 +197,10 @@ final class CueSynth: @unchecked Sendable {
         let cue = parameters.cue.load(ordering: .relaxed)
         if cue != lastCue {
             lastCue = cue
-            let tone = Self.tone(for: BreathCue.decode(cue))
+            let tone = Self.tone(for: Cue.decode(cue))
             startHz = tone.start
             endHz = tone.end
+            level = tone.level
             length = max(1, Int(tone.seconds * sampleRate))
             remaining = length
             phasor = Phasor()
@@ -214,7 +221,7 @@ final class CueSynth: @unchecked Sendable {
             let envelope = 0.5 - 0.5 * SineTable.sin(cycles: t + 0.25)
             let hz = startHz + (endHz - startHz) * t
             let p = phasor.next(hz / sampleRate)
-            let s = (SineTable.sin(cycles: p) + 0.3 * SineTable.sin(cycles: 2 * p)) * envelope * Self.level * trim
+            let s = (SineTable.sin(cycles: p) + 0.3 * SineTable.sin(cycles: 2 * p)) * envelope * level * trim
             outL[i] = s
             outR[i] = s
             remaining -= 1

@@ -46,14 +46,15 @@ struct BreathingTests {
     /// The cue and the trigger count share one atomic; a repeated cue still
     /// differs from the one before it.
     @Test func cuesEncodeWithTheirTrigger() {
-        let first = BreathCue.encode(.hold, trigger: 1)
-        let second = BreathCue.encode(.hold, trigger: 2)
+        let first = Cue.encode(.breath(.hold), trigger: 1)
+        let second = Cue.encode(.breath(.hold), trigger: 2)
         #expect(first != second)
-        #expect(BreathCue.decode(first) == .hold)
-        #expect(BreathCue.decode(second) == .hold)
+        #expect(Cue.decode(first) == .breath(.hold))
+        #expect(Cue.decode(second) == .breath(.hold))
         for cue in BreathCue.allCases {
-            #expect(BreathCue.decode(BreathCue.encode(cue, trigger: 1234)) == cue)
+            #expect(Cue.decode(Cue.encode(.breath(cue), trigger: 1234)) == .breath(cue))
         }
+        #expect(Cue.decode(Cue.encode(.bedtime, trigger: 1234)) == .bedtime)
         #expect(BreathPhase.inhale.cue == .inhale)
         #expect(BreathPhase.exhale.cue == .exhale)
     }
@@ -68,7 +69,7 @@ struct BreathingTests {
         // The master smoother needs a moment to reach full level.
         #expect(renderer.render(seconds: 2) == 0)
 
-        parameters.cue.store(BreathCue.encode(.inhale, trigger: 1), ordering: .relaxed)
+        parameters.cue.store(Cue.encode(.breath(.inhale), trigger: 1), ordering: .relaxed)
         let onset = renderer.render(seconds: 0.05)
         #expect(onset.isFinite && onset > 0 && onset < 0.05, "the window should open softly, peaked at \(onset)")
         let body = renderer.render(seconds: 0.5)
@@ -77,14 +78,20 @@ struct BreathingTests {
         #expect(renderer.render(seconds: 1) == 0)
 
         // The same cue again, with a new trigger, plays again.
-        parameters.cue.store(BreathCue.encode(.inhale, trigger: 2), ordering: .relaxed)
+        parameters.cue.store(Cue.encode(.breath(.inhale), trigger: 2), ordering: .relaxed)
         #expect(renderer.render(seconds: 0.6) > 0.15)
+
+        // The bedtime signature is longer and softer than a breathing cue.
+        parameters.cue.store(Cue.encode(.bedtime, trigger: 3), ordering: .relaxed)
+        let bedtime = renderer.render(seconds: 3.6)
+        #expect(bedtime > 0.1 && bedtime <= CueSynth.bedtimeLevel * 1.3, "bedtime peaked at \(bedtime)")
+        #expect(renderer.render(seconds: 0.5) == 0)
 
         // Master at zero fades a cue away like the bed; the smoother only
         // approaches zero, so what is left is a rounding of silence.
         parameters.master.store(0, ordering: .relaxed)
         _ = renderer.render(seconds: 3)
-        parameters.cue.store(BreathCue.encode(.exhale, trigger: 3), ordering: .relaxed)
+        parameters.cue.store(Cue.encode(.breath(.exhale), trigger: 4), ordering: .relaxed)
         #expect(renderer.render(seconds: 1) < 0.02)
     }
 
@@ -151,7 +158,7 @@ struct BreathGuideTests {
         #expect(session.breath.position?.phase == .inhale)
         #expect(session.breath.position?.cycle == 0)
         #expect(session.breath.cycles == nil)
-        #expect(BreathCue.decode(p.cue.load(ordering: .relaxed)) == .inhale)
+        #expect(Cue.decode(p.cue.load(ordering: .relaxed)) == .breath(.inhale))
         let cue = p.cue.load(ordering: .relaxed)
 
         // Another mode has no breath to follow; back in Meditate it starts over.

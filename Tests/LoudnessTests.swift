@@ -60,6 +60,7 @@ enum Meter {
             rain.prepare(lfo: lfo, brightness: brightness)
             pad.prepare(lfo: lfo, brightness: brightness)
             drone.prepare(lfo: lfo, brightness: brightness)
+            noise.prepare(brightness: brightness)
             for _ in 0..<block {
                 let s: Float = switch soundscape {
                 case .rain: rain.next(rng: &rng)

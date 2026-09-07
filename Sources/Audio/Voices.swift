@@ -158,23 +158,45 @@ struct Drone {
     }
 }
 
-/// Steady brown noise. White noise through a one-pole at 60 Hz gives the
-/// 6 dB per octave slope; a matching high-pass at 40 Hz drops the rumble
-/// speakers cannot reproduce and that would eat headroom. No events, no drift.
+/// Brown noise with a little pink over it. White noise through a one-pole
+/// at 60 Hz gives the 6 dB per octave slope; a matching high-pass at 40 Hz
+/// drops the rumble speakers cannot reproduce and that would eat headroom.
+/// Brown alone has almost nothing left where voices, traffic and doors sit,
+/// so a measure of pink fills the mids in: at the same loudness the bed
+/// masks more of the room. A one-pole lowpass on top is what the sleep
+/// onset darkens, `brightness` moving it half an octave each way from
+/// 1.2 kHz. No events, no drift.
 struct Noise {
+    /// Pink against brown, before either is trimmed. Brown carries the
+    /// weight; pink lifts 300 Hz to 2 kHz by two to four decibels.
+    private static let pinkBlend: Float = 0.1
+
+    private var pink = PinkNoise()
     private var slope = OnePoleLowpass()
     private var rumble = OnePoleLowpass()
+    private var lowpass = OnePoleLowpass()
     private let slopeCoefficient: Float
     private let rumbleCoefficient: Float
+    private var coefficient: Float = 0
+    private let sampleRate: Float
 
     init(sampleRate: Double) {
+        self.sampleRate = Float(sampleRate)
         slopeCoefficient = OnePoleLowpass.coefficient(cutoff: 60, sampleRate: Float(sampleRate))
         rumbleCoefficient = OnePoleLowpass.coefficient(cutoff: 40, sampleRate: Float(sampleRate))
+        prepare()
+    }
+
+    /// Once per block. `brightness` scales the lowpass, 1 being where the
+    /// voice was tuned.
+    mutating func prepare(brightness: Float = 1) {
+        coefficient = OnePoleLowpass.coefficient(cutoff: 1200 * brightness, sampleRate: sampleRate)
     }
 
     mutating func next(rng: inout XorShift) -> Float {
         let brown = slope.process(rng.bipolar(), slopeCoefficient)
-        return (brown - rumble.process(brown, rumbleCoefficient)) * Trim.noise
+        let s = brown + pink.next(&rng) * Self.pinkBlend
+        return lowpass.process(s - rumble.process(s, rumbleCoefficient), coefficient) * Trim.noise
     }
 }
 
