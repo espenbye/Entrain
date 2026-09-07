@@ -65,6 +65,7 @@ struct MenuBarLabel: View {
 /// Transport, mode and settings as menu items, for the menu bar menu.
 struct PlayerControls: View {
     @Bindable var session: Session
+    @Bindable private var daylight = Daylight.shared
 
     var body: some View {
         TransportSection(
@@ -82,6 +83,7 @@ struct PlayerControls: View {
             length: $session.length,
             binaural: $session.binaural,
             headTracking: session.headTrackingAvailable ? $session.headTracking : nil,
+            daylight: $daylight.followsLocation,
             sleep: session.mode.isSleep
         )
         VolumeSection(volume: $session.volume)
@@ -96,6 +98,8 @@ struct SettingsSection: View {
     @Binding var binaural: Bool
     /// Nil where no headphones can report motion.
     let headTracking: Binding<Bool>?
+    /// Whether sunrise and sunset come from the device's location.
+    @Binding var daylight: Bool
     /// Sleep modes play a fixed bed; sound and intensity have nothing to set.
     let sleep: Bool
 
@@ -114,6 +118,7 @@ struct SettingsSection: View {
             if let headTracking {
                 Toggle("Head Tracking", isOn: headTracking)
             }
+            Toggle("Daylight", isOn: $daylight)
         }
     }
 }

@@ -18,6 +18,19 @@ struct LoudnessTests {
         )
         #expect(measured.peak < 1, "\(soundscape.title) clips at \(measured.peak)")
     }
+
+    /// Time of day moves the filters half an octave each way. The voices
+    /// stay within the same tolerance of the target at both ends, so a
+    /// morning session is not a louder one.
+    @Test(arguments: Soundscape.allCases, [-1.0, 1.0])
+    func brightnessKeepsLoudness(_ soundscape: Soundscape, _ brightness: Double) {
+        let scale = Float(exp2(0.5 * brightness))
+        let measured = Meter.loudness(of: soundscape, sampleRate: Self.sampleRate, seconds: 30, brightness: scale)
+        #expect(
+            abs(measured.lufs - Self.target) <= Self.tolerance,
+            "\(soundscape.title) at brightness \(brightness) is \(measured.lufs) LUFS, target \(Self.target)"
+        )
+    }
 }
 
 /// Renders a voice with the same slow drift the engine applies and reports
@@ -28,7 +41,7 @@ enum Meter {
         var peak: Float
     }
 
-    static func loudness(of soundscape: Soundscape, sampleRate: Double, seconds: Int) -> Reading {
+    static func loudness(of soundscape: Soundscape, sampleRate: Double, seconds: Int, brightness: Float = 1) -> Reading {
         var rng = XorShift()
         var rain = Rain(sampleRate: sampleRate)
         var pad = Pad(sampleRate: sampleRate)
@@ -44,9 +57,9 @@ enum Meter {
         var i = 0
         while i < frames + warmup {
             let lfo = sin(2 * Float.pi * Float(i) / (Float(sampleRate) * 900))
-            rain.prepare(lfo: lfo)
-            pad.prepare(lfo: lfo)
-            drone.prepare(lfo: lfo)
+            rain.prepare(lfo: lfo, brightness: brightness)
+            pad.prepare(lfo: lfo, brightness: brightness)
+            drone.prepare(lfo: lfo, brightness: brightness)
             for _ in 0..<block {
                 let s: Float = switch soundscape {
                 case .rain: rain.next(rng: &rng)

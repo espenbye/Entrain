@@ -41,6 +41,12 @@ open entrain://pause
 open entrain://toggle
 ```
 
+## Adaptive
+
+On top of the mode, inputs shape the sound while it plays. Each input is one module that yields a small adjustment; the session composes them onto the mode's own parameters, and none runs while the session is paused.
+
+**Daylight.** The carrier is brighter and the modulation a little deeper through the morning, warmer and shallower after sunset: the voice filters move up to half an octave, the depth up to a fifth. The arc is measured against sunrise and sunset, so a winter afternoon already sounds like evening and the same mode never sounds identical across a day. Off, the day is assumed to run 7 to 19. With the Daylight switch on, sunrise and sunset are computed on the device from one approximate location fix, a tenth of a degree, kept in defaults and refreshed once per launch; nothing is sent anywhere. The system asks for location the first time the switch goes on. Above the polar circles the day is clamped between four and twenty hours around solar noon. The sleep beds keep their fixed depth.
+
 ## iPhone, iPad and Apple Watch
 
 The same session, synth and intents run on every platform; the shell differs, and the watch skips the effects chain (see below). On iPhone and iPad the player window is the app, playback continues in the background, and the widget comes in Home Screen sizes, as Lock Screen accessories and as Control Center toggles. Entrain blends under music and podcasts by default. The "Lock Screen Controls" toggle is the Mac's Now Playing toggle under another name: on, Entrain takes the Lock Screen and Control Center playback controls and pauses other audio, because iOS gives those controls only to an app that does not mix. A timed session also shows a Live Activity on the Lock Screen and in the Dynamic Island: the mode, its sound, the time left counting down and a play/pause button. Pausing freezes the countdown and says so; the activity goes when the timer ends. Endless sessions get none, and the watch shows the phone's in its Smart Stack. A phone call pauses the session; when the call ends and the system says to resume, it picks up where it stopped. An interruption that ends without that, or a stop of your own, leaves it paused. On iPhone, iPad and the watch, each stretch of Meditate play a minute or longer is logged to Health as mindful minutes; Health asks for permission the first time Meditate starts.
@@ -61,6 +67,7 @@ Sources/
   UI/        PlayerScreen (Mac window, iPhone, iPad) and the pieces the watch reuses; the menu bar menu under macOS/, the watch screen under watchOS/
   Session/   Session state, modes, App Intents, entrain:// URL commands, Now Playing and widget snapshot
   Audio/     Engine, audio session, synth voices, DSP primitives, shared parameters
+  Adaptive/  Inputs that shape the sound while it plays: the daylight arc and the sun behind it
 Resources/   Asset catalog and the English/Norwegian string catalogs
 Widget/      WidgetKit extension built once per platform; shares Mode, Intents and WidgetState with the app
 iOS/, watchOS/  Generated Info.plist and entitlements for those targets
