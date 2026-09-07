@@ -553,7 +553,12 @@ final class Session {
 
     /// Ticks once a second while there is a countdown to keep or an arc to
     /// walk. An endless session stops ticking once its mode has settled.
+    /// Any earlier task goes first: a play while already playing (a Focus
+    /// filter, an interruption's end) must not leave one behind to finish
+    /// a session that has since been paused or reset.
     private func startTimer() {
+        tickTask?.cancel()
+        tickTask = nil
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
         guard deadline != nil || mode.evolves(at: playTime, length: length) else { return }
         self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }

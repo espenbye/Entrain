@@ -144,6 +144,32 @@ struct SessionTests {
         #expect(session.isPlaying)
     }
 
+    /// A Focus filter landing on a session that is already playing a timed
+    /// session replaces its timer rather than adding one: after the pause
+    /// nothing ticks, and the countdown is the filter's, not the old one.
+    @Test func focusFilterOnARunningSessionReplacesItsTimer() async {
+        let session = makeSession()
+        session.mode = .focus
+        session.length = .sixty
+        await session.play()
+        let first = session.deadline
+        #expect(first != nil)
+
+        await session.applyFocusFilter(mode: .relax, length: .fifteen, stopWhenOff: false)
+        #expect(session.isPlaying)
+        #expect(session.remaining == SessionLength.fifteen.seconds)
+        #expect(session.deadline != first)
+        #expect(audio.starts == 2)
+
+        session.pause()
+        #expect(!session.isPlaying)
+        #expect(session.deadline == nil)
+        #expect(session.remaining == SessionLength.fifteen.seconds)
+        session.length = .thirty
+        #expect(session.remaining == SessionLength.thirty.seconds)
+        #expect(session.parameters.master.load(ordering: .relaxed) == 0)
+    }
+
     @Test func focusFilterStopFlagSurvivesRelaunch() async {
         await makeSession().applyFocusFilter(mode: nil, length: nil, stopWhenOff: true)
         let session = makeSession()
