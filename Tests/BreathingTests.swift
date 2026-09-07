@@ -193,13 +193,15 @@ struct BreathGuideTests {
         #expect(synced.breathingLength == .three)
     }
 
-    /// The guide steps its phases in real time and ends with a final cue.
-    @Test func guideStepsThroughThePatternAndFinishes() async throws {
+    /// The guide steps its phases in real time, one cue per step in the
+    /// pattern's order, and stops cold. How many steps pass in the wait
+    /// depends on the machine (a loaded CI runner starves the main actor),
+    /// so the test checks the sequence, not the count.
+    @Test func guideStepsThroughThePatternInOrder() async throws {
         let guide = BreathGuide()
         var cues: [BreathCue] = []
         guide.onCue = { cues.append($0) }
-        // A one-minute Box exercise rounds to four breaths; this test only
-        // needs to see the phases advance, so it watches the first step.
+        // A one-minute Box exercise rounds to four breaths.
         guide.start(.box, length: .one)
         #expect(guide.cycles == 4)
         #expect(guide.position?.phase == .inhale)
@@ -208,13 +210,19 @@ struct BreathGuideTests {
         #expect(abs(interval.duration - 4) < 0.001)
 
         try await Task.sleep(for: .seconds(4.3))
-        #expect(guide.position?.phase == .hold)
-        #expect(guide.position?.index == 1)
-        #expect(cues == [.inhale, .hold])
+        let steps = BreathingPattern.box.steps
+        #expect(cues.count >= 2, "no step followed the first in \(cues)")
+        #expect(cues == cues.indices.map { steps[$0 % steps.count].phase.cue })
+        let position = try #require(guide.position)
+        #expect(position.index == (cues.count - 1) % steps.count)
+        #expect(position.cycle == (cues.count - 1) / steps.count)
+        #expect(position.phase == steps[position.index].phase)
 
         guide.stop()
         #expect(guide.position == nil)
+        #expect(guide.stepInterval == nil)
+        let count = cues.count
         try await Task.sleep(for: .seconds(0.2))
-        #expect(cues.count == 2)
+        #expect(cues.count == count)
     }
 }
