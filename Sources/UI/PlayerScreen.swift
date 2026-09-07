@@ -193,6 +193,8 @@ private struct ModeGrid: View {
 
     private var selection: Mode { session.mode }
 
+    /// Makes `mode` current and, if nothing is playing, starts it. While a
+    /// session plays, the tap only switches the mode so it does not restart.
     private func select(_ mode: Mode) {
         session.mode = mode
         if !session.isPlaying {
