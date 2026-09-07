@@ -582,6 +582,16 @@
         }
       }
     },
+    "Falls Asleep In" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovner etter"
+          }
+        }
+      }
+    },
     "Focus" : {
       "localizations" : {
         "nb" : {
@@ -598,6 +608,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fokusfilter"
+          }
+        }
+      }
+    },
+    "Following the Breath" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Følger pusten"
+          }
+        }
+      }
+    },
+    "From the last %lld nights on this device. Entrain reads Health; it never writes anything but your Meditate minutes, and nothing leaves the device." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fra de siste %lld nettene på denne enheten. Entrain leser fra Helse, skriver ingenting annet enn Mediter-minuttene dine, og ingenting forlater enheten."
           }
         }
       }
@@ -648,6 +678,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hodesporing"
+          }
+        }
+      }
+    },
+    "Health" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Helse"
+          }
+        }
+      }
+    },
+    "Heart Rate" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls"
+          }
+        }
+      }
+    },
+    "Heart Rate Variability" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsvariasjon"
           }
         }
       }
@@ -1022,6 +1082,16 @@
         }
       }
     },
+    "Resting Heart Rate" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvilepuls"
+          }
+        }
+      }
+    },
     "Returns the mode, whether it is playing, the sound, the time left, the intensity and whether binaural beats are on." : {
       "localizations" : {
         "nb" : {
@@ -1168,6 +1238,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vis i Dock"
+          }
+        }
+      }
+    },
+    "Shows your heart rate through Meditate and Relax, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viser pulsen din gjennom Mediter og Slapp av, og hvor godt den følger pusten. Holder pulssensoren i gang, så det koster batteri."
           }
         }
       }
@@ -1322,6 +1402,26 @@
         }
       }
     },
+    "Suggested before you usually wake" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått før du vanligvis våkner"
+          }
+        }
+      }
+    },
+    "Suggested before your usual bedtime" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått før du vanligvis legger deg"
+          }
+        }
+      }
+    },
     "Suggested for a bright morning" : {
       "localizations" : {
         "nb" : {
@@ -1422,6 +1522,26 @@
         }
       }
     },
+    "Usual Bedtime" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vanlig leggetid"
+          }
+        }
+      }
+    },
+    "Usual Wake" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vanlig vekketid"
+          }
+        }
+      }
+    },
     "Volume" : {
       "localizations" : {
         "nb" : {
@@ -1488,6 +1608,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arbeid"
+          }
+        }
+      }
+    },
+    "about usual" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "omtrent som vanlig"
+          }
+        }
+      }
+    },
+    "above your usual" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "over det vanlige"
+          }
+        }
+      }
+    },
+    "below your usual" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "under det vanlige"
+          }
+        }
+      }
+    },
+    "well above your usual" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "godt over det vanlige"
+          }
+        }
+      }
+    },
+    "well below your usual" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "godt under det vanlige"
           }
         }
       }

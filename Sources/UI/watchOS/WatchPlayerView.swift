@@ -51,6 +51,8 @@ struct WatchPlayerView: View {
                         Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")
                     }
                 }
+                HeartRateSection(session: session)
+                BodySection()
             }
             .navigationTitle("Entrain")
         }

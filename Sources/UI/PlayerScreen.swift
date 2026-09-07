@@ -162,11 +162,12 @@ private struct Hero: View {
 private struct SuggestionCard: View {
     @Bindable var session: Session
     @Bindable private var daylight = Daylight.shared
+    private let health = HealthSignals.shared
 
     var body: some View {
         if !session.isPlaying {
             TimelineView(.everyMinute) { context in
-                let suggestion = Suggestion.at(context.date, day: daylight.day(on:))
+                let suggestion = Suggestion.at(context.date, day: daylight.day(on:), sleep: health.sleep)
                 HStack(spacing: 12) {
                     Image(systemName: suggestion.mode.symbol)
                         .font(.body.weight(.medium))

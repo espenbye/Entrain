@@ -29,7 +29,9 @@ targetTemplates:
       - Sources/Audio
       - Sources/Adaptive
       - Sources/Haptics
+      - Sources/Health
       - Sources/UI/PlayerView.swift
+      - Sources/UI/BodySection.swift
       - Resources
     settings:
       base:
@@ -143,6 +145,7 @@ targets:
             CFBundleURLSchemes: [entrain]
         UIBackgroundModes: [audio]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
+        NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, and your resting heart rate and heart rate variability so it can tell an ordinary day from a tired one. Nothing leaves the device.
         NSAlarmKitUsageDescription: Rings the Wake alarm at the time you choose, even on silent.
         NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the device.
         NSLocationDefaultAccuracyReduced: true
@@ -163,6 +166,10 @@ targets:
       properties:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
+        # This key enumerates clinical health record types, not ordinary read
+        # types: sleep, heart rate and variability are asked for at runtime
+        # and declared in NSHealthShareUsageDescription, not here. Entrain
+        # reads no health records, so it stays empty.
         com.apple.developer.healthkit.access: []
         # No iCloud key-value store: personal teams cannot provision it, so
         # settings sync comes from an archive signed with AppStore/EntrainiOS.entitlements.
@@ -205,8 +212,11 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         WKApplication: true
         WKCompanionAppBundleIdentifier: no.espenbye.entrain
-        WKBackgroundModes: [audio]
+        # workout-processing keeps the heart sensor streaming through a
+        # Meditate or Relax session; no workout is ever saved.
+        WKBackgroundModes: [audio, workout-processing]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
+        NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, your resting heart rate and heart rate variability so it can tell an ordinary day from a tired one, and your heart rate during a session. Nothing leaves the watch.
         NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the watch.
         NSLocationDefaultAccuracyReduced: true
     entitlements:
@@ -214,6 +224,7 @@ targets:
       properties:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
+        # Clinical health records only; see the iOS target. Entrain reads none.
         com.apple.developer.healthkit.access: []
         # iCloud key-value store only in AppStore/EntrainWatch.entitlements, as on iOS.
     dependencies:

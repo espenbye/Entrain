@@ -381,10 +381,22 @@ struct SessionTests {
         #expect(!Mode.sleep.evolves(at: onset, length: .endless))
 
         let cycle = Mode.cycleSeconds
+        // The cycle is measured from sleep onset, not from the tap.
         #expect(Mode.deepSleep.depth(elapsed: 0) == 0.15)
-        #expect(abs(Mode.deepSleep.depth(elapsed: cycle / 2) - 0.5) < 1e-9)
-        #expect(abs(Mode.deepSleep.depth(elapsed: cycle) - 0.15) < 1e-9)
-        #expect(abs(Mode.deepSleep.depth(elapsed: 2.5 * cycle) - 0.5) < 1e-9)
+        #expect(abs(Mode.deepSleep.depth(elapsed: onset) - 0.15) < 1e-9)
+        #expect(abs(Mode.deepSleep.depth(elapsed: onset + cycle / 2) - 0.5) < 1e-9)
+        #expect(abs(Mode.deepSleep.depth(elapsed: onset + cycle) - 0.15) < 1e-9)
+        #expect(abs(Mode.deepSleep.depth(elapsed: onset + 2.5 * cycle) - 0.5) < 1e-9)
+        // A listener Health says falls asleep in eight minutes gets the
+        // whole arc eight minutes in, cycle included.
+        let quick = Mode.sleep.arc(onset: 8 * 60)
+        let quickDeep = Mode.deepSleep.arc(onset: 8 * 60)
+        #expect(quick.depth.value(at: 8 * 60) == 0)
+        #expect(abs(quick.level.value(at: 4 * 60) - 0.8) < 1e-9)
+        #expect(abs(quickDeep.depth.value(at: 8 * 60 + cycle / 2) - 0.5) < 1e-9)
+        #expect(abs(quickDeep.depth.value(at: 8 * 60 + 2.5 * cycle) - 0.5) < 1e-9)
+        #expect(!Mode.sleep.evolves(at: 8 * 60, length: .endless, in: quick))
+        #expect(Mode.deepSleep.evolves(at: 12 * 3600, length: .endless, in: quickDeep))
         #expect(Mode.deepSleep.level(elapsed: 0) == 1)
         #expect(Mode.deepSleep.brightness(elapsed: onset) == -0.6)
         #expect(Mode.deepSleep.evolves(at: 12 * 3600, length: .endless))
@@ -408,14 +420,17 @@ struct SessionTests {
             let t = min(1, elapsed / Mode.onsetSeconds)
             return from + (to - from) * (0.5 - 0.5 * cos(t * .pi))
         }
+        /// The Deep Sleep cycle, now counted from sleep onset rather than
+        /// from the tap: flat through the onset, then the old closed form.
         func cycle(_ elapsed: Double) -> Double {
-            0.15 + (0.5 - 0.15) * (0.5 - 0.5 * cos(2 * .pi * elapsed / Mode.cycleSeconds))
+            let since = max(0, elapsed - Mode.onsetSeconds)
+            return 0.15 + (0.5 - 0.15) * (0.5 - 0.5 * cos(2 * .pi * since / Mode.cycleSeconds))
         }
         func ramp(_ elapsed: Double, from: Double, to: Double, over seconds: Double) -> Double {
             from + (to - from) * min(1, max(0, elapsed / seconds))
         }
 
-        for minutes in [0.0, 10, 20, 45, 90] {
+        for minutes in [0.0, 10, 20, 45, 65, 90, 110, 200] {
             let t = minutes * 60
             #expect(abs(Mode.sleep.depth(elapsed: t) - onset(t, from: 0.3, to: 0)) < 1e-12)
             #expect(abs(Mode.sleep.brightness(elapsed: t) - onset(t, from: 0.3, to: -0.6)) < 1e-12)

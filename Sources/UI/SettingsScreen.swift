@@ -62,6 +62,9 @@ struct SettingsScreen: View {
                     Text("Keeps the room in place when you turn your head, with AirPods or Beats. Stays off in Sleep and Wind Down.")
                 }
             }
+            #if !os(macOS)
+            BodySection()
+            #endif
             Section {
                 #if os(macOS)
                 Toggle("Control Center & Media Keys", isOn: $session.nowPlaying)
