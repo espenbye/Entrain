@@ -271,6 +271,30 @@ private struct ModeTile: View {
     }
 }
 
+/// One sound layer as a chip. On is a filled, tinted capsule; off is a plain
+/// glass outline with dimmed text, so the two states read apart at a glance.
+private struct LayerChip: View {
+    let soundscape: Soundscape
+    let on: Bool
+    let tint: Color
+    let onTint: Color
+    let setLayer: (Soundscape, Bool) -> Void
+
+    var body: some View {
+        Button { setLayer(soundscape, !on) } label: {
+            Text(soundscape.title)
+                .font(.footnote.weight(on ? .semibold : .medium))
+                .frame(minWidth: 44, minHeight: 24)
+                .padding(.horizontal, 10)
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(on ? .regular.tint(tint).interactive() : .regular.interactive(), in: .capsule)
+        .foregroundStyle(on ? onTint : .secondary)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
 /// What changes per session: sound, intensity, timer, the Wake alarm, volume.
 private struct SessionCard: View {
     @Bindable var session: Session
@@ -282,11 +306,15 @@ private struct SessionCard: View {
         VStack(spacing: 0) {
             if !session.mode.isSleep {
                 Row("Sound") {
-                    LayerToggles(layers: session.layers, setLayer: session.setLayer)
-                        .toggleStyle(.button)
-                        .buttonStyle(.glass)
-                        .tint(session.mode.tint)
-                        .font(.footnote.weight(.medium))
+                    ForEach(Soundscape.allCases) { soundscape in
+                        LayerChip(
+                            soundscape: soundscape,
+                            on: session.layers.contains(soundscape),
+                            tint: session.mode.tint,
+                            onTint: session.mode.onTint,
+                            setLayer: session.setLayer
+                        )
+                    }
                 }
                 Divider()
                 Row("Intensity") {
