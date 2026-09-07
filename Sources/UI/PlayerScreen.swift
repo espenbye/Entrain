@@ -43,7 +43,7 @@ struct PlayerScreen: View {
             ScrollView {
                 VStack(spacing: 16) {
                     SuggestionCard(session: session)
-                    ModeGrid(selection: $session.mode)
+                    ModeGrid(session: session)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 64)
@@ -57,7 +57,7 @@ struct PlayerScreen: View {
             VStack(spacing: 20) {
                 Hero(session: session)
                 SuggestionCard(session: session)
-                ModeGrid(selection: $session.mode)
+                ModeGrid(session: session)
                 SessionCard(session: session)
             }
             .padding(.horizontal, 20)
@@ -187,8 +187,18 @@ private struct SuggestionCard: View {
 
 /// Every mode on three shelves, two to a row: all of them visible, the
 /// current one filled with its tint, each with a line on what it is for.
+/// A tap picks the mode, and starts it when nothing is playing.
 private struct ModeGrid: View {
-    @Binding var selection: Mode
+    @Bindable var session: Session
+
+    private var selection: Mode { session.mode }
+
+    private func select(_ mode: Mode) {
+        session.mode = mode
+        if !session.isPlaying {
+            Task { await session.play() }
+        }
+    }
 
     var body: some View {
         GlassEffectContainer(spacing: 10) {
@@ -202,7 +212,7 @@ private struct ModeGrid: View {
                             .padding(.horizontal, 4)
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                             ForEach(purpose.modes) { mode in
-                                ModeTile(mode: mode, selected: mode == selection) { selection = mode }
+                                ModeTile(mode: mode, selected: mode == selection) { select(mode) }
                             }
                         }
                     }
