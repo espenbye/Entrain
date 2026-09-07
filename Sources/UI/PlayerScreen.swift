@@ -146,6 +146,13 @@ struct PlayerScreen: View {
             Row("Binaural Beats") {
                 Toggle("Binaural Beats", isOn: $session.binaural).labelsHidden()
             }
+            if session.binaural && !session.headphones {
+                Text("Binaural beats need headphones.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 12)
+            }
             Divider()
             HStack(spacing: 12) {
                 Image(systemName: "speaker.fill")

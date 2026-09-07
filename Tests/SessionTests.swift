@@ -190,6 +190,7 @@ struct SessionTests {
         session.mode = .focus
         session.intensity = .high
         session.binaural = true
+        session.headphones = true
         let p = session.parameters
         #expect(p.modulationRate.load(ordering: .relaxed) == 16)
         #expect(p.modulationDepth.load(ordering: .relaxed) == 0.6)
@@ -222,6 +223,19 @@ struct SessionTests {
         #expect(Session.masterGain(remaining: 150, fadeOut: 300) == 0.5)
         #expect(Session.masterGain(remaining: 0, fadeOut: 300) == 0)
         #expect(Session.masterGain(remaining: 30, fadeOut: 1) == 1)
+    }
+
+    @Test func binauralIsMutedOverSpeakers() {
+        let session = makeSession()
+        session.binaural = true
+        session.headphones = true
+        #expect(session.parameters.binauralLevel.load(ordering: .relaxed) == 0.12)
+        session.headphones = false
+        #expect(session.parameters.binauralLevel.load(ordering: .relaxed) == 0)
+        #expect(session.binaural)
+        session.headphones = true
+        #expect(session.parameters.binauralLevel.load(ordering: .relaxed) == 0.12)
+        #expect(makeSession().binaural)
     }
 
     @Test func widgetSeesTheSession() async {

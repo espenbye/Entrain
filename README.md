@@ -20,7 +20,7 @@ Each mode sets the modulation rate and depth. On top of that you pick:
 - **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus and Wind Down start on Rain, Gamma, Relax, Meditate and Wake on Pad. A mix is scaled so it sits at the level of a single sound.
 - **Intensity**: Low, Medium, High (scales modulation depth; High is a small step above Medium)
 - **Timer**: Endless, 15 to 90 minutes, or 2, 4 or 8 hours. A timed session fades out when it ends. Pausing keeps the countdown; it resumes where it stopped.
-- **Binaural**: optional binaural beat at the same rate (headphones required)
+- **Binaural**: optional binaural beat at the same rate. It needs headphones: over speakers the app says so and mutes the beat until headphones come back, leaving the setting on
 - **Volume**: an app-level volume on top of the system level, so the soundscape can sit under music or a call
 
 Gamma is shallow on purpose: 40 Hz is the most reproducible rate for driving a steady-state response on EEG, but at ordinary depth it sounds like a buzz.

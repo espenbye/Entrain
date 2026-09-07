@@ -161,6 +161,16 @@
         }
       }
     },
+    "Binaural beats need headphones." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Binaurale toner trenger hodetelefoner."
+          }
+        }
+      }
+    },
     "Binaural Beats" : {
       "localizations" : {
         "nb" : {

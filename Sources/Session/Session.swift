@@ -21,6 +21,10 @@ final class Session {
     }
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
+    /// Whether the output is headphones. Binaural beats need one carrier per
+    /// ear, so over speakers the layer is muted and the UI says why.
+    var headphones: Bool { didSet { apply() } }
+    private var route: OutputRoute?
     var length: SessionLength { didSet { resetTimer(); save() } }
     /// Control Center and media keys. Off keeps the media keys with the music player.
     var nowPlaying: Bool {
@@ -112,6 +116,7 @@ final class Session {
         length = SessionLength(rawValue: defaults.integer(forKey: "length")) ?? .endless
         volume = defaults.object(forKey: "volume") as? Double ?? 1
         nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? Self.nowPlayingByDefault
+        headphones = OutputRoute.headphones
         layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
             let stored = defaults.string(forKey: "layers.\(mode.rawValue)")?.split(separator: ",") ?? []
             let layers = Set(stored.compactMap { Soundscape(rawValue: String($0)) })
@@ -121,6 +126,7 @@ final class Session {
         parameters.volume.store(volume, ordering: .relaxed)
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
+        route = OutputRoute { [weak self] headphones in self?.headphones = headphones }
 
         #if os(macOS)
         // A session that outlives the Mac's sleep would otherwise resume on
@@ -256,7 +262,7 @@ final class Session {
         applyRate()
         p.modulationDepth.store(mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
-        p.binauralLevel.store(binaural ? 0.12 : 0, ordering: .relaxed)
+        p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
         applyMaster()
         save()
