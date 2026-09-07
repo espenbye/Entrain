@@ -61,6 +61,13 @@ struct WidgetState: Codable, Sendable {
         }
     }
 
+    /// The snapshot as of `date`. A timed session whose deadline has passed
+    /// is over, even if the app was killed before it could say so.
+    func at(_ date: Date) -> WidgetState {
+        guard isPlaying, let deadline, deadline <= date else { return self }
+        return WidgetState(mode: mode, sound: sound, isPlaying: false, remaining: nil, deadline: nil)
+    }
+
     static func load(from directory: URL? = directory) -> WidgetState? {
         guard let directory, let data = try? Data(contentsOf: directory.appending(path: "widget.json")) else { return nil }
         return try? JSONDecoder().decode(WidgetState.self, from: data)

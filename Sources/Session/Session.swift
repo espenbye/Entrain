@@ -8,7 +8,9 @@ import WidgetKit
 @MainActor
 @Observable
 final class Session {
-    static let shared = Session(defaults: .standard, mindful: health) { AudioEngine(parameters: $0) }
+    static let shared = Session(defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default) {
+        AudioEngine(parameters: $0)
+    }
 
     var mode: Mode {
         didSet {
@@ -21,6 +23,10 @@ final class Session {
     }
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
+    /// Whether the output is headphones. Binaural beats need one carrier per
+    /// ear, so over speakers the layer is muted and the UI says why.
+    var headphones: Bool { didSet { apply() } }
+    private var route: OutputRoute?
     var length: SessionLength { didSet { resetTimer(); save() } }
     /// Control Center and media keys. Off keeps the media keys with the music player.
     var nowPlaying: Bool {
@@ -72,6 +78,14 @@ final class Session {
     private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     private let mindful: (any MindfulLog)?
+    /// iCloud's key-value store: a setting changed on one device reaches the
+    /// others. Nil in tests. Without the entitlement or an account the store
+    /// just does not sync, so a development build runs unchanged.
+    private let cloud: (any SettingsStore)?
+    private var cloudObserver: NSObjectProtocol?
+    /// Off until launch has taken the store in, and while a remote change is
+    /// applied, so the store's own values are not sent back over each other.
+    private var mirrors = false
     /// Wall-clock start of the Meditate segment playing now.
     private var mindfulStart: Date?
     /// Created on first play: a login item should not touch audio hardware at launch.
@@ -85,9 +99,15 @@ final class Session {
     private var playStart: ContinuousClock.Instant?
     private var tickTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
+    /// Set while a system interruption holds the session paused; cleared by
+    /// anything the user does, so only the interruption's end resumes.
+    private var interruptedByAudio = false
     /// What the widget last got. iOS budgets a few dozen reloads a day, so
     /// only a snapshot that differs from it is written and reloaded.
     private var widgetState: WidgetState?
+    #if os(iOS)
+    private let activity = SessionLiveActivity()
+    #endif
     #if os(macOS)
     private var sleepObserver: NSObjectProtocol?
     #endif
@@ -96,11 +116,13 @@ final class Session {
         defaults: UserDefaults,
         widgetDirectory: URL? = WidgetState.directory,
         mindful: (any MindfulLog)? = nil,
+        cloud: (any SettingsStore)? = nil,
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
         self.mindful = mindful
+        self.cloud = cloud
         self.makeEngine = makeEngine
         widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
@@ -109,15 +131,30 @@ final class Session {
         length = SessionLength(rawValue: defaults.integer(forKey: "length")) ?? .endless
         volume = defaults.object(forKey: "volume") as? Double ?? 1
         nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? Self.nowPlayingByDefault
+        headphones = OutputRoute.headphones
         layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
-            let stored = defaults.string(forKey: "layers.\(mode.rawValue)")?.split(separator: ",") ?? []
-            let layers = Set(stored.compactMap { Soundscape(rawValue: String($0)) })
+            let layers = Self.layers(from: defaults.string(forKey: Self.layersKey(mode)))
             return layers.isEmpty ? nil : (mode, layers)
         })
         remaining = length == .endless ? nil : length.seconds
         parameters.volume.store(volume, ordering: .relaxed)
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
+        route = OutputRoute { [weak self] headphones in self?.headphones = headphones }
+
+        if let cloud {
+            // Changes that arrived while the app was not running are in the
+            // store already; later ones come as notifications.
+            cloud.synchronize()
+            pull(Self.syncedKeys)
+            mirrors = true
+            cloudObserver = NotificationCenter.default.addObserver(
+                forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: cloud, queue: .main
+            ) { [weak self] note in
+                let keys = note.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] ?? Self.syncedKeys
+                MainActor.assumeIsolated { self?.pull(keys) }
+            }
+        }
 
         #if os(macOS)
         // A session that outlives the Mac's sleep would otherwise resume on
@@ -166,10 +203,12 @@ final class Session {
     /// Async because the watch may have to ask which headphones to use before
     /// its audio route exists; on the Mac and iPhone the engine starts at once.
     func play() async {
+        interruptedByAudio = false
         stopTask?.cancel()
         let engine = self.engine ?? {
             let engine = makeEngine(parameters)
             engine.onInterruption = { [weak self] in self?.interrupted() }
+            engine.onInterruptionEnded = { [weak self] in await self?.interruptionEnded(shouldResume: $0) }
             engine.mixesWithOthers = !nowPlaying
             self.engine = engine
             return engine
@@ -190,6 +229,7 @@ final class Session {
     }
 
     func pause() {
+        interruptedByAudio = false
         guard isPlaying else { return }
         isPlaying = false
         played = playTime
@@ -208,10 +248,46 @@ final class Session {
         }
     }
 
-    /// The engine stopped on its own and could not come back.
+    /// A Focus filter. A mode means its Focus turned on: start it, and
+    /// remember whether it wants the session paused when it turns off. No
+    /// mode and no stop flag is the empty filter the system sends once every
+    /// Focus is off. The flag lives in defaults because that later call
+    /// carries nothing of the filter that set it.
+    func applyFocusFilter(mode: Mode?, length: SessionLength?, stopWhenOff: Bool) async {
+        let key = "focusFilter.stopWhenOff"
+        if let mode {
+            defaults.set(stopWhenOff, forKey: key)
+            self.mode = mode
+            if let length { self.length = length }
+            await play()
+        } else if stopWhenOff {
+            defaults.set(true, forKey: key)
+        } else if defaults.bool(forKey: key) {
+            defaults.set(false, forKey: key)
+            pause()
+        }
+    }
+
+    /// The engine stopped on its own. The engine is kept so the end of a
+    /// system interruption still reaches it; a deliberate pause releases it.
     private func interrupted() {
         pause()
+        stopTask?.cancel()
+        interruptedByAudio = true
         error = String(localized: "Audio stopped")
+    }
+
+    /// Resumes when the system says so and nothing else happened in between;
+    /// otherwise the idle engine is released like after any other pause.
+    private func interruptionEnded(shouldResume: Bool) async {
+        guard interruptedByAudio else { return }
+        interruptedByAudio = false
+        if shouldResume {
+            await play()
+        } else {
+            engine?.stop()
+            engine = nil
+        }
     }
 
     // MARK: Mindful minutes
@@ -235,7 +311,7 @@ final class Session {
         applyRate()
         p.modulationDepth.store(mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
-        p.binauralLevel.store(binaural ? 0.12 : 0, ordering: .relaxed)
+        p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
         applyMaster()
         save()
@@ -243,19 +319,67 @@ final class Session {
     }
 
     private func applyRate() {
-        parameters.modulationRate.store(mode.rate(elapsed: playTime), ordering: .relaxed)
+        parameters.modulationRate.store(mode.rate(elapsed: playTime, length: length), ordering: .relaxed)
     }
 
     private func save() {
-        defaults.set(mode.rawValue, forKey: "mode")
-        defaults.set(intensity.rawValue, forKey: "intensity")
-        defaults.set(binaural, forKey: "binaural")
-        defaults.set(length.rawValue, forKey: "length")
-        defaults.set(volume, forKey: "volume")
+        store(mode.rawValue, forKey: "mode")
+        store(intensity.rawValue, forKey: "intensity")
+        store(binaural, forKey: "binaural")
+        store(length.rawValue, forKey: "length")
+        store(volume, forKey: "volume")
+        // Now Playing means something else on each platform, so it stays local.
         defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
-            let stored = Soundscape.allCases.filter(layers.contains).map(\.rawValue).joined(separator: ",")
-            defaults.set(stored, forKey: "layers.\(mode.rawValue)")
+            store(Soundscape.allCases.filter(layers.contains).map(\.rawValue).joined(separator: ","), forKey: Self.layersKey(mode))
+        }
+    }
+
+    // MARK: iCloud
+
+    /// Defaults get every value; the cloud only what differs from it, so a
+    /// value that just arrived from another device is not sent straight back.
+    private func store<V: Equatable>(_ value: V, forKey key: String) {
+        defaults.set(value, forKey: key)
+        guard mirrors, let cloud, cloud.object(forKey: key) as? V != value else { return }
+        cloud.set(value, forKey: key)
+    }
+
+    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume"] + Mode.allCases.map { layersKey($0) }
+
+    nonisolated private static func layersKey(_ mode: Mode) -> String { "layers.\(mode.rawValue)" }
+
+    nonisolated private static func layers(from stored: String?) -> Set<Soundscape> {
+        Set((stored ?? "").split(separator: ",").compactMap { Soundscape(rawValue: String($0)) })
+    }
+
+    /// Takes the store's values for `keys` into the session. Only what differs
+    /// is assigned, so the setters do the rest: defaults, atomics, widget.
+    /// A playing device hears the change; an idle one only remembers it.
+    private func pull(_ keys: [String]) {
+        guard let cloud else { return }
+        let mirrored = mirrors
+        mirrors = false
+        defer { mirrors = mirrored }
+        for key in keys {
+            switch key {
+            case "mode":
+                if let value = (cloud.object(forKey: key) as? String).flatMap(Mode.init), value != mode { mode = value }
+            case "intensity":
+                if let value = (cloud.object(forKey: key) as? String).flatMap(Intensity.init), value != intensity { intensity = value }
+            case "binaural":
+                if let value = cloud.object(forKey: key) as? Bool, value != binaural { binaural = value }
+            case "length":
+                if let value = (cloud.object(forKey: key) as? Int).flatMap(SessionLength.init), value != length { length = value }
+            case "volume":
+                if let value = cloud.object(forKey: key) as? Double, value != volume { volume = value }
+            default:
+                guard key.hasPrefix("layers."), let mode = Mode(rawValue: String(key.dropFirst("layers.".count))) else { continue }
+                let layers = Self.layers(from: cloud.object(forKey: key) as? String)
+                guard !layers.isEmpty, layers != layersByMode[mode] else { continue }
+                layersByMode[mode] = layers
+                mode == self.mode ? apply() : save()
+            }
         }
     }
 
@@ -266,10 +390,16 @@ final class Session {
         parameters.master.store(gain, ordering: .relaxed)
     }
 
-    /// Tells Now Playing, the widget and Control Center about a state change.
-    /// Both read the snapshot file, so they need no live connection.
+    /// Tells Now Playing, the Live Activity, the widget and Control Center
+    /// about a state change. The last two read the snapshot file, so they
+    /// need no live connection.
     private func broadcast() {
         NowPlaying.update(self)
+        #if os(iOS)
+        activity.update(SessionActivityAttributes.ContentState.snapshot(
+            mode: mode, sound: layers.title, isPlaying: isPlaying, remaining: remaining, deadline: deadline
+        ))
+        #endif
         let state = WidgetState(
             mode: mode,
             sound: layers.title,
@@ -290,11 +420,15 @@ final class Session {
 
     // MARK: Timer
 
-    /// A new length starts the countdown over, even mid-session.
+    /// A new length starts the countdown over, even mid-session, and the
+    /// ramp with it: a timed ramp is measured against the timer.
     private func resetTimer() {
         stopTimer()
         remaining = length == .endless ? nil : length.seconds
+        played = 0
+        playStart = isPlaying ? .now : nil
         if isPlaying { startTimer() }
+        applyRate()
         applyMaster()
         broadcast()
     }
@@ -303,14 +437,15 @@ final class Session {
     /// walk. An endless session stops ticking once its ramp has arrived.
     private func startTimer() {
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
-        guard deadline != nil || mode.ramp != nil else { return }
+        let rampSeconds = mode.rampSeconds(for: length)
+        guard deadline != nil || rampSeconds != nil else { return }
         tickDeadline = deadline
         self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
                 applyRate()
                 guard let deadline else {
-                    if let ramp = mode.ramp, playTime >= ramp.seconds {
+                    if let rampSeconds, playTime >= rampSeconds {
                         tickTask = nil
                         return
                     }
@@ -340,6 +475,9 @@ final class Session {
     private func finish() {
         pause()
         remaining = length.seconds
+        #if os(iOS)
+        activity.end()
+        #endif
         broadcast()
     }
 

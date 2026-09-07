@@ -2,6 +2,7 @@
 *.xcodeproj
 Info.plist
 Entrain.entitlements
+!AppStore/Entrain.entitlements
 
 xcuserdata/
 *.xcuserstate

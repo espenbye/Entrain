@@ -7,6 +7,7 @@ import Testing
 struct SessionTests {
     final class FakeAudio: SessionAudio {
         var onInterruption: (() -> Void)?
+        var onInterruptionEnded: ((Bool) async -> Void)?
         var mixesWithOthers = false
         var starts = 0
         var stops = 0
@@ -27,6 +28,24 @@ struct SessionTests {
         var segments: [DateInterval] = []
         func prepare() { prepared += 1 }
         func log(_ segment: DateInterval) { segments.append(segment) }
+    }
+
+    /// The iCloud store as a dictionary. `changed` plays the other device.
+    final class FakeCloud: SettingsStore {
+        var values: [String: Any] = [:]
+        var writes = 0
+        func object(forKey key: String) -> Any? { values[key] }
+        func set(_ value: Any?, forKey key: String) {
+            values[key] = value
+            writes += 1
+        }
+        func synchronize() -> Bool { true }
+        func changed(_ keys: [String]) {
+            NotificationCenter.default.post(
+                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: self,
+                userInfo: [NSUbiquitousKeyValueStoreChangedKeysKey: keys]
+            )
+        }
     }
 
     let defaults: UserDefaults
@@ -65,6 +84,74 @@ struct SessionTests {
         #expect(second.layers == [.pad])
         second.mode = .relax
         #expect(second.layers == [.pad, .drone])
+    }
+
+    @Test func settingsReachTheCloudAndComeBack() async {
+        let cloud = FakeCloud()
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory, cloud: cloud) { [audio] _ in audio }
+        session.mode = .relax
+        session.setLayer(.drone, on: true)
+        session.length = .thirty
+        session.nowPlaying = false
+        #expect(cloud.values["mode"] as? String == "relax")
+        #expect(cloud.values["layers.relax"] as? String == "pad,drone")
+        #expect(cloud.values["length"] as? Int == SessionLength.thirty.rawValue)
+        #expect(cloud.values["nowPlaying"] == nil)
+
+        // Another device changed its settings; this one follows without echoing them back.
+        let writes = cloud.writes
+        cloud.values["mode"] = "meditate"
+        cloud.values["intensity"] = "high"
+        cloud.values["binaural"] = true
+        cloud.values["volume"] = 0.3
+        cloud.values["layers.meditate"] = "pad,rain"
+        cloud.changed(["mode", "intensity", "binaural", "volume", "layers.meditate"])
+        #expect(session.mode == .meditate)
+        #expect(session.intensity == .high)
+        #expect(session.binaural)
+        #expect(session.volume == 0.3)
+        #expect(session.layers == [.pad, .rain])
+        #expect(session.parameters.layers.load(ordering: .relaxed) == Soundscape.pad.bit | Soundscape.rain.bit)
+        #expect(cloud.writes == writes)
+        #expect(!session.isPlaying)
+        #expect(audio.starts == 0)
+        #expect(defaults.string(forKey: "mode") == "meditate")
+
+        // A change that arrived while the app was closed is read at launch.
+        cloud.values["length"] = SessionLength.sixty.rawValue
+        let relaunched = Session(defaults: defaults, widgetDirectory: widgetDirectory, cloud: cloud) { [audio] _ in audio }
+        #expect(relaunched.length == .sixty)
+        #expect(relaunched.mode == .meditate)
+    }
+
+    @Test func focusFilterStartsItsModeAndStopsWhenAsked() async {
+        let session = makeSession()
+        await session.applyFocusFilter(mode: .relax, length: .thirty, stopWhenOff: true)
+        #expect(session.isPlaying)
+        #expect(session.mode == .relax)
+        #expect(session.length == .thirty)
+
+        // Every Focus off: the filter arrives empty.
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(!session.isPlaying)
+
+        // A filter that does not ask to stop leaves the session alone at the end.
+        await session.applyFocusFilter(mode: .focus, length: nil, stopWhenOff: false)
+        #expect(session.length == .thirty)
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(session.isPlaying)
+    }
+
+    @Test func focusFilterStopFlagSurvivesRelaunch() async {
+        await makeSession().applyFocusFilter(mode: nil, length: nil, stopWhenOff: true)
+        let session = makeSession()
+        await session.play()
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(!session.isPlaying)
+        // Consumed: the next empty filter is not a stop.
+        await session.play()
+        await session.applyFocusFilter(mode: nil, length: nil, stopWhenOff: false)
+        #expect(session.isPlaying)
     }
 
     @Test func theLastLayerCannotBeRemoved() {
@@ -122,6 +209,39 @@ struct SessionTests {
         #expect(session.remaining == SessionLength.fifteen.seconds)
     }
 
+    @Test func interruptionResumesOnlyWhenTheSystemSaysSo() async {
+        let session = makeSession()
+        session.length = .fifteen
+        await session.play()
+        audio.onInterruption?()
+        #expect(!session.isPlaying)
+        #expect(audio.stops == 0)
+
+        await audio.onInterruptionEnded?(true)
+        #expect(session.isPlaying)
+        #expect(session.error == nil)
+        #expect(audio.starts == 2)
+        #expect(session.deadline != nil)
+
+        // Without the resume flag the session stays paused and lets the engine go.
+        audio.onInterruption?()
+        await audio.onInterruptionEnded?(false)
+        #expect(!session.isPlaying)
+        #expect(audio.stops == 1)
+
+        // A spurious end after the user resumed changes nothing.
+        await session.play()
+        await audio.onInterruptionEnded?(false)
+        #expect(session.isPlaying)
+        #expect(audio.stops == 1)
+
+        // A stop of the user's own during the interruption disarms the resume.
+        audio.onInterruption?()
+        session.pause()
+        await audio.onInterruptionEnded?(true)
+        #expect(!session.isPlaying)
+    }
+
     @Test func pauseKeepsTheCountdownAndNewLengthResetsIt() async {
         let session = makeSession()
         session.length = .sixty
@@ -136,13 +256,37 @@ struct SessionTests {
         #expect(session.remaining == nil)
     }
 
-    @Test func rampModesWalkTheRate() {
-        #expect(Mode.windDown.rate(elapsed: 0) == 10)
-        #expect(Mode.windDown.rate(elapsed: 10 * 60) == 6)
-        #expect(Mode.windDown.rate(elapsed: 60 * 60) == 2)
-        #expect(Mode.wake.rate(elapsed: 0) == 2)
-        #expect(Mode.wake.rate(elapsed: 15 * 60) == 16)
-        #expect(Mode.focus.rate(elapsed: 60 * 60) == 16)
+    @Test func newLengthRestartsTheRamp() async {
+        let session = makeSession()
+        session.mode = .windDown
+        session.length = .fifteen
+        await session.play()
+        session.length = .sixty
+        #expect(session.remaining == SessionLength.sixty.seconds)
+        // Back at the start of the ramp, give or take the microseconds since.
+        #expect(session.parameters.modulationRate.load(ordering: .relaxed) > 9.99)
+    }
+
+    @Test func endlessRampsWalkTheirFixedLength() {
+        #expect(Mode.windDown.rate(elapsed: 0, length: .endless) == 10)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .endless) == 6)
+        #expect(Mode.windDown.rate(elapsed: 60 * 60, length: .endless) == 2)
+        #expect(Mode.wake.rate(elapsed: 0, length: .endless) == 2)
+        #expect(Mode.wake.rate(elapsed: 15 * 60, length: .endless) == 16)
+        #expect(Mode.focus.rate(elapsed: 60 * 60, length: .endless) == 16)
+        #expect(Mode.focus.rampSeconds(for: .sixty) == nil)
+    }
+
+    @Test func timedRampsFollowTheTimer() {
+        // Wake ramps over the whole timer.
+        #expect(Mode.wake.rampSeconds(for: .sixty) == 60 * 60)
+        #expect(Mode.wake.rate(elapsed: 30 * 60, length: .sixty) == 9)
+        #expect(Mode.wake.rate(elapsed: 60 * 60, length: .sixty) == 16)
+        // Wind Down reaches 2 Hz when its five-minute taper begins.
+        #expect(Mode.windDown.rampSeconds(for: .fifteen) == 10 * 60)
+        #expect(Mode.windDown.rate(elapsed: 5 * 60, length: .fifteen) == 6)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .fifteen) == 2)
+        #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .eightHours) > 9)
     }
 
     @Test func rampModesStartAtTheirFirstRate() {
@@ -162,6 +306,7 @@ struct SessionTests {
         session.mode = .focus
         session.intensity = .high
         session.binaural = true
+        session.headphones = true
         let p = session.parameters
         #expect(p.modulationRate.load(ordering: .relaxed) == 16)
         #expect(p.modulationDepth.load(ordering: .relaxed) == 0.6)
@@ -194,6 +339,19 @@ struct SessionTests {
         #expect(Session.masterGain(remaining: 150, fadeOut: 300) == 0.5)
         #expect(Session.masterGain(remaining: 0, fadeOut: 300) == 0)
         #expect(Session.masterGain(remaining: 30, fadeOut: 1) == 1)
+    }
+
+    @Test func binauralIsMutedOverSpeakers() {
+        let session = makeSession()
+        session.binaural = true
+        session.headphones = true
+        #expect(session.parameters.binauralLevel.load(ordering: .relaxed) == 0.12)
+        session.headphones = false
+        #expect(session.parameters.binauralLevel.load(ordering: .relaxed) == 0)
+        #expect(session.binaural)
+        session.headphones = true
+        #expect(session.parameters.binauralLevel.load(ordering: .relaxed) == 0.12)
+        #expect(makeSession().binaural)
     }
 
     @Test func widgetSeesTheSession() async {
@@ -256,10 +414,38 @@ struct SessionTests {
         #expect(mindful.segments.allSatisfy { $0.duration >= 0 && $0.end <= .now })
     }
 
+    @Test func widgetTreatsAPastDeadlineAsStopped() {
+        let playing = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: .now.addingTimeInterval(60))
+        #expect(playing.at(.now).isPlaying)
+        let over = playing.at(.now.addingTimeInterval(120))
+        #expect(!over.isPlaying)
+        #expect(over.deadline == nil)
+        #expect(over.mode == .relax)
+        let endless = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: nil)
+        #expect(endless.at(.distantFuture).isPlaying)
+    }
+
     @Test func countdownGrowsPastAnHour() {
         #expect(899.countdown == "14:59")
         #expect(3600.countdown == "1:00:00")
         #expect(SessionLength.eightHours.seconds.countdown == "8:00:00")
         #expect(SessionLength.eightHours.title == String(localized: "\(8) h"))
+    }
+
+    @Test func liveActivityFollowsTheTimer() {
+        typealias State = SessionActivityAttributes.ContentState
+        let now = Date.now
+        let deadline = now.addingTimeInterval(600)
+        #expect(State.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: nil, deadline: nil) == nil)
+
+        let playing = State.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: 600, deadline: deadline, now: now)
+        #expect(playing == State(mode: .focus, sound: "Rain", deadline: deadline, pausedAt: nil))
+        #expect(playing?.isPlaying == true)
+
+        // Paused: the countdown freezes at `now`, showing the seconds kept.
+        let paused = State.snapshot(mode: .focus, sound: "Rain", isPlaying: false, remaining: 600, deadline: nil, now: now)
+        #expect(paused?.pausedAt == now)
+        #expect(paused?.deadline == deadline)
+        #expect(paused?.isPlaying == false)
     }
 }

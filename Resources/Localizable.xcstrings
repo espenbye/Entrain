@@ -51,42 +51,22 @@
         }
       }
     },
-    "2 hours" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "2 timer"
-          }
-        }
-      }
-    },
-    "4 hours" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4 timer"
-          }
-        }
-      }
-    },
-    "8 hours" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "8 timer"
-          }
-        }
-      }
-    },
     "15 minutes" : {
       "localizations" : {
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "15 minutter"
+          }
+        }
+      }
+    },
+    "2 hours" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 timer"
           }
         }
       }
@@ -101,12 +81,32 @@
         }
       }
     },
+    "4 hours" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 timer"
+          }
+        }
+      }
+    },
     "60 minutes" : {
       "localizations" : {
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "60 minutter"
+          }
+        }
+      }
+    },
+    "8 hours" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "8 timer"
           }
         }
       }
@@ -171,6 +171,16 @@
         }
       }
     },
+    "Binaural beats need headphones." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Binaurale toner trenger hodetelefoner."
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "nb" : {
@@ -187,6 +197,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt Våkne-alarm"
+          }
+        }
+      }
+    },
+    "Changes how deep the modulation goes. The sleep modes ignore it." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endrer hvor dyp modulasjonen er. Søvnmodusene ignorerer den."
+          }
+        }
+      }
+    },
+    "Changes the timer. A running session starts its countdown over." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endrer tidtakeren. En pågående økt starter nedtellingen på nytt."
           }
         }
       }
@@ -261,8 +291,16 @@
         }
       }
     },
-    "Entrain" : {
-
+    "Entrain" : {},
+    "Entrain State" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrain-tilstand"
+          }
+        }
+      }
     },
     "Entrain could not play: %@" : {
       "localizations" : {
@@ -280,6 +318,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entrain kunne ikke starte lyd."
+          }
+        }
+      }
+    },
+    "Entrain is paused." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrain er pauset."
+          }
+        }
+      }
+    },
+    "Entrain is playing %@." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrain spiller %@."
           }
         }
       }
@@ -304,12 +362,32 @@
         }
       }
     },
+    "Focus Filter" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokusfilter"
+          }
+        }
+      }
+    },
     "Gamma" : {
       "localizations" : {
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gamma"
+          }
+        }
+      }
+    },
+    "Get Entrain State" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hent Entrain-tilstand"
           }
         }
       }
@@ -340,6 +418,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intensitet"
+          }
+        }
+      }
+    },
+    "Is Playing" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiller av"
           }
         }
       }
@@ -420,6 +508,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Støy"
+          }
+        }
+      }
+    },
+    "Nothing" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingenting"
           }
         }
       }
@@ -594,6 +692,26 @@
         }
       }
     },
+    "Remaining Seconds" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekunder igjen"
+          }
+        }
+      }
+    },
+    "Returns the mode, whether it is playing, the sound, the time left, the intensity and whether binaural beats are on." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returnerer modusen, om den spiller, lyden, tiden som er igjen, intensiteten og om binaurale toner er på."
+          }
+        }
+      }
+    },
     "Rings at %@" : {
       "localizations" : {
         "nb" : {
@@ -614,12 +732,92 @@
         }
       }
     },
+    "Set Binaural Beats" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett binaurale toner"
+          }
+        }
+      }
+    },
+    "Set Intensity" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett intensitet"
+          }
+        }
+      }
+    },
     "Set Mode Playing" : {
       "localizations" : {
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sett modus til å spille"
+          }
+        }
+      }
+    },
+    "Set Timer" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett tidtaker"
+          }
+        }
+      }
+    },
+    "Set Volume" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett volum"
+          }
+        }
+      }
+    },
+    "Set intensity to ${value}" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett intensiteten til ${value}"
+          }
+        }
+      }
+    },
+    "Set timer to ${value}" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett tidtakeren til ${value}"
+          }
+        }
+      }
+    },
+    "Set volume to ${value} %" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sett volumet til ${value} %"
+          }
+        }
+      }
+    },
+    "Sets the app's own volume, on top of the system level." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setter appens eget volum, på toppen av systemnivået."
           }
         }
       }
@@ -664,6 +862,16 @@
         }
       }
     },
+    "Start %@" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start %@"
+          }
+        }
+      }
+    },
     "Start Session" : {
       "localizations" : {
         "nb" : {
@@ -680,6 +888,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Start Våkne"
+          }
+        }
+      }
+    },
+    "Starts a mode when the Focus turns on." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starter en modus når fokuset slås på."
           }
         }
       }
@@ -704,6 +922,26 @@
         }
       }
     },
+    "Stop when this Focus turns off" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopp når dette fokuset slås av"
+          }
+        }
+      }
+    },
+    "Stops when the Focus turns off" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper når fokuset slås av"
+          }
+        }
+      }
+    },
     "Timer" : {
       "localizations" : {
         "nb" : {
@@ -720,6 +958,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Veksler avspilling av gjeldende modus."
+          }
+        }
+      }
+    },
+    "Turn binaural beats ${value}" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå binaurale toner ${value}"
+          }
+        }
+      }
+    },
+    "Turns the binaural beat on or off. It plays over headphones only." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slår den binaurale tonen på eller av. Den spilles bare over hodetelefoner."
           }
         }
       }
@@ -750,6 +1008,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hverdager kl. %@."
+          }
+        }
+      }
+    },
+    "What's Playing" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hva spilles"
           }
         }
       }

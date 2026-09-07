@@ -147,8 +147,8 @@ final class WakeAlarm {
 
 /// Behind the alarm's second button. A Live Activity intent runs in the app,
 /// and foreground mode brings the app up, so the ramp starts on screen. An
-/// endless timer becomes half an hour: the ramp takes fifteen minutes, and
-/// a wake-up soundscape should not still be playing at lunch.
+/// endless timer becomes half an hour, so the ramp has a length to follow
+/// and a wake-up soundscape is not still playing at lunch.
 struct StartWakeIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Start Wake"
     static var supportedModes: IntentModes { .foreground }

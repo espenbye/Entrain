@@ -39,8 +39,10 @@ targetTemplates:
     sources:
       - Widget/EntrainWidget.swift
       - Widget/WakeActivity.swift
+      - Widget/SessionActivity.swift
       - Sources/Session/Mode.swift
       - Sources/Session/WakeAlarmMetadata.swift
+      - Sources/Session/SessionActivityAttributes.swift
       - Sources/Session/WidgetState.swift
       - Sources/Session/Intents.swift
       - Resources/Localizable.xcstrings
@@ -85,6 +87,9 @@ targets:
         # CODE_SIGN_ENTITLEMENTS=AppStore/$(TARGET_NAME).entitlements instead.
         com.apple.security.temporary-exception.files.home-relative-path.read-write:
           - /Library/Application Support/Entrain/
+        # No iCloud key-value store here: like an App Group it needs a
+        # certificate to sign, so the Mac only syncs settings from an
+        # archive signed with AppStore/Entrain.entitlements.
     dependencies:
       - target: EntrainWidget
     settings:
@@ -148,6 +153,8 @@ targets:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        # No iCloud key-value store: personal teams cannot provision it, so
+        # settings sync comes from an archive signed with AppStore/EntrainiOS.entitlements.
     dependencies:
       - target: EntrainWidgetiOS
       - target: EntrainWatch
@@ -195,6 +202,7 @@ targets:
         com.apple.security.application-groups: [group.no.espenbye.entrain]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        # iCloud key-value store only in AppStore/EntrainWatch.entitlements, as on iOS.
     dependencies:
       - target: EntrainWidgetWatch
     settings:
