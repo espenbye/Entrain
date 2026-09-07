@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in Entrain does not behave as described in the README.
+labels: [bug]
+body:
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and OS version
+      placeholder: "macOS 26.1 / iOS 26.1 / watchOS 26.1"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Entrain version
+      description: From the About view, or the commit hash if built from source.
+    validations:
+      required: true
+  - type: input
+    id: settings
+    attributes:
+      label: Mode, sound, intensity, timer, binaural
+      placeholder: "Focus, Rain + Pad, Medium, 30 min, binaural off"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include audio artifacts (clicks, dropouts, level jumps), logs or a recording if relevant.
+    validations:
+      required: true
