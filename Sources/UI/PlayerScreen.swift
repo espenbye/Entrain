@@ -5,7 +5,8 @@ import SwiftUI
 /// shelves, then what changes per session in a glass card. Everything set
 /// once lives behind the gear. The backdrop takes the mode's tint so
 /// switching modes changes the room, not just a label. The Mac window is
-/// wide enough for two columns, so nothing scrolls there.
+/// wide enough for two columns, so nothing scrolls there, and the window
+/// is the size of its content.
 struct PlayerScreen: View {
     static let windowID = "player"
     @Bindable var session: Session
@@ -50,7 +51,7 @@ struct PlayerScreen: View {
             }
             .scrollBounceBehavior(.basedOnSize)
         }
-        .frame(minWidth: 720, idealWidth: 760, minHeight: 640, idealHeight: 680)
+        .frame(width: 760, height: 640)
         #else
         ScrollView {
             VStack(spacing: 20) {
