@@ -66,6 +66,7 @@ struct PlayerControls: View {
             if session.mode == .meditate {
                 BreathingPickers(session: session)
             }
+            Toggle("Follow the Day", isOn: $session.program)
         }
     }
 }

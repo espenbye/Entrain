@@ -1,1677 +1,1967 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "%1$@ at %2$@." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ kl. %2$@."
+  "sourceLanguage": "en",
+  "strings": {
+    "%1$@ at %2$@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ kl. %2$@."
           }
         }
       }
     },
-    "%@\n\nMove Entrain to the Applications folder and try again." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@\n\nFlytt Entrain til Programmer-mappen og prøv igjen."
+    "%@\n\nMove Entrain to the Applications folder and try again.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@\n\nFlytt Entrain til Programmer-mappen og prøv igjen."
           }
         }
       }
     },
-    "%@ · %@ left" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · %2$@ igjen"
+    "%@ Hz": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Hz"
           }
         }
       }
     },
-    "%@, %@" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@, %2$@"
+    "%@ at %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ klokken %2$@."
           }
         }
       }
     },
-    "%lld h" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld t"
+    "%@ from %@. Start it yourself when you are ready.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ fra klokken %2$@. Start den selv når du er klar."
           }
         }
       }
     },
-    "%lld min" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld min"
+    "%@ to %@ Hz": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ til %@ Hz"
           }
         }
       }
     },
-    "15 minutes" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "15 minutter"
+    "%@ · %@ left": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ igjen"
           }
         }
       }
     },
-    "2 hours" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "2 timer"
+    "%@, %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
           }
         }
       }
     },
-    "30 minutes" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "30 minutter"
+    "%lld h": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld t"
           }
         }
       }
     },
-    "4 hours" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4 timer"
+    "%lld min": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
           }
         }
       }
     },
-    "4 in, 6 out. A longer exhale for calm." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4 inn, 6 ut. Lengre utpust for ro."
+    "10 Hz is alpha, the rhythm of a calm and open mind. The swell stays close to a plain sine, so nothing in it pulls at attention.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10 Hz er alfa, rytmen til et rolig og åpent sinn. Svellet ligger nær en ren sinus, så ingenting i den drar i oppmerksomheten."
           }
         }
       }
     },
-    "4 in, hold 4, 4 out, hold 4. Steadies attention." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4 inn, hold 4, 4 ut, hold 4. Stabiliserer oppmerksomheten."
+    "15 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 minutter"
           }
         }
       }
     },
-    "4 in, hold 7, 8 out. Slows the body down." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4 inn, hold 7, 8 ut. Roer ned kroppen."
+    "16 Hz is beta, where alert attention sits. Each cycle drops sharply and recovers, so there is a transient to lock to rather than a wobble.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "16 Hz er beta, der våken oppmerksomhet ligger. Hver syklus faller brått og bygger seg opp igjen, så det er en transient å låse seg til framfor en vibrato."
           }
         }
       }
     },
-    "4-7-8" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4-7-8"
+    "2 hours": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 timer"
           }
         }
       }
     },
-    "5 in, 5 out. Six breaths a minute, the resonance rate." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "5 inn, 5 ut. Seks pust i minuttet, resonansfrekvensen."
+    "30 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 minutter"
           }
         }
       }
     },
-    "60 minutes" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "60 minutter"
+    "4 hours": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 timer"
           }
         }
       }
     },
-    "8 hours" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "8 timer"
+    "4 in, 6 out. A longer exhale for calm.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 inn, 6 ut. Lengre utpust for ro."
           }
         }
       }
     },
-    "90 minutes" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "90 minutter"
+    "4 in, hold 4, 4 out, hold 4. Steadies attention.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 inn, hold 4, 4 ut, hold 4. Stabiliserer oppmerksomheten."
           }
         }
       }
     },
-    "Adds a slow beat between the ears. Needs headphones, so it is silent right now." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Legger en langsom puls mellom ørene. Trenger hodetelefoner, så den er stille nå."
+    "4 in, hold 7, 8 out. Slows the body down.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 inn, hold 7, 8 ut. Roer ned kroppen."
           }
         }
       }
     },
-    "Adds a slow beat between the ears. Needs headphones." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Legger en langsom puls mellom ørene. Trenger hodetelefoner."
+    "4-7-8": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4-7-8"
           }
         }
       }
     },
-    "Alarm" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alarm"
+    "40 Hz is the best-replicated rate for driving an auditory steady-state response. It stays shallow because 40 Hz modulation sits in the range the ear hears as roughness, and turns into a buzz at ordinary depth.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "40 Hz er den best replikerte raten for å drive en auditiv stabil-tilstandsrespons. Den holdes grunn fordi 40 Hz-modulasjon ligger i området øret hører som ruhet, og blir en summing ved vanlig dybde."
           }
         }
       }
     },
-    "Allow alarms for Entrain in Settings to use the Wake alarm." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillat alarmer for Entrain i Innstillinger for å bruke Våkne-alarmen."
+    "5 in, 5 out. Six breaths a minute, the resonance rate.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 inn, 5 ut. Seks pust i minuttet, resonansfrekvensen."
           }
         }
       }
     },
-    "Allow location for Entrain in Settings to follow local sunrise and sunset." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillat posisjon for Entrain i Innstillinger for å følge lokal soloppgang og solnedgang."
+    "6 Hz is theta, the rate of inward attention, and slow enough to breathe along with.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6 Hz er theta, raten for innoverrettet oppmerksomhet, og langsom nok til å puste med."
           }
         }
       }
     },
-    "Audio stopped" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lyden stoppet"
+    "60 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 minutter"
           }
         }
       }
     },
-    "Audio unavailable" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lyd utilgjengelig"
+    "8 hours": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 timer"
           }
         }
       }
     },
-    "Binaural Beats" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Binaurale toner"
+    "90 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90 minutter"
           }
         }
       }
     },
-    "Binaural beats need headphones." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Binaurale toner trenger hodetelefoner."
+    "A little 2 Hz to follow while you are still awake, fading to a steady bed over the time it takes you to fall asleep. Sound that stays busy past onset lifts arousals for the rest of the night.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Litt 2 Hz å følge mens du fortsatt er våken, som toner ut til et jevnt teppe i løpet av tiden du bruker på å sovne. Lyd som holder seg travel etter innsovning gir flere oppvåkninger resten av natten."
           }
         }
       }
     },
-    "Box" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Boks"
+    "Adds a slow beat between the ears. Needs headphones, so it is silent right now.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legger en langsom puls mellom ørene. Trenger hodetelefoner, så den er stille nå."
           }
         }
       }
     },
-    "Breath %lld of %lld" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pust %1$lld av %2$lld"
+    "Adds a slow beat between the ears. Needs headphones.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legger en langsom puls mellom ørene. Trenger hodetelefoner."
           }
         }
       }
     },
-    "Breathe in" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pust inn"
+    "Alarm": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarm"
           }
         }
       }
     },
-    "Breathe out" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pust ut"
+    "Allow alarms for Entrain in Settings to use the Wake alarm.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillat alarmer for Entrain i Innstillinger for å bruke Våkne-alarmen."
           }
         }
       }
     },
-    "Breathing" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pust"
+    "Allow location for Entrain in Settings to follow local sunrise and sunset.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillat posisjon for Entrain i Innstillinger for å følge lokal soloppgang og solnedgang."
           }
         }
       }
     },
-    "Breathing Length" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pustelengde"
+    "Alpha walked down to delta over the session, the way an evening should go, arriving in delta as the taper begins.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alfa gått ned til delta gjennom økten, slik en kveld bør gå, og framme i delta når uttoningen begynner."
           }
         }
       }
     },
-    "Brighter in the morning, warmer after sunset, assuming a 7 to 19 day." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lysere om morgenen, varmere etter solnedgang, med en dag fra 7 til 19."
+    "Audio stopped": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyden stoppet"
           }
         }
       }
     },
-    "Brighter in the morning, warmer after sunset, from your approximate location." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lysere om morgenen, varmere etter solnedgang, ut fra din omtrentlige posisjon."
+    "Audio unavailable": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyd utilgjengelig"
           }
         }
       }
     },
-    "Cancel" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avbryt"
+    "Background Sound": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bakgrunnslyd"
           }
         }
       }
     },
-    "Cancel Wake Alarm" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avbryt Våkne-alarm"
+    "Background sound distracts me": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bakgrunnslyd forstyrrer meg"
           }
         }
       }
     },
-    "Changes how deep the modulation goes. The sleep modes ignore it." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Endrer hvor dyp modulasjonen er. Søvnmodusene ignorerer den."
+    "Binaural Beats": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Binaurale toner"
           }
         }
       }
     },
-    "Changes the timer. A running session starts its countdown over." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Endrer tidtakeren. En pågående økt starter nedtellingen på nytt."
+    "Binaural beats need headphones.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Binaurale toner trenger hodetelefoner."
           }
         }
       }
     },
-    "Coherent" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Koherent"
+    "Box": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boks"
           }
         }
       }
     },
-    "Control Center & Media Keys" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrollsenter og medietaster"
+    "Breath %lld of %lld": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pust %1$lld av %2$lld"
           }
         }
       }
     },
-    "Could not disable Launch at Login" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kunne ikke slå av Åpne ved innlogging"
+    "Breathe in": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pust inn"
           }
         }
       }
     },
-    "Could not enable Launch at Login" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kunne ikke slå på Åpne ved innlogging"
+    "Breathe out": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pust ut"
           }
         }
       }
     },
-    "Daylight" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dagslys"
+    "Breathing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pust"
           }
         }
       }
     },
-    "Deep Sleep" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dyp søvn"
+    "Breathing Length": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pustelengde"
           }
         }
       }
     },
-    "Deep work" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dypt arbeid"
+    "Brighter in the morning, warmer after sunset, assuming a 7 to 19 day.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lysere om morgenen, varmere etter solnedgang, med en dag fra 7 til 19."
           }
         }
       }
     },
-    "Dismiss" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avvis"
+    "Brighter in the morning, warmer after sunset, from your approximate location.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lysere om morgenen, varmere etter solnedgang, ut fra din omtrentlige posisjon."
           }
         }
       }
     },
-    "Done" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ferdig"
+    "Cancel": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
           }
         }
       }
     },
-    "Drone" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drone"
+    "Cancel Wake Alarm": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt Våkne-alarm"
           }
         }
       }
     },
-    "Ease toward bed" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mot sengetid"
+    "Changes how deep the modulation goes. The sleep modes ignore it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Endrer hvor dyp modulasjonen er. Søvnmodusene ignorerer den."
           }
         }
       }
     },
-    "Endless" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uendelig"
+    "Changes the timer. A running session starts its countdown over.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Endrer tidtakeren. En pågående økt starter nedtellingen på nytt."
           }
         }
       }
     },
-    "Entrain" : {},
-    "Entrain State" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrain-tilstand"
+    "Coherent": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Koherent"
           }
         }
       }
     },
-    "Entrain could not play: %@" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrain kunne ikke spille av: %@"
+    "Continue": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsett"
           }
         }
       }
     },
-    "Entrain could not start audio." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrain kunne ikke starte lyd."
+    "Control Center & Media Keys": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrollsenter og medietaster"
           }
         }
       }
     },
-    "Entrain is paused." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrain er pauset."
+    "Could not disable Launch at Login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke slå av Åpne ved innlogging"
           }
         }
       }
     },
-    "Entrain is playing %@." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrain spiller %@."
+    "Could not enable Launch at Login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke slå på Åpne ved innlogging"
           }
         }
       }
     },
-    "Every day at %@." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hver dag kl. %@."
+    "Daylight": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dagslys"
           }
         }
       }
     },
-    "Fall asleep" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sovne"
+    "Deep Sleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyp søvn"
           }
         }
       }
     },
-    "Falls Asleep In" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sovner etter"
+    "Deep work": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dypt arbeid"
           }
         }
       }
     },
-    "Focus" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fokus"
+    "Delta walked back up to beta, so a nap ends where the day does rather than in a jolt.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delta gått opp igjen til beta, så en høneblund ender der dagen er framfor i et rykk."
           }
         }
       }
     },
-    "Focus Filter" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fokusfilter"
+    "Dismiss": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvis"
           }
         }
       }
     },
-    "Following the Breath" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Følger pusten"
+    "Done": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferdig"
           }
         }
       }
     },
-    "From the last %lld nights on this device. Entrain reads Health; it never writes anything but your Meditate minutes, and nothing leaves the device." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fra de siste %lld nettene på denne enheten. Entrain leser fra Helse, skriver ingenting annet enn Mediter-minuttene dine, og ingenting forlater enheten."
+    "Drone": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drone"
           }
         }
       }
     },
-    "Gamma" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gamma"
+    "Ease toward bed": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot sengetid"
           }
         }
       }
     },
-    "Gentle rise" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Myk start"
+    "Endless": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uendelig"
           }
         }
       }
     },
-    "Get Entrain State" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hent Entrain-tilstand"
+    "Entrain": {},
+    "Entrain State": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain-tilstand"
           }
         }
       }
     },
-    "Global Shortcut ⌃⌥E" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Global hurtigtast ⌃⌥E"
+    "Entrain could not play: %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain kunne ikke spille av: %@"
           }
         }
       }
     },
-    "Head Tracking" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hodesporing"
+    "Entrain could not start audio.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain kunne ikke starte lyd."
           }
         }
       }
     },
-    "Health" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Helse"
+    "Entrain is paused.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain er pauset."
           }
         }
       }
     },
-    "Heart Rate" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Puls"
+    "Entrain is playing %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain spiller %@."
           }
         }
       }
     },
-    "Heart Rate Variability" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pulsvariasjon"
+    "Entrain's sound pulses gently. How strong that pulse should be is different for everyone, so pick what sounds like you. You can change it any time in Settings.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyden i Entrain pulserer rolig. Hvor sterk pulsen bør være er forskjellig fra person til person, så velg det som ligner på deg. Du kan endre det når som helst i Innstillinger."
           }
         }
       }
     },
-    "High" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Høy"
+    "Every day at %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hver dag kl. %@."
           }
         }
       }
     },
-    "Hold" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hold"
+    "Fall asleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sovne"
           }
         }
       }
     },
-    "Intensity" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Intensitet"
+    "Falls Asleep In": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sovner etter"
           }
         }
       }
     },
-    "Is Playing" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spiller av"
+    "Focus": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fokus"
           }
         }
       }
     },
-    "Keeps the room in place when you turn your head, with AirPods or Beats. Stays off in Sleep and Wind Down." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Holder rommet på plass når du snur på hodet, med AirPods eller Beats. Er av i Søvn og Ro ned."
+    "Focus Filter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fokusfilter"
           }
         }
       }
     },
-    "Launch at Login" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Åpne ved innlogging"
+    "Follow the Day": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Følg dagen"
           }
         }
       }
     },
-    "Length" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lengde"
+    "Following the Breath": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Følger pusten"
           }
         }
       }
     },
-    "Lock Screen Controls" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontroller på låst skjerm"
+    "From the last %lld nights on this device. Entrain reads Health; it never writes anything but your Meditate minutes, and nothing leaves the device.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra de siste %lld nettene på denne enheten. Entrain leser fra Helse, skriver ingenting annet enn Mediter-minuttene dine, og ingenting forlater enheten."
           }
         }
       }
     },
-    "Long Exhale" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lang utpust"
+    "Gamma": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gamma"
           }
         }
       }
     },
-    "Low" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lav"
+    "Gentle rise": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Myk start"
           }
         }
       }
     },
-    "Meditate" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mediter"
+    "Get Entrain State": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hent Entrain-tilstand"
           }
         }
       }
     },
-    "Medium" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Middels"
+    "Global Shortcut ⌃⌥E": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global hurtigtast ⌃⌥E"
           }
         }
       }
     },
-    "Memory and recall" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hukommelse og gjenkalling"
+    "Head Tracking": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hodesporing"
           }
         }
       }
     },
-    "Mode" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modus"
+    "Health": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helse"
           }
         }
       }
     },
-    "No breathing cues" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingen pustesignaler"
+    "Heart Rate": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puls"
           }
         }
       }
     },
-    "Noise" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Støy"
+    "Heart Rate Variability": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulsvariasjon"
           }
         }
       }
     },
-    "Nothing" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingenting"
+    "High": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Høy"
           }
         }
       }
     },
-    "Now" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nå"
+    "Hold": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold"
           }
         }
       }
     },
-    "Off" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Av"
+    "How does background sound work for you?": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvordan fungerer bakgrunnslyd for deg?"
           }
         }
       }
     },
-    "Off, Entrain blends under music and podcasts. On, it takes the playback controls and pauses other audio." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Av lar Entrain spille under musikk og podkaster. På tar avspillingskontrollene og setter annen lyd på pause."
+    "I like it noticeable": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeg liker at den merkes"
           }
         }
       }
     },
-    "Once, at the next %@." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Én gang, neste %@."
+    "Intensity": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intensitet"
           }
         }
       }
     },
-    "Open Entrain…" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Åpne Entrain…"
+    "Is Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av"
           }
         }
       }
     },
-    "Pad" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pad"
+    "It sits nicely in the background": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Den ligger fint i bakgrunnen"
           }
         }
       }
     },
-    "Pause" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause"
+    "Keeps the room in place when you turn your head, with AirPods or Beats. Stays off in Sleep and Wind Down.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Holder rommet på plass når du snur på hodet, med AirPods eller Beats. Er av i Søvn og Ro ned."
           }
         }
       }
     },
-    "Paused" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauset"
+    "Launch at Login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne ved innlogging"
           }
         }
       }
     },
-    "Pauses playback. The timer keeps its place." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauser avspillingen. Tidtakeren beholder plassen sin."
+    "Length": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lengde"
           }
         }
       }
     },
-    "Play" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spill av"
+    "Lets Entrain pick the mode as the day goes, and move between them without stopping the sound.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lar Entrain velge modus etter hvert som dagen går, og bytte mellom dem uten å stoppe lyden."
           }
         }
       }
     },
-    "Play or Pause" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spill av eller pause"
+    "Lock Screen Controls": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontroller på låst skjerm"
           }
         }
       }
     },
-    "Play, pause and switch modes." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spill av, pause og bytt modus."
+    "Long Exhale": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lang utpust"
           }
         }
       }
     },
-    "Playing" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spiller"
+    "Low": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lav"
           }
         }
       }
     },
-    "Plays a mode, optionally for a set length." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spiller av en modus, eventuelt i en angitt lengde."
+    "Meditate": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediter"
           }
         }
       }
     },
-    "Plays or pauses %@." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spiller av eller pauser %@."
+    "Medium": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Middels"
           }
         }
       }
     },
-    "Quit Entrain" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avslutt Entrain"
+    "Memory and learning": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minne og læring"
           }
         }
       }
     },
-    "Rain" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Regn"
+    "Memory and recall": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hukommelse og gjenkalling"
           }
         }
       }
     },
-    "Relax" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Slapp av"
+    "Mode": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modus"
           }
         }
       }
     },
-    "Remaining Seconds" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sekunder igjen"
+    "Moves between modes as the day goes, without stopping the sound. Runs while something is playing.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bytter modus etter hvert som dagen går, uten å stoppe lyden. Går mens noe spilles."
           }
         }
       }
     },
-    "Rest" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hvile"
+    "No breathing cues": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen pustesignaler"
           }
         }
       }
     },
-    "Resting Heart Rate" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hvilepuls"
+    "Noise": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Støy"
           }
         }
       }
     },
-    "Returns the mode, whether it is playing, the sound, the time left, the intensity and whether binaural beats are on." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Returnerer modusen, om den spiller, lyden, tiden som er igjen, intensiteten og om binaurale toner er på."
+    "Nothing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingenting"
           }
         }
       }
     },
-    "Rings at %@" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ringer kl. %@"
+    "Now": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nå"
           }
         }
       }
     },
-    "Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ringer også i stillemodus. Start Våkne på alarmen spiller rampen i 30 minutter."
+    "Off": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Av"
           }
         }
       }
     },
-    "Set Binaural Beats" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett binaurale toner"
+    "Off, Entrain blends under music and podcasts. On, it takes the playback controls and pauses other audio.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Av lar Entrain spille under musikk og podkaster. På tar avspillingskontrollene og setter annen lyd på pause."
           }
         }
       }
     },
-    "Set Intensity" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett intensitet"
+    "Once, at the next %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Én gang, neste %@."
           }
         }
       }
     },
-    "Set Mode Playing" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett modus til å spille"
+    "Open Entrain…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Entrain…"
           }
         }
       }
     },
-    "Set Timer" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett tidtaker"
+    "Pad": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pad"
           }
         }
       }
     },
-    "Set Volume" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett volum"
+    "Pause": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
           }
         }
       }
     },
-    "Set intensity to ${value}" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett intensiteten til ${value}"
+    "Paused": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauset"
           }
         }
       }
     },
-    "Set timer to ${value}" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett tidtakeren til ${value}"
+    "Pauses playback. The timer keeps its place.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauser avspillingen. Tidtakeren beholder plassen sin."
           }
         }
       }
     },
-    "Set volume to ${value} %" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sett volumet til ${value} %"
+    "Play": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spill av"
           }
         }
       }
     },
-    "Sets the app's own volume, on top of the system level." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Setter appens eget volum, på toppen av systemnivået."
+    "Play or Pause": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spill av eller pause"
           }
         }
       }
     },
-    "Settings" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Innstillinger"
+    "Play, pause and switch modes.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spill av, pause og bytt modus."
           }
         }
       }
     },
-    "Settings…" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Innstillinger …"
+    "Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller"
           }
         }
       }
     },
-    "Show in Dock" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vis i Dock"
+    "Plays a mode, optionally for a set length.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av en modus, eventuelt i en angitt lengde."
           }
         }
       }
     },
-    "Shows your heart rate through Meditate and Relax, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Viser pulsen din gjennom Mediter og Slapp av, og hvor godt den følger pusten. Holder pulssensoren i gang, så det koster batteri."
+    "Plays or pauses %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av eller pauser %@."
           }
         }
       }
     },
-    "Sleep" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Søvn"
+    "Quiet backgrounds do nothing for me": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stille bakgrunnslyd gjør ingenting for meg"
           }
         }
       }
     },
-    "Sound" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lyd"
+    "Quit Entrain": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avslutt Entrain"
           }
         }
       }
     },
-    "Start" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start"
+    "Rain": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regn"
           }
         }
       }
     },
-    "Start ${mode}" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start ${mode}"
+    "Recall": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hukommelse"
           }
         }
       }
     },
-    "Start %@" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start %@"
+    "Relax": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slapp av"
           }
         }
       }
     },
-    "Start Session" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start økt"
+    "Remaining Seconds": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sekunder igjen"
           }
         }
       }
     },
-    "Start Wake" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start Våkne"
+    "Rest": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvile"
           }
         }
       }
     },
-    "Starts a mode when the Focus turns on." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Starter en modus når fokuset slås på."
+    "Resting Heart Rate": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvilepuls"
           }
         }
       }
     },
-    "Stay asleep" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sove videre"
+    "Returns the mode, whether it is playing, the sound, the time left, the intensity and whether binaural beats are on.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Returnerer modusen, om den spiller, lyden, tiden som er igjen, intensiteten og om binaurale toner er på."
           }
         }
       }
     },
-    "Stillness" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stillhet"
+    "Rings at %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ringer kl. %@"
           }
         }
       }
     },
-    "Stop" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stopp"
+    "Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ringer også i stillemodus. Start Våkne på alarmen spiller rampen i 30 minutter."
           }
         }
       }
     },
-    "Stop Session" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stopp økt"
+    "Set Binaural Beats": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett binaurale toner"
           }
         }
       }
     },
-    "Stop when this Focus turns off" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stopp når dette fokuset slås av"
+    "Set Intensity": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett intensitet"
           }
         }
       }
     },
-    "Stops when the Focus turns off" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stopper når fokuset slås av"
+    "Set Mode Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett modus til å spille"
           }
         }
       }
     },
-    "Suggested before sunrise" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått før soloppgang"
+    "Set Timer": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett tidtaker"
           }
         }
       }
     },
-    "Suggested before you usually wake" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått før du vanligvis våkner"
+    "Set Volume": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett volum"
           }
         }
       }
     },
-    "Suggested before your usual bedtime" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått før du vanligvis legger deg"
+    "Set intensity to ${value}": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett intensiteten til ${value}"
           }
         }
       }
     },
-    "Suggested for a bright morning" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått for en lys morgen"
+    "Set timer to ${value}": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett tidtakeren til ${value}"
           }
         }
       }
     },
-    "Suggested for a day below your usual" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått for en dag under det vanlige"
+    "Set volume to ${value} %": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett volumet til ${value} %"
           }
         }
       }
     },
-    "Suggested for midday" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått midt på dagen"
+    "Sets the app's own volume, on top of the system level.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setter appens eget volum, på toppen av systemnivået."
           }
         }
       }
     },
-    "Suggested for the afternoon" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått for ettermiddagen"
+    "Settings": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Innstillinger"
           }
         }
       }
     },
-    "Suggested for the evening" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått for kvelden"
+    "Settings…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Innstillinger …"
           }
         }
       }
     },
-    "Suggested for the night" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foreslått for natten"
+    "Show in Dock": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vis i Dock"
           }
         }
       }
     },
-    "Timer" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tidtaker"
+    "Shows your heart rate through Meditate and Relax, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viser pulsen din gjennom Mediter og Slapp av, og hvor godt den følger pusten. Holder pulssensoren i gang, så det koster batteri."
           }
         }
       }
     },
-    "Toggles playback of the current mode." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Veksler avspilling av gjeldende modus."
+    "Skip": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hopp over"
           }
         }
       }
     },
-    "Turn binaural beats ${value}" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Slå binaurale toner ${value}"
+    "Sleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søvn"
           }
         }
       }
     },
-    "Turns the binaural beat on or off. It plays over headphones only." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Slår den binaurale tonen på eller av. Den spilles bare over hodetelefoner."
+    "Sound": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyd"
           }
         }
       }
     },
-    "Unwind" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Koble av"
+    "Start": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
           }
         }
       }
     },
-    "Usual Bedtime" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vanlig leggetid"
+    "Start ${mode}": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start ${mode}"
           }
         }
       }
     },
-    "Usual Wake" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vanlig vekketid"
+    "Start %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start %@"
           }
         }
       }
     },
-    "Volume" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volum"
+    "Start Session": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start økt"
           }
         }
       }
     },
-    "Wake" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Våkne"
+    "Start Wake": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Våkne"
           }
         }
       }
     },
-    "Weekdays at %@." : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hverdager kl. %@."
+    "Starts a mode when the Focus turns on.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter en modus når fokuset slås på."
           }
         }
       }
     },
-    "What's Playing" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hva spilles"
+    "Stay asleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sove videre"
           }
         }
       }
     },
-    "Whole session" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hele sesjonen"
+    "Stillness": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stillhet"
           }
         }
       }
     },
-    "Wind Down" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ro ned"
+    "Stop": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopp"
           }
         }
       }
     },
-    "Work" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Arbeid"
+    "Stop Session": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopp økt"
           }
         }
       }
     },
-    "about usual" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "omtrent som vanlig"
+    "Stop when this Focus turns off": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopp når dette fokuset slås av"
           }
         }
       }
     },
-    "above your usual" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "over det vanlige"
+    "Stops when the Focus turns off": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopper når fokuset slås av"
           }
         }
       }
     },
-    "below your usual" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "under det vanlige"
+    "Strong": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sterk"
           }
         }
       }
     },
-    "well above your usual" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "godt over det vanlige"
+    "Suggested before sunrise": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før soloppgang"
           }
         }
       }
     },
-    "well below your usual" : {
-      "localizations" : {
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "godt under det vanlige"
+    "Suggested before you usually wake": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før du vanligvis våkner"
+          }
+        }
+      }
+    },
+    "Suggested before your usual bedtime": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før du vanligvis legger deg"
+          }
+        }
+      }
+    },
+    "Suggested for a bright morning": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått for en lys morgen"
+          }
+        }
+      }
+    },
+    "Suggested for a day below your usual": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått for en dag under det vanlige"
+          }
+        }
+      }
+    },
+    "Suggested for midday": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått midt på dagen"
+          }
+        }
+      }
+    },
+    "Suggested for the afternoon": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått for ettermiddagen"
+          }
+        }
+      }
+    },
+    "Suggested for the evening": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått for kvelden"
+          }
+        }
+      }
+    },
+    "Suggested for the night": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått for natten"
+          }
+        }
+      }
+    },
+    "The bed swells once a second, the slow-oscillation rate, and follows the ninety-minute sleep cycle: deepest around its forty-fifth minute where slow-wave sleep peaks, shallow toward the REM end, so it never pushes all night.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teppet sveller én gang i sekundet, raten til de langsomme oscillasjonene, og følger den nittiminutters søvnsyklusen: dypest rundt det førtifemte minuttet der dypsøvnen topper seg, grunt mot REM-enden, så den aldri presser hele natten."
+          }
+        }
+      }
+    },
+    "Timer": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tidtaker"
+          }
+        }
+      }
+    },
+    "Toggles playback of the current mode.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veksler avspilling av gjeldende modus."
+          }
+        }
+      }
+    },
+    "Turn binaural beats ${value}": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå binaurale toner ${value}"
+          }
+        }
+      }
+    },
+    "Turns the binaural beat on or off. It plays over headphones only.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slår den binaurale tonen på eller av. Den spilles bare over hodetelefoner."
+          }
+        }
+      }
+    },
+    "Unwind": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Koble av"
+          }
+        }
+      }
+    },
+    "Usual Bedtime": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vanlig leggetid"
+          }
+        }
+      }
+    },
+    "Usual Wake": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vanlig vekketid"
+          }
+        }
+      }
+    },
+    "Volume": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volum"
+          }
+        }
+      }
+    },
+    "Wake": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Våkne"
+          }
+        }
+      }
+    },
+    "Weekdays at %@.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hverdager kl. %@."
+          }
+        }
+      }
+    },
+    "What's Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hva spilles"
+          }
+        }
+      }
+    },
+    "Whole session": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hele sesjonen"
+          }
+        }
+      }
+    },
+    "Why this works": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvorfor det virker"
+          }
+        }
+      }
+    },
+    "Wind Down": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ro ned"
+          }
+        }
+      }
+    },
+    "Work": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arbeid"
+          }
+        }
+      }
+    },
+    "about usual": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "omtrent som vanlig"
+          }
+        }
+      }
+    },
+    "above your usual": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "over det vanlige"
+          }
+        }
+      }
+    },
+    "below your usual": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "under det vanlige"
+          }
+        }
+      }
+    },
+    "depth %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dybde %@"
+          }
+        }
+      }
+    },
+    "well above your usual": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "godt over det vanlige"
+          }
+        }
+      }
+    },
+    "well below your usual": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "godt under det vanlige"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

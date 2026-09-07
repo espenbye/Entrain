@@ -51,6 +51,14 @@ struct SessionTests {
         }
     }
 
+    /// A schedule and a clock the test holds: the session asks, this
+    /// answers, so the program can be driven without waiting for a day.
+    @MainActor
+    final class Clock {
+        var now = Date(timeIntervalSince1970: 1_800_000_000)
+        var plan = Program.Plan(mode: .focus)
+    }
+
     let defaults: UserDefaults
     let widgetDirectory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let audio = FakeAudio()
@@ -501,6 +509,126 @@ struct SessionTests {
         session.mode = .wake
         #expect(Cue.decode(p.cue.load(ordering: .relaxed)) == .bedtime)
         #expect(p.cue.load(ordering: .relaxed) == Cue.encode(.bedtime, trigger: 3))
+    }
+
+    // MARK: Program
+
+    /// A session with the program on walks the day by itself: it starts on
+    /// what the schedule says, moves when the boundary passes, and does it
+    /// without stopping or restarting audio.
+    @Test func theProgramWalksTheDayWithoutRestartingAudio() async throws {
+        let clock = Clock()
+        let session = Session(
+            defaults: defaults, widgetDirectory: widgetDirectory,
+            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+        ) { [audio] _ in audio }
+        session.mode = .focus
+        session.program = true
+        clock.plan = Program.Plan(mode: .relax, next: .windDown, at: clock.now.addingTimeInterval(0.05))
+        await session.play()
+        try await Task.sleep(for: .seconds(0.02))
+        #expect(session.mode == .relax)
+        #expect(session.plan?.next == .windDown)
+
+        // The program never wakes more often than once a second, however
+        // close the next boundary claims to be.
+        clock.plan = Program.Plan(mode: .windDown)
+        try await Task.sleep(for: .seconds(1.2))
+        #expect(session.mode == .windDown)
+        #expect(session.isPlaying)
+        // One start, no stop: a program transition is not a new session.
+        #expect(audio.starts == 1)
+        #expect(audio.stops == 0)
+        session.pause()
+    }
+
+    /// The rate walks rather than steps, and the walk is over three minutes
+    /// later. Nothing else about the transition changes.
+    @Test func theProgramGlidesTheRate() async throws {
+        let clock = Clock()
+        let session = Session(
+            defaults: defaults, widgetDirectory: widgetDirectory,
+            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+        ) { [audio] _ in audio }
+        session.mode = .focus
+        session.program = true
+        clock.plan = Program.Plan(mode: .relax)
+        await session.play()
+        try await Task.sleep(for: .seconds(0.02))
+        #expect(session.mode == .relax)
+        // Relax modulates at 10 Hz, but the session left Focus at 16 and is
+        // still walking down from it: a step would already read 10. The band
+        // is wide because the glide is three minutes long and the test does
+        // not own the clock — anything near 16 is a walk, 10 is a step.
+        let rate = session.parameters.modulationRate.load(ordering: .relaxed)
+        #expect(rate > 14 && rate <= 16, "rate \(rate)")
+        session.pause()
+    }
+
+    /// Picking a mode by hand ends the program, wherever the pick comes
+    /// from, and the switch goes off with it.
+    @Test func aModePickedByHandEndsTheProgram() async {
+        let clock = Clock()
+        let session = Session(
+            defaults: defaults, widgetDirectory: widgetDirectory,
+            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+        ) { [audio] _ in audio }
+        session.program = true
+        await session.play()
+        #expect(session.program)
+
+        session.mode = .meditate
+        #expect(!session.program)
+        #expect(session.plan == nil)
+        #expect(session.mode == .meditate)
+
+        // And a Focus filter is a pick like any other.
+        session.program = true
+        await session.applyFocusFilter(mode: .gamma, length: nil, stopWhenOff: false)
+        #expect(!session.program)
+        session.pause()
+    }
+
+    /// Nothing runs while paused, and the switch survives a relaunch and
+    /// reaches the other devices.
+    @Test func theProgramSleepsWhilePausedAndSurvivesRelaunch() async {
+        let cloud = FakeCloud()
+        let clock = Clock()
+        let session = Session(
+            defaults: defaults, widgetDirectory: widgetDirectory, cloud: cloud,
+            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+        ) { [audio] _ in audio }
+        session.program = true
+        await session.play()
+        #expect(session.plan != nil)
+        session.pause()
+        #expect(session.plan == nil)
+        #expect(session.program)
+        #expect(cloud.values["program"] as? Bool == true)
+
+        let relaunched = Session(defaults: defaults, widgetDirectory: widgetDirectory) { [audio] _ in audio }
+        #expect(relaunched.program)
+    }
+
+    /// The first-launch question is asked once, and skipping answers it.
+    @Test func theIntensityQuestionIsAskedOnce() {
+        let first = makeSession()
+        #expect(first.asksIntensity)
+        first.answerIntensity(.strong)
+        #expect(!first.asksIntensity)
+        #expect(first.intensity == .strong)
+
+        let second = makeSession()
+        #expect(!second.asksIntensity)
+        #expect(second.intensity == .strong)
+    }
+
+    @Test func skippingTheQuestionLeavesTheDefault() {
+        let session = makeSession()
+        session.answerIntensity(nil)
+        #expect(!session.asksIntensity)
+        #expect(session.intensity == .medium)
+        #expect(!makeSession().asksIntensity)
     }
 
     @Test func masterTapersOverTheFadeOut() {

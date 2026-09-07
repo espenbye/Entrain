@@ -41,11 +41,16 @@ struct WatchPlayerView: View {
                     Picker("Timer", selection: $session.length) {
                         ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
                     }
+                    Toggle("Follow the Day", isOn: $session.program)
                     Toggle("Binaural Beats", isOn: $session.binaural)
                     Toggle("Haptics", isOn: $session.haptics)
                     Toggle("Daylight", isOn: $daylight.followsLocation)
                 } footer: {
-                    if session.binaural && !session.headphones {
+                    if let plan = session.plan, let next = plan.next, let at = plan.at {
+                        plan.asks
+                            ? Text("\(String(localized: next.blurb)) from \(at.formatted(date: .omitted, time: .shortened)). Start it yourself when you are ready.")
+                            : Text("\(String(localized: next.blurb)) at \(at.formatted(date: .omitted, time: .shortened)).")
+                    } else if session.binaural && !session.headphones {
                         Text("Binaural beats need headphones.")
                     } else if daylight.followsLocation && daylight.denied {
                         Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")

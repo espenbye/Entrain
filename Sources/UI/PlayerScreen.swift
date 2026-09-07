@@ -24,6 +24,15 @@ struct PlayerScreen: View {
                 settingsButton
                     .padding(16)
             }
+            // The one first-launch question. Not dismissible by swipe: it
+            // has a Skip, and a half-swiped sheet is not an answer.
+            .sheet(isPresented: .constant(session.asksIntensity)) {
+                IntensityQuestion { session.answerIntensity($0) }
+                    .interactiveDismissDisabled()
+                    #if os(macOS)
+                    .frame(width: 460, height: 520)
+                    #endif
+            }
     }
 
     @ViewBuilder
@@ -122,9 +131,13 @@ private struct Hero: View {
             .animation(.default, value: session.breath.isActive)
 
             VStack(spacing: 4) {
-                Text(session.mode.title)
+                // What the mode is for, then the state it drives and the
+                // sound it is made of: the listener came here to do
+                // something, not to pick a frequency band.
+                Text(session.mode.blurb)
                     .font(.title.weight(.semibold))
-                Text(session.layers.title)
+                    .multilineTextAlignment(.center)
+                Text(verbatim: "\(session.mode.title) · \(session.layers.title)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -180,7 +193,7 @@ private struct SuggestionCard: View {
                         Text(suggestion.reason)
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(.secondary)
-                        Text("\(suggestion.mode.title), \(session.length.title)")
+                        Text("\(String(localized: suggestion.mode.blurb)), \(session.length.title)")
                             .font(.subheadline.weight(.semibold))
                     }
                     Spacer(minLength: 8)
@@ -252,9 +265,9 @@ private struct ModeTile: View {
                     .font(.body.weight(.medium))
                 Spacer(minLength: 0)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(mode.title)
-                        .font(.subheadline.weight(.medium))
                     Text(mode.blurb)
+                        .font(.subheadline.weight(.medium))
+                    Text(mode.title)
                         .font(.caption)
                         .opacity(0.7)
                 }
@@ -280,6 +293,10 @@ private struct SessionCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            ProgramRow(session: session)
+            Divider()
+            ModeDetails(mode: session.mode)
+            Divider()
             if !session.mode.isSleep {
                 Row("Sound") {
                     LayerToggles(layers: session.layers, setLayer: session.setLayer)
@@ -385,6 +402,65 @@ private struct SessionCard: View {
         .toggleStyle(.switch)
         .tint(session.mode.tint)
         .glassEffect(.regular, in: .rect(cornerRadius: 24))
+    }
+}
+
+/// The single control for the program, and what it is doing. One switch:
+/// on, the session walks the day by itself; picking a mode by hand turns it
+/// off again, and the switch says so by going off with it.
+private struct ProgramRow: View {
+    @Bindable var session: Session
+
+    var body: some View {
+        Row("Follow the Day") {
+            Toggle("Follow the Day", isOn: $session.program)
+                .labelsHidden()
+        }
+        Group {
+            if let plan = session.plan, let next = plan.next, let at = plan.at {
+                if plan.asks {
+                    // The program walks Focus to Relax on its own; it does
+                    // not put anyone to bed. Sleep stays a tap.
+                    Text("\(String(localized: next.blurb)) from \(at.formatted(date: .omitted, time: .shortened)). Start it yourself when you are ready.")
+                } else {
+                    Text("\(String(localized: next.blurb)) at \(at.formatted(date: .omitted, time: .shortened)).")
+                }
+            } else if session.program {
+                Text("Moves between modes as the day goes, without stopping the sound. Runs while something is playing.")
+            } else {
+                Text("Lets Entrain pick the mode as the day goes, and move between them without stopping the sound.")
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 12)
+    }
+}
+
+/// The physics behind the mode, a disclosure away: the rate it modulates
+/// at, how deep, and why it is that way. Nobody has to read it, and the
+/// listener who wants to know should not have to open the source to.
+private struct ModeDetails: View {
+    let mode: Mode
+    @State private var expanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(verbatim: "\(mode.frequency) · \(String(localized: "depth \(mode.depthRange)"))")
+                    .font(.caption.weight(.medium).monospacedDigit())
+                Text(mode.reason)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 12)
+        } label: {
+            Text("Why this works")
+                .padding(.vertical, 12)
+        }
+        .tint(.secondary)
     }
 }
 

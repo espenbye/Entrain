@@ -30,6 +30,17 @@ struct SettingsScreen: View {
 
     private var form: some View {
         Form {
+            // The same setting the first-launch question sets, in the same
+            // words, so it reads as one thing moved rather than two.
+            Section {
+                Picker("Intensity", selection: $session.intensity) {
+                    ForEach(Intensity.allCases) { Text($0.title).tag($0) }
+                }
+            } header: {
+                Text("Background Sound")
+            } footer: {
+                Text(session.intensity.blurb)
+            }
             Section {
                 Toggle("Binaural Beats", isOn: $session.binaural)
             } footer: {

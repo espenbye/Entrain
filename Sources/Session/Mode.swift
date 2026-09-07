@@ -6,12 +6,17 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
 
     var id: Self { self }
     var title: String { String(localized: name) }
-    /// The same keys as the App Intents display representations, so one
-    /// catalog entry covers the menu, the widget and Shortcuts.
+    /// The state, secondary to what the mode is for. Display only: the raw
+    /// values are what shortcuts, Focus filters, `entrain://` URLs and the
+    /// synced settings are written in, and they never move. "Gamma" is the
+    /// one name here that asked the reader to know what a frequency band is,
+    /// so it is called what it is for; the 40 Hz is still a line away, in
+    /// `reason`. The same keys as the App Intents display representations,
+    /// so one catalog entry covers the menu, the widget and Shortcuts.
     var name: LocalizedStringResource {
         switch self {
         case .focus: "Focus"
-        case .gamma: "Gamma"
+        case .gamma: "Recall"
         case .relax: "Relax"
         case .meditate: "Meditate"
         case .sleep: "Sleep"
@@ -52,17 +57,44 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     var carrier: Double { isSleep ? 100 : 200 }
 
     /// What the mode is for, in a line a first-time user understands
-    /// without knowing what 40 Hz does.
+    /// without knowing what 40 Hz does. This is what the player leads with:
+    /// somebody choosing a sound is choosing what they are about to do, not
+    /// which steady-state response they would like driven.
     var blurb: LocalizedStringResource {
         switch self {
         case .focus: "Deep work"
-        case .gamma: "Memory and recall"
+        case .gamma: "Memory and learning"
         case .relax: "Unwind"
         case .meditate: "Stillness"
         case .sleep: "Fall asleep"
         case .deepSleep: "Stay asleep"
         case .windDown: "Ease toward bed"
         case .wake: "Gentle rise"
+        }
+    }
+
+    /// Why the mode is the way it is, in one line. The reasoning in
+    /// `Arc.swift` and `Circadian.swift` is not decoration; a listener who
+    /// wants to know why a sound pulses forty times a second should be able
+    /// to find out inside the app rather than in the source.
+    var reason: LocalizedStringResource {
+        switch self {
+        case .focus:
+            "16 Hz is beta, where alert attention sits. Each cycle drops sharply and recovers, so there is a transient to lock to rather than a wobble."
+        case .gamma:
+            "40 Hz is the best-replicated rate for driving an auditory steady-state response. It stays shallow because 40 Hz modulation sits in the range the ear hears as roughness, and turns into a buzz at ordinary depth."
+        case .relax:
+            "10 Hz is alpha, the rhythm of a calm and open mind. The swell stays close to a plain sine, so nothing in it pulls at attention."
+        case .meditate:
+            "6 Hz is theta, the rate of inward attention, and slow enough to breathe along with."
+        case .sleep:
+            "A little 2 Hz to follow while you are still awake, fading to a steady bed over the time it takes you to fall asleep. Sound that stays busy past onset lifts arousals for the rest of the night."
+        case .deepSleep:
+            "The bed swells once a second, the slow-oscillation rate, and follows the ninety-minute sleep cycle: deepest around its forty-fifth minute where slow-wave sleep peaks, shallow toward the REM end, so it never pushes all night."
+        case .windDown:
+            "Alpha walked down to delta over the session, the way an evening should go, arriving in delta as the taper begins."
+        case .wake:
+            "Delta walked back up to beta, so a nap ends where the day does rather than in a jolt."
         }
     }
 
@@ -105,7 +137,7 @@ enum Purpose: CaseIterable, Identifiable, Sendable {
 }
 
 enum Intensity: String, CaseIterable, Identifiable, Sendable {
-    case low, medium, high
+    case low, medium, high, strong
 
     var id: Self { self }
     var title: String {
@@ -113,16 +145,38 @@ enum Intensity: String, CaseIterable, Identifiable, Sendable {
         case .low: String(localized: "Low")
         case .medium: String(localized: "Medium")
         case .high: String(localized: "High")
+        case .strong: String(localized: "Strong")
+        }
+    }
+
+    /// How a listener answers `Onboarding`, in the same words. The setting
+    /// and the first-launch question are one thing, so Settings shows this
+    /// under each step rather than a second explanation of its own.
+    var blurb: LocalizedStringResource {
+        switch self {
+        case .low: "Background sound distracts me"
+        case .medium: "It sits nicely in the background"
+        case .high: "I like it noticeable"
+        case .strong: "Quiet backgrounds do nothing for me"
         }
     }
 
     /// High is a small step above medium: medium depth tested best, and deep
-    /// modulation was counterproductive.
+    /// modulation was counterproductive. Strong goes further for the
+    /// listener who under-responds to ordinary background sound and finds
+    /// the medium version does nothing at all — for them the choice is not
+    /// between medium and strong, it is between strong and closing the app.
+    /// It stops at 1.45 rather than going on to 1.5 or 2 because roughness
+    /// grows with depth: `EnvelopeTests` holds every mode, at every rate it
+    /// passes through and every intensity it can be played at, under the
+    /// roughness of Gamma's own 40 Hz sine, and 1.45 is where Focus's deep
+    /// 16 Hz pulse reaches that ceiling.
     var multiplier: Double {
         switch self {
         case .low: 0.6
         case .medium: 1.0
         case .high: 1.2
+        case .strong: 1.45
         }
     }
 }
