@@ -106,3 +106,50 @@ struct OnePoleLowpass {
         return z
     }
 }
+
+/// The gate applied to one modulation cycle. The curve is the raised cosine
+/// the modulation has always used; what moves is where in the cycle it peaks.
+/// `peak` is that point as a fraction of the period: at 0.5 the warp below is
+/// the identity and the shape is exactly the old sine, and under it the
+/// envelope rises fast and falls slowly. A sharp onset drives a stronger
+/// steady-state response than a symmetric swell and reads as a pulse rather
+/// than as tremolo, which is what 16 Hz and up need.
+///
+/// The warp is a Möbius map, which buys three things a piecewise curve does
+/// not. It is smooth in phase, with zero slope at both ends of the cycle at
+/// every setting, so there is no corner to catch however sharp the pulse. It
+/// is smooth in `peak` as well, so the setting can be smoothed per sample
+/// from one mode's shape to the next without a discontinuity appearing on
+/// the way. And it costs one divide and two multiplies over the lookup that
+/// was there before.
+///
+/// The trough is `peak` deep whatever the shape, so the shape changes when
+/// the gain falls, never how far. Its mean does move: a sharp pulse spends
+/// less of the cycle attenuating, which lifts the modulated band by up to
+/// half a decibel at the settings in `Mode.envelope`.
+struct PulseShape {
+    /// Where the envelope peaks, followed over 0.2 s so a mode change morphs
+    /// the shape rather than stepping it.
+    private var peak: Smoother
+
+    init(peak: Float, sampleRate: Double) {
+        self.peak = Smoother(Self.clamped(peak), seconds: 0.2, sampleRate: sampleRate)
+    }
+
+    var target: Float {
+        get { peak.target }
+        set { peak.target = Self.clamped(newValue) }
+    }
+
+    /// Away from the ends the warp keeps its shape; at them it degenerates.
+    private static func clamped(_ peak: Float) -> Float { min(0.9, max(0.1, peak)) }
+
+    /// 0 at the start of the cycle, 1 at `peak`, back to 0 at the end.
+    /// `phase` is in cycles, 0..<1.
+    @inline(__always)
+    mutating func next(phase: Float) -> Float {
+        let a = peak.next()
+        let warped = phase * (1 - a) / (a + phase * (1 - 2 * a))
+        return 0.5 - 0.5 * SineTable.sin(cycles: warped + 0.25)
+    }
+}

@@ -26,6 +26,8 @@ final class VoiceSynth: @unchecked Sendable {
     private var layerGain: Smoother
 
     private var modulation = Phasor()
+    /// The shape of one modulation cycle, set by the mode.
+    private var shape: PulseShape
     private var depth: Smoother
     private var master: Smoother
     private var volume: Smoother
@@ -58,6 +60,7 @@ final class VoiceSynth: @unchecked Sendable {
         // A seed per voice, so two noise-based voices never share a stream.
         rng = XorShift(state: 0x9E37_79B9 &+ UInt32(soundscape.index) &* 0x632B_E5AB)
         layerGain = Smoother(0, seconds: 1.5, sampleRate: sampleRate)
+        shape = PulseShape(peak: 0.5, sampleRate: sampleRate)
         depth = Smoother(0.5, seconds: 0.05, sampleRate: sampleRate)
         master = Smoother(0, seconds: 1, sampleRate: sampleRate)
         volume = Smoother(1, seconds: 0.05, sampleRate: sampleRate)
@@ -71,6 +74,7 @@ final class VoiceSynth: @unchecked Sendable {
     func render(frames: Int, into out: UnsafeMutablePointer<Float>) {
         let rateIncrement = Float(parameters.modulationRate.load(ordering: .relaxed)) / sampleRate
         depth.target = Float(parameters.modulationDepth.load(ordering: .relaxed))
+        shape.target = Float(parameters.modulationShape.load(ordering: .relaxed))
         master.target = Float(parameters.master.load(ordering: .relaxed))
         volume.target = Float(parameters.volume.load(ordering: .relaxed))
         // Each voice is trimmed to the same loudness, so a mix of n layers is
@@ -94,7 +98,7 @@ final class VoiceSynth: @unchecked Sendable {
 
         for i in 0..<frames {
             let gain = layerGain.next()
-            let pulse = depth.next() * (0.5 - 0.5 * SineTable.sin(cycles: modulation.next(rateIncrement) + 0.25))
+            let pulse = depth.next() * shape.next(phase: modulation.next(rateIncrement))
             let trim = master.next() * volume.next()
             // A silent voice still advances its clocks, so it comes back in phase.
             guard gain > 0.0005 else {

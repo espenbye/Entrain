@@ -64,6 +64,33 @@ extension Mode {
         }
     }
 
+    /// Where the modulation envelope peaks, as a fraction of the cycle. At
+    /// 0.5 it is the symmetric raised cosine the modulation started as; under
+    /// it the gain drops fast and recovers slowly, which reads as a pulse
+    /// rather than as tremolo and puts a transient at the top of every cycle
+    /// for the auditory system to lock to. It does not move over a session:
+    /// the arc says how fast and how deep a mode pulses, this says what one
+    /// pulse is shaped like, and that is a property of the mode itself.
+    ///
+    /// A sharp onset costs roughness: it spreads the envelope over harmonics
+    /// of the rate, and those land in the band around 70 Hz the ear hears as
+    /// rough. How much depends on where the rate sits. At 6 and 10 Hz the
+    /// harmonics march straight into that band, so Meditate, Relax and Wind
+    /// Down stay near the sine. At 16 Hz there is room for a real pulse. At
+    /// 40 Hz the fundamental is already inside the band and the harmonics
+    /// fall past it, so Gamma can take the sharpest shape here and measure
+    /// slightly smoother than the sine it replaces; `EnvelopeTests` holds it
+    /// to that. Nothing that ends in bed gets a transient at all.
+    var envelope: Double {
+        switch self {
+        case .focus, .wake: 0.25
+        case .gamma: 0.3
+        case .relax: 0.4
+        case .meditate, .windDown: 0.45
+        case .sleep, .deepSleep: 0.5
+        }
+    }
+
     /// The keyframes as curves, built once. Deep Sleep is the one mode with a
     /// cycle, and only its depth reaches the end of it, so only its depth repeats.
     var arc: Arc { Self.arcs[self]! }
