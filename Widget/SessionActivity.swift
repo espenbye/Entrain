@@ -11,15 +11,15 @@ import WidgetKit
 struct SessionActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: SessionActivityAttributes.self) { context in
-            LockScreenView(attributes: context.attributes, state: context.state)
+            LockScreenView(state: context.state)
                 .activityBackgroundTint(Color(red: 0.07, green: 0.06, blue: 0.20))
-                .activitySystemActionForegroundColor(context.attributes.mode.tint)
+                .activitySystemActionForegroundColor(context.state.mode.tint)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label(context.attributes.mode.title, systemImage: context.attributes.mode.symbol)
+                    Label(context.state.mode.title, systemImage: context.state.mode.symbol)
                         .font(.headline)
-                        .foregroundStyle(context.attributes.mode.tint)
+                        .foregroundStyle(context.state.mode.tint)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Countdown(state: context.state)
@@ -27,46 +27,45 @@ struct SessionActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack(spacing: 12) {
-                        Status(sound: context.attributes.sound, state: context.state)
+                        Status(sound: context.state.sound, state: context.state)
                         Spacer()
-                        ToggleButton(mode: context.attributes.mode, state: context.state)
+                        ToggleButton(mode: context.state.mode, state: context.state)
                     }
                 }
             } compactLeading: {
-                Image(systemName: context.attributes.mode.symbol)
-                    .foregroundStyle(context.attributes.mode.tint)
+                Image(systemName: context.state.mode.symbol)
+                    .foregroundStyle(context.state.mode.tint)
             } compactTrailing: {
                 Countdown(state: context.state)
                     .monospacedDigit()
                     .frame(maxWidth: 64)
             } minimal: {
-                Image(systemName: context.state.isPlaying ? context.attributes.mode.symbol : "pause.fill")
-                    .foregroundStyle(context.attributes.mode.tint)
+                Image(systemName: context.state.isPlaying ? context.state.mode.symbol : "pause.fill")
+                    .foregroundStyle(context.state.mode.tint)
             }
-            .keylineTint(context.attributes.mode.tint)
+            .keylineTint(context.state.mode.tint)
         }
     }
 }
 
 private struct LockScreenView: View {
-    let attributes: SessionActivityAttributes
     let state: SessionActivityAttributes.ContentState
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: attributes.mode.symbol)
+            Image(systemName: state.mode.symbol)
                 .font(.title2)
-                .foregroundStyle(attributes.mode.tint)
+                .foregroundStyle(state.mode.tint)
             VStack(alignment: .leading, spacing: 2) {
-                Text(attributes.mode.title)
+                Text(state.mode.title)
                     .font(.headline)
-                Status(sound: attributes.sound, state: state)
+                Status(sound: state.sound, state: state)
             }
             .lineLimit(1)
             Spacer()
             Countdown(state: state)
                 .font(.system(size: 34, weight: .light, design: .rounded).monospacedDigit())
-            ToggleButton(mode: attributes.mode, state: state)
+            ToggleButton(mode: state.mode, state: state)
         }
         .padding(16)
     }

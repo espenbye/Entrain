@@ -79,8 +79,8 @@ final class Session {
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     private let mindful: (any MindfulLog)?
     /// iCloud's key-value store: a setting changed on one device reaches the
-    /// others. Nil in tests. Without a team or an account the store just does
-    /// not sync, so a development build runs unchanged.
+    /// others. Nil in tests. Without the entitlement or an account the store
+    /// just does not sync, so a development build runs unchanged.
     private let cloud: (any SettingsStore)?
     private var cloudObserver: NSObjectProtocol?
     /// Off until launch has taken the store in, and while a remote change is
@@ -203,6 +203,7 @@ final class Session {
     /// Async because the watch may have to ask which headphones to use before
     /// its audio route exists; on the Mac and iPhone the engine starts at once.
     func play() async {
+        interruptedByAudio = false
         stopTask?.cancel()
         let engine = self.engine ?? {
             let engine = makeEngine(parameters)
@@ -219,7 +220,6 @@ final class Session {
             self.error = String(localized: "Audio unavailable")
             return
         }
-        interruptedByAudio = false
         isPlaying = true
         playStart = .now
         startMindful()
@@ -229,6 +229,7 @@ final class Session {
     }
 
     func pause() {
+        interruptedByAudio = false
         guard isPlaying else { return }
         isPlaying = false
         played = playTime
@@ -395,7 +396,7 @@ final class Session {
     private func broadcast() {
         NowPlaying.update(self)
         #if os(iOS)
-        activity.update(SessionActivityAttributes.snapshot(
+        activity.update(SessionActivityAttributes.ContentState.snapshot(
             mode: mode, sound: layers.title, isPlaying: isPlaying, remaining: remaining, deadline: deadline
         ))
         #endif
@@ -419,10 +420,13 @@ final class Session {
 
     // MARK: Timer
 
-    /// A new length starts the countdown over, even mid-session.
+    /// A new length starts the countdown over, even mid-session, and the
+    /// ramp with it: a timed ramp is measured against the timer.
     private func resetTimer() {
         stopTimer()
         remaining = length == .endless ? nil : length.seconds
+        played = 0
+        playStart = isPlaying ? .now : nil
         if isPlaying { startTimer() }
         applyRate()
         applyMaster()

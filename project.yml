@@ -87,8 +87,9 @@ targets:
         # CODE_SIGN_ENTITLEMENTS=AppStore/$(TARGET_NAME).entitlements instead.
         com.apple.security.temporary-exception.files.home-relative-path.read-write:
           - /Library/Application Support/Entrain/
-        # Settings sync. Without a team the store simply never syncs.
-        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        # No iCloud key-value store here: like an App Group it needs a
+        # certificate to sign, so the Mac only syncs settings from an
+        # archive signed with AppStore/Entrain.entitlements.
     dependencies:
       - target: EntrainWidget
     settings:

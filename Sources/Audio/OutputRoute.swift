@@ -16,7 +16,10 @@ final class OutputRoute {
     private let onChange: @MainActor (Bool) -> Void
     #if os(macOS)
     private var device = AudioObjectID(kAudioObjectUnknown)
-    private var listener: AudioObjectPropertyListenerBlock = { _, _ in }
+    /// What CoreAudio hands back to `listener`. A weak box rather than self:
+    /// the callback comes on CoreAudio's thread and may still be in flight
+    /// while this route is going away. Released in deinit.
+    private let box = Unmanaged.passRetained(WeakRoute())
     #else
     private var observer: NSObjectProtocol?
     #endif
@@ -24,9 +27,9 @@ final class OutputRoute {
     init(onChange: @escaping @MainActor (Bool) -> Void) {
         self.onChange = onChange
         #if os(macOS)
-        listener = { _, _ in Task { @MainActor [weak self] in self?.changed() } }
+        box.takeUnretainedValue().route = self
         var address = Self.defaultDevice
-        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, listener)
+        AudioObjectAddPropertyListener(AudioObjectID(kAudioObjectSystemObject), &address, Self.listener, box.toOpaque())
         listen(to: Self.currentDevice)
         #else
         observer = NotificationCenter.default.addObserver(
@@ -40,8 +43,9 @@ final class OutputRoute {
     isolated deinit {
         #if os(macOS)
         var address = Self.defaultDevice
-        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, listener)
+        AudioObjectRemovePropertyListener(AudioObjectID(kAudioObjectSystemObject), &address, Self.listener, box.toOpaque())
         listen(to: AudioObjectID(kAudioObjectUnknown))
+        box.release()
         #else
         observer.map(NotificationCenter.default.removeObserver)
         #endif
@@ -55,6 +59,20 @@ final class OutputRoute {
     }
 
     #if os(macOS)
+    private final class WeakRoute: @unchecked Sendable {
+        weak var route: OutputRoute?
+    }
+
+    /// The C listener pair is used rather than the block one: removing a
+    /// block listener never unregisters a Swift closure, so listeners on
+    /// old default devices would pile up.
+    private static let listener: AudioObjectPropertyListenerProc = { _, _, _, clientData in
+        guard let clientData else { return noErr }
+        let box = Unmanaged<WeakRoute>.fromOpaque(clientData).takeUnretainedValue()
+        Task { @MainActor in box.route?.changed() }
+        return noErr
+    }
+
     private static let defaultDevice = AudioObjectPropertyAddress(
         mSelector: kAudioHardwarePropertyDefaultOutputDevice,
         mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain
@@ -78,11 +96,11 @@ final class OutputRoute {
         guard newDevice != device else { return }
         var address = Self.dataSource
         if device != kAudioObjectUnknown {
-            AudioObjectRemovePropertyListenerBlock(device, &address, .main, listener)
+            AudioObjectRemovePropertyListener(device, &address, Self.listener, box.toOpaque())
         }
         device = newDevice
         if device != kAudioObjectUnknown {
-            AudioObjectAddPropertyListenerBlock(device, &address, .main, listener)
+            AudioObjectAddPropertyListener(device, &address, Self.listener, box.toOpaque())
         }
     }
 

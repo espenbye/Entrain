@@ -234,6 +234,12 @@ struct SessionTests {
         await audio.onInterruptionEnded?(false)
         #expect(session.isPlaying)
         #expect(audio.stops == 1)
+
+        // A stop of the user's own during the interruption disarms the resume.
+        audio.onInterruption?()
+        session.pause()
+        await audio.onInterruptionEnded?(true)
+        #expect(!session.isPlaying)
     }
 
     @Test func pauseKeepsTheCountdownAndNewLengthResetsIt() async {
@@ -248,6 +254,17 @@ struct SessionTests {
         #expect(session.remaining == SessionLength.fifteen.seconds)
         session.length = .endless
         #expect(session.remaining == nil)
+    }
+
+    @Test func newLengthRestartsTheRamp() async {
+        let session = makeSession()
+        session.mode = .windDown
+        session.length = .fifteen
+        await session.play()
+        session.length = .sixty
+        #expect(session.remaining == SessionLength.sixty.seconds)
+        // Back at the start of the ramp, give or take the microseconds since.
+        #expect(session.parameters.modulationRate.load(ordering: .relaxed) > 9.99)
     }
 
     @Test func endlessRampsWalkTheirFixedLength() {
@@ -416,19 +433,19 @@ struct SessionTests {
     }
 
     @Test func liveActivityFollowsTheTimer() {
+        typealias State = SessionActivityAttributes.ContentState
         let now = Date.now
         let deadline = now.addingTimeInterval(600)
-        #expect(SessionActivityAttributes.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: nil, deadline: nil) == nil)
+        #expect(State.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: nil, deadline: nil) == nil)
 
-        let playing = SessionActivityAttributes.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: 600, deadline: deadline, now: now)
-        #expect(playing?.attributes == SessionActivityAttributes(mode: .focus, sound: "Rain"))
-        #expect(playing?.state.deadline == deadline)
-        #expect(playing?.state.isPlaying == true)
+        let playing = State.snapshot(mode: .focus, sound: "Rain", isPlaying: true, remaining: 600, deadline: deadline, now: now)
+        #expect(playing == State(mode: .focus, sound: "Rain", deadline: deadline, pausedAt: nil))
+        #expect(playing?.isPlaying == true)
 
         // Paused: the countdown freezes at `now`, showing the seconds kept.
-        let paused = SessionActivityAttributes.snapshot(mode: .focus, sound: "Rain", isPlaying: false, remaining: 600, deadline: nil, now: now)
-        #expect(paused?.state.pausedAt == now)
-        #expect(paused?.state.deadline == deadline)
-        #expect(paused?.state.isPlaying == false)
+        let paused = State.snapshot(mode: .focus, sound: "Rain", isPlaying: false, remaining: 600, deadline: nil, now: now)
+        #expect(paused?.pausedAt == now)
+        #expect(paused?.deadline == deadline)
+        #expect(paused?.isPlaying == false)
     }
 }

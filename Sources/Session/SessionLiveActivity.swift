@@ -4,9 +4,7 @@ import Foundation
 
 /// Drives the session's Live Activity. The session tells it about every
 /// state change; a timed session that is playing has an activity, a paused
-/// one keeps it frozen, and anything else ends it. Attributes cannot change
-/// once requested, so a new mode or sound ends the activity and, if the
-/// session is playing, requests a fresh one.
+/// one keeps it frozen, and anything else ends it.
 @MainActor
 final class SessionLiveActivity {
     private var activity: Activity<SessionActivityAttributes>?
@@ -22,24 +20,21 @@ final class SessionLiveActivity {
         }
     }
 
-    func update(_ snapshot: (attributes: SessionActivityAttributes, state: SessionActivityAttributes.ContentState)?) {
-        guard let snapshot else { return end() }
-        let content = ActivityContent(state: snapshot.state, staleDate: snapshot.state.deadline)
-        if let activity, activity.attributes == snapshot.attributes {
-            guard snapshot.state != state else { return }
-            state = snapshot.state
+    func update(_ state: SessionActivityAttributes.ContentState?) {
+        guard let state else { return end() }
+        let content = ActivityContent(state: state, staleDate: state.deadline)
+        if let activity {
+            guard state != self.state else { return }
             // `Activity` is not Sendable, but its calls only hop off the
             // actor for their own duration and nothing else touches it.
             nonisolated(unsafe) let activity = activity
             enqueue { await activity.update(content) }
         } else {
-            end()
-            // Only a playing session opens one; a pause under new attributes
-            // has nothing live to show.
-            guard snapshot.state.isPlaying else { return }
-            activity = try? Activity.request(attributes: snapshot.attributes, content: content)
-            state = snapshot.state
+            // Only a playing session opens one; a pause has nothing live to show.
+            guard state.isPlaying else { return }
+            activity = try? Activity.request(attributes: SessionActivityAttributes(), content: content)
         }
+        self.state = state
     }
 
     /// The timer ran out or the session left the activity behind.
