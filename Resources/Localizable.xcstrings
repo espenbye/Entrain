@@ -101,6 +101,56 @@
         }
       }
     },
+    "4 in, 6 out. A longer exhale for calm." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 inn, 6 ut. Lengre utpust for ro."
+          }
+        }
+      }
+    },
+    "4 in, hold 4, 4 out, hold 4. Steadies attention." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 inn, hold 4, 4 ut, hold 4. Stabiliserer oppmerksomheten."
+          }
+        }
+      }
+    },
+    "4 in, hold 7, 8 out. Slows the body down." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 inn, hold 7, 8 ut. Roer ned kroppen."
+          }
+        }
+      }
+    },
+    "4-7-8" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4-7-8"
+          }
+        }
+      }
+    },
+    "5 in, 5 out. Six breaths a minute, the resonance rate." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 inn, 5 ut. Seks pust i minuttet, resonansfrekvensen."
+          }
+        }
+      }
+    },
     "60 minutes" : {
       "localizations" : {
         "nb" : {
@@ -221,6 +271,66 @@
         }
       }
     },
+    "Box" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boks"
+          }
+        }
+      }
+    },
+    "Breath %lld of %lld" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pust %1$lld av %2$lld"
+          }
+        }
+      }
+    },
+    "Breathe in" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pust inn"
+          }
+        }
+      }
+    },
+    "Breathe out" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pust ut"
+          }
+        }
+      }
+    },
+    "Breathing" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pust"
+          }
+        }
+      }
+    },
+    "Breathing Length" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pustelengde"
+          }
+        }
+      }
+    },
     "Brighter in the morning, warmer after sunset, assuming a 7 to 19 day." : {
       "localizations" : {
         "nb" : {
@@ -277,6 +387,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Endrer tidtakeren. En pågående økt starter nedtellingen på nytt."
+          }
+        }
+      }
+    },
+    "Coherent" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koherent"
           }
         }
       }
@@ -542,6 +662,16 @@
         }
       }
     },
+    "Hold" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold"
+          }
+        }
+      }
+    },
     "Intensity" : {
       "localizations" : {
         "nb" : {
@@ -602,6 +732,16 @@
         }
       }
     },
+    "Long Exhale" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lang utpust"
+          }
+        }
+      }
+    },
     "Low" : {
       "localizations" : {
         "nb" : {
@@ -652,6 +792,16 @@
         }
       }
     },
+    "No breathing cues" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen pustesignaler"
+          }
+        }
+      }
+    },
     "Noise" : {
       "localizations" : {
         "nb" : {
@@ -678,6 +828,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nå"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av"
           }
         }
       }
@@ -1298,6 +1458,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hva spilles"
+          }
+        }
+      }
+    },
+    "Whole session" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hele sesjonen"
           }
         }
       }

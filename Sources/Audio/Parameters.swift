@@ -18,4 +18,7 @@ final class AudioParameters: Sendable {
     /// 0...1 user volume, independent of the system output level. Smoothed
     /// over 50 ms so a slider drag is immediate but click-free.
     let volume = Atomic<Double>(1)
+    /// A breathing cue, `BreathCue.encode`d: every new value plays one tone.
+    /// The trigger count in the high bits makes a repeat of the same cue a change.
+    let cue = Atomic<Int>(0)
 }

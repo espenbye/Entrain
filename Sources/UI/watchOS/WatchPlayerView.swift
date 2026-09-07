@@ -17,8 +17,18 @@ struct WatchPlayerView: View {
                     error: session.error,
                     toggle: session.toggle
                 )
+                if session.breath.isActive {
+                    Section {
+                        BreathingCircle(guide: session.breath, tint: session.mode.tint, size: 96)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                    }
+                }
                 ModeSection(selection: $session.mode)
                 Section {
+                    if session.mode == .meditate {
+                        BreathingPickers(session: session)
+                    }
                     if !session.mode.isSleep {
                         NavigationLink("Sound") {
                             List { LayerToggles(layers: session.layers, setLayer: session.setLayer) }

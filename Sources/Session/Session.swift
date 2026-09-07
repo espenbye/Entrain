@@ -26,9 +26,28 @@ final class Session {
                 inputs.forEach { $0.stop() }
                 inputs.forEach { $0.start(for: mode) }
             }
+            startBreathing()
             apply()
         }
     }
+    /// The breathing exercise over Meditate, and how long it runs. Synced
+    /// like the mode: which exercise you do is a preference, not a device.
+    var breathing: BreathingPattern {
+        didSet {
+            startBreathing()
+            save()
+        }
+    }
+    var breathingLength: BreathingLength {
+        didSet {
+            startBreathing()
+            save()
+        }
+    }
+    /// Where the exercise is right now, for the breathing circle.
+    let breath = BreathGuide()
+    /// Counts cues, so the render thread sees each one as a new value.
+    private var cues = 0
     var intensity: Intensity { didSet { apply() } }
     var binaural: Bool { didSet { apply() } }
     /// Whether the output is headphones. Binaural beats need one carrier per
@@ -157,6 +176,8 @@ final class Session {
         nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? Self.nowPlayingByDefault
         headphones = OutputRoute.headphones
         headTracking = defaults.bool(forKey: "headTracking")
+        breathing = BreathingPattern(rawValue: defaults.string(forKey: "breathing") ?? "") ?? .none
+        breathingLength = BreathingLength(rawValue: defaults.integer(forKey: "breathingLength")) ?? .session
         #if canImport(CoreMotion) && !os(watchOS)
         headTrackingAvailable = HeadTracker.isAvailable
         #else
@@ -171,6 +192,7 @@ final class Session {
         for input in inputs {
             input.onChange = { [weak self] in self?.applyAdjustment() }
         }
+        breath.onCue = { [weak self] cue in self?.play(cue) }
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
         route = OutputRoute { [weak self] headphones in self?.headphones = headphones }
@@ -261,6 +283,7 @@ final class Session {
         isPlaying = true
         playStart = .now
         startMindful()
+        startBreathing()
         inputs.forEach { $0.start(for: mode) }
         applyAdjustment()
         startTimer()
@@ -275,6 +298,7 @@ final class Session {
         played = playTime
         playStart = nil
         endMindful()
+        breath.stop()
         inputs.forEach { $0.stop() }
         stopTimer()
         applyMaster()
@@ -347,6 +371,24 @@ final class Session {
         mindful?.log(DateInterval(start: start, end: .now))
     }
 
+    // MARK: Breathing
+
+    /// The exercise runs while Meditate plays with a pattern chosen, from
+    /// its first breath: a pause, a new pattern or a new length starts it
+    /// over rather than resuming mid-breath.
+    private func startBreathing() {
+        guard isPlaying, mode == .meditate, breathing != .none else {
+            breath.stop()
+            return
+        }
+        breath.start(breathing, length: breathingLength)
+    }
+
+    private func play(_ cue: BreathCue) {
+        cues += 1
+        parameters.cue.store(BreathCue.encode(cue, trigger: cues), ordering: .relaxed)
+    }
+
     private func apply() {
         let p = parameters
         applyRate()
@@ -382,6 +424,8 @@ final class Session {
         store(binaural, forKey: "binaural")
         store(length.rawValue, forKey: "length")
         store(volume, forKey: "volume")
+        store(breathing.rawValue, forKey: "breathing")
+        store(breathingLength.rawValue, forKey: "breathingLength")
         // Now Playing means something else on each platform, so it stays local.
         defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
@@ -399,7 +443,8 @@ final class Session {
         cloud.set(value, forKey: key)
     }
 
-    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume"] + Mode.allCases.map { layersKey($0) }
+    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength"]
+        + Mode.allCases.map { layersKey($0) }
 
     nonisolated private static func layersKey(_ mode: Mode) -> String { "layers.\(mode.rawValue)" }
 
@@ -427,6 +472,12 @@ final class Session {
                 if let value = (cloud.object(forKey: key) as? Int).flatMap(SessionLength.init), value != length { length = value }
             case "volume":
                 if let value = cloud.object(forKey: key) as? Double, value != volume { volume = value }
+            case "breathing":
+                if let value = (cloud.object(forKey: key) as? String).flatMap(BreathingPattern.init), value != breathing { breathing = value }
+            case "breathingLength":
+                if let value = (cloud.object(forKey: key) as? Int).flatMap(BreathingLength.init), value != breathingLength {
+                    breathingLength = value
+                }
             default:
                 guard key.hasPrefix("layers."), let mode = Mode(rawValue: String(key.dropFirst("layers.".count))) else { continue }
                 let layers = Self.layers(from: cloud.object(forKey: key) as? String)

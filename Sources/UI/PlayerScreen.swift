@@ -31,14 +31,19 @@ struct PlayerScreen: View {
         #if os(macOS)
         // Both columns hang from the same top edge, below the gear.
         HStack(alignment: .top, spacing: 0) {
-            VStack(spacing: 24) {
-                Hero(session: session)
-                SessionCard(session: session)
+            // Meditate's breathing rows and circle can outgrow the window
+            // height; the column scrolls only then.
+            ScrollView {
+                VStack(spacing: 24) {
+                    Hero(session: session)
+                    SessionCard(session: session)
+                }
+                .frame(width: 340)
+                .padding(.horizontal, 24)
+                .padding(.top, 64)
+                .padding(.bottom, 24)
             }
-            .frame(width: 340)
-            .padding(.horizontal, 24)
-            .padding(.top, 64)
-            .padding(.bottom, 24)
+            .scrollBounceBehavior(.basedOnSize)
             Divider()
             ScrollView {
                 VStack(spacing: 16) {
@@ -101,12 +106,20 @@ private struct Hero: View {
                     .fill(session.mode.tint.opacity(0.35))
                     .blur(radius: 30)
                     .frame(width: 120, height: 120)
-                Image(systemName: session.mode.symbol)
-                    .font(.system(size: heroSize, weight: .light))
-                    .foregroundStyle(.white)
-                    .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying && !reduceMotion)
+                if session.breath.isActive {
+                    // The exercise takes the symbol's place while it runs.
+                    BreathingCircle(guide: session.breath, tint: session.mode.tint, size: 140)
+                        .transition(.opacity)
+                } else {
+                    Image(systemName: session.mode.symbol)
+                        .font(.system(size: heroSize, weight: .light))
+                        .foregroundStyle(.white)
+                        .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying && !reduceMotion)
+                        .transition(.opacity)
+                }
             }
-            .frame(height: 120)
+            .frame(minHeight: 120)
+            .animation(.default, value: session.breath.isActive)
 
             VStack(spacing: 4) {
                 Text(session.mode.title)
@@ -281,6 +294,32 @@ private struct SessionCard: View {
                     .labelsHidden()
                     .frame(maxWidth: 200)
                 }
+                Divider()
+            }
+            if session.mode == .meditate {
+                Row("Breathing") {
+                    Picker("Breathing", selection: $session.breathing) {
+                        ForEach(BreathingPattern.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .tint(.primary)
+                }
+                if session.breathing != .none {
+                    Row("Breathing Length") {
+                        Picker("Breathing Length", selection: $session.breathingLength) {
+                            ForEach(BreathingLength.allCases) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .tint(.primary)
+                    }
+                }
+                Text(session.breathing.blurb)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 12)
                 Divider()
             }
             Row("Timer") {
