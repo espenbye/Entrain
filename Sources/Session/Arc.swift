@@ -1,17 +1,17 @@
 import Foundation
 
-/// How a sleep mode moves on its own over a night. Nothing here reads the
-/// clock: the session passes play time in, so pausing holds the arc and
-/// switching mode starts it over, like the rate ramps in `Mode`.
+/// How a mode moves on its own over a session, as one keyframe table per
+/// mode. Nothing here reads the clock: the session passes play time in, so
+/// pausing holds the arc and switching mode starts it over.
 ///
-/// The first twenty minutes are the onset. Sleep latency in the healthy
-/// adult is ten to twenty minutes, so the bed is at its most present when
-/// the listener is awake and processing the room, and settles once they are
-/// past that: a little slow modulation to follow, a brighter bed that masks
-/// more, at full level; then no modulation, a darker bed, a few decibels
-/// down. Sound that stays loud past onset lifts arousals for the rest of
-/// the night, and a bed that is featureless from the first second gives
-/// the waking mind nothing to hold on to.
+/// The first twenty minutes of a sleep bed are the onset. Sleep latency in
+/// the healthy adult is ten to twenty minutes, so the bed is at its most
+/// present when the listener is awake and processing the room, and settles
+/// once they are past that: a little slow modulation to follow, a brighter
+/// bed that masks more, at full level; then no modulation, a darker bed, a
+/// few decibels down. Sound that stays loud past onset lifts arousals for
+/// the rest of the night, and a bed that is featureless from the first
+/// second gives the waking mind nothing to hold on to.
 ///
 /// Deep Sleep swells the bed at 1 Hz, the slow-oscillation rate, but not
 /// evenly: slow-wave sleep peaks in the middle of each ninety-minute cycle
@@ -20,46 +20,84 @@ import Foundation
 /// modulation cannot find the up-phase the way closed-loop stimulation
 /// does, so it stays moderate and steps out of the way where the cycle is
 /// lightest rather than pushing all night.
+///
+/// Wind Down walks alpha to delta at bedtime and Wake walks delta back to
+/// beta after a nap. Their rate keyframes are written over a nominal ramp
+/// and stretched to the session's; see `rampSeconds(for:)`.
 extension Mode {
     /// Seconds over which a sleep bed settles.
     static let onsetSeconds: Double = 20 * 60
     /// One sleep cycle.
     static let cycleSeconds: Double = 90 * 60
 
-    private static let onsetBrightness = Curve([(0, 0.3), (1, -0.6)])
-    private static let onsetLevel = Curve([(0, 1), (1, 0.6)])
-    private static let sleepDepth = Curve([(0, 0.3), (1, 0)])
-
-    /// Modulation depth `elapsed` seconds in, before intensity. Steady
-    /// modes hold their `depth`; the sleep beds walk their arc.
-    func depth(elapsed: Double) -> Double {
+    /// The whole of a mode's behaviour over time. Every mode names its rate
+    /// and depth at time zero; a channel no keyframe names holds its default,
+    /// which is a flat bed at full level.
+    var keyframes: [Keyframe] {
         switch self {
-        case .sleep: Self.sleepDepth.value(at: onset(elapsed))
-        case .deepSleep: 0.15 + (depth - 0.15) * (0.5 - 0.5 * cos(2 * .pi * elapsed / Self.cycleSeconds))
-        default: depth
+        case .focus: [Keyframe(0, rate: 16, depth: 0.5)]
+        // Gamma sits at 40 Hz, the best-replicated auditory steady-state
+        // response, and shallow: 40 Hz modulation sits in the roughness
+        // range and turns into a buzz at ordinary depth.
+        case .gamma: [Keyframe(0, rate: 40, depth: 0.3)]
+        case .relax: [Keyframe(0, rate: 10, depth: 0.4)]
+        case .meditate: [Keyframe(0, rate: 6, depth: 0.5)]
+        case .sleep: [
+            Keyframe(0, rate: 2, depth: 0.3, brightness: 0.3, level: 1),
+            Keyframe(Self.onsetSeconds, depth: 0, brightness: -0.6, level: 0.6),
+        ]
+        case .deepSleep: [
+            Keyframe(0, rate: 1, depth: 0.15, brightness: 0.3, level: 1),
+            Keyframe(Self.onsetSeconds, brightness: -0.6, level: 0.6),
+            Keyframe(Self.cycleSeconds / 2, depth: 0.5),
+            Keyframe(Self.cycleSeconds, depth: 0.15),
+        ]
+        case .windDown: [Keyframe(0, rate: 10, depth: 0.4), Keyframe(20 * 60, rate: 2)]
+        case .wake: [Keyframe(0, rate: 2, depth: 0.5), Keyframe(15 * 60, rate: 16)]
         }
     }
 
-    /// Carrier brightness `elapsed` seconds in, -1...1, from the mode alone.
-    func brightness(elapsed: Double) -> Double {
-        isSleep ? Self.onsetBrightness.value(at: onset(elapsed)) : 0
+    /// The keyframes as curves, built once. Deep Sleep is the one mode with a
+    /// cycle, and only its depth reaches the end of it, so only its depth repeats.
+    var arc: Arc { Self.arcs[self]! }
+
+    private static let arcs: [Mode: Arc] = Dictionary(uniqueKeysWithValues: Mode.allCases.map {
+        ($0, Arc($0.keyframes, cycle: $0 == .deepSleep ? cycleSeconds : nil))
+    })
+
+    /// How long the rate ramp takes: a timed session ramps over the whole
+    /// timer, less the taper, so Wind Down arrives at 2 Hz before it fades
+    /// out. Endless sessions use the table's own length. Nil for steady modes.
+    func rampSeconds(for length: SessionLength) -> Double? {
+        let nominal = arc.rate.end
+        guard nominal > 0 else { return nil }
+        guard length != .endless else { return nominal }
+        return max(1, Double(length.seconds) - (tapers ? fadeOut : 0))
     }
 
-    /// Level `elapsed` seconds in, 0...1, on top of the timer's taper.
-    func level(elapsed: Double) -> Double {
-        isSleep ? Self.onsetLevel.value(at: onset(elapsed)) : 1
+    /// Rate after `elapsed` seconds of play, with the ramp stretched over the
+    /// session's own length. Linear in Hz: a ramp should walk at a steady
+    /// hertz per minute, where a level wants the arc's raised cosine.
+    func rate(elapsed: Double, length: SessionLength) -> Double {
+        guard let seconds = rampSeconds(for: length) else { return arc.rate.value(at: 0) }
+        return arc.rate.value(at: elapsed * arc.rate.end / seconds)
     }
+
+    /// Modulation depth `elapsed` seconds in, before intensity.
+    func depth(elapsed: Double) -> Double { arc.depth.value(at: elapsed) }
+
+    /// Carrier brightness `elapsed` seconds in, -1...1, from the mode alone.
+    func brightness(elapsed: Double) -> Double { arc.brightness.value(at: elapsed) }
+
+    /// Level `elapsed` seconds in, 0...1, on top of the timer's taper.
+    func level(elapsed: Double) -> Double { arc.level.value(at: elapsed) }
 
     /// Whether the sound is still moving on its own `elapsed` seconds in: a
     /// rate ramp under way, an onset settling, or the Deep Sleep cycle,
     /// which never rests. An endless session stops ticking once this is false.
     func evolves(at elapsed: Double, length: SessionLength) -> Bool {
         if let seconds = rampSeconds(for: length), elapsed < seconds { return true }
-        switch self {
-        case .sleep: return elapsed < Self.onsetSeconds
-        case .deepSleep: return true
-        default: return false
-        }
+        return elapsed < arc.settles
     }
 
     /// The signature that opens the modes that end in bed. Always the same
@@ -67,17 +105,92 @@ extension Mode {
     /// means bedtime by itself: a cue that reliably precedes sleep comes to
     /// bring it on, the way a fixed bedtime routine does.
     var cue: Cue? { tapers ? .bedtime : nil }
-
-    private func onset(_ elapsed: Double) -> Double { min(1, elapsed / Self.onsetSeconds) }
 }
 
-/// A curve through points, each segment blended with a raised cosine so
-/// the slope is zero at every point: no corners for the ear to catch.
-struct Curve: Sendable {
-    private let points: [(x: Double, y: Double)]
+/// One point on a mode's arc, in seconds of play. A keyframe names only the
+/// channels that move at that time: a channel no keyframe names is not part
+/// of its track, so Deep Sleep's ninety-minute depth cycle and its
+/// twenty-minute onset share one table without either bending the other.
+struct Keyframe: Sendable {
+    let time: Double
+    let rate: Double?
+    let depth: Double?
+    let brightness: Double?
+    let level: Double?
 
-    init(_ points: [(Double, Double)]) {
+    init(
+        _ time: Double, rate: Double? = nil, depth: Double? = nil,
+        brightness: Double? = nil, level: Double? = nil
+    ) {
+        self.time = time
+        self.rate = rate
+        self.depth = depth
+        self.brightness = brightness
+        self.level = level
+    }
+}
+
+/// A keyframe table compiled to one curve per channel.
+struct Arc: Sendable {
+    let rate: Track
+    let depth: Track
+    let brightness: Track
+    let level: Track
+    /// Play seconds after which nothing but the rate ramp moves; infinite
+    /// while a track repeats.
+    let settles: Double
+
+    /// A track that reaches `cycle` repeats from there; one that ends sooner
+    /// holds its last value, which is what keeps the Deep Sleep onset from
+    /// starting over every ninety minutes.
+    init(_ keyframes: [Keyframe], cycle: Double? = nil) {
+        rate = Track(keyframes, \.rate, default: 0, shape: .linear, cycle: cycle)
+        depth = Track(keyframes, \.depth, default: 0, cycle: cycle)
+        brightness = Track(keyframes, \.brightness, default: 0, cycle: cycle)
+        level = Track(keyframes, \.level, default: 1, cycle: cycle)
+        settles = max(depth.settles, brightness.settles, level.settles)
+    }
+}
+
+/// One channel of an arc.
+struct Track: Sendable {
+    private let curve: Curve
+    /// Set when the track repeats, and how long one turn takes.
+    private let cycle: Double?
+    /// The last keyframe that names this channel. Zero when it never moves.
+    let end: Double
+
+    init(
+        _ keyframes: [Keyframe], _ channel: KeyPath<Keyframe, Double?>,
+        default fallback: Double, shape: Curve.Shape = .cosine, cycle: Double? = nil
+    ) {
+        let points = keyframes.compactMap { key in key[keyPath: channel].map { (key.time, $0) } }
+        curve = Curve(points.isEmpty ? [(0, fallback)] : points, shape: shape)
+        end = points.last?.0 ?? 0
+        self.cycle = end > 0 && end == cycle ? cycle : nil
+    }
+
+    /// Play seconds after which the track holds still.
+    var settles: Double { cycle == nil ? end : .infinity }
+
+    func value(at time: Double) -> Double {
+        curve.value(at: cycle.map { time.truncatingRemainder(dividingBy: $0) } ?? time)
+    }
+}
+
+/// A curve through points, each segment blended so the slope is zero at
+/// every point: no corners for the ear to catch.
+struct Curve: Sendable {
+    /// How a segment gets from one point to the next. Levels take the raised
+    /// cosine; a rate ramp is linear, so it walks at a steady hertz per minute.
+    enum Shape: Sendable { case cosine, linear }
+
+    private let points: [(x: Double, y: Double)]
+    private let shape: Shape
+
+    init(_ points: [(Double, Double)], shape: Shape = .cosine) {
         self.points = points.map { (x: $0.0, y: $0.1) }
+        self.shape = shape
     }
 
     func value(at x: Double) -> Double {
@@ -87,7 +200,7 @@ struct Curve: Sendable {
         let i = points.firstIndex { $0.x > x }!
         let (a, b) = (points[i - 1], points[i])
         let t = (x - a.x) / (b.x - a.x)
-        let blend = 0.5 - 0.5 * cos(t * .pi)
+        let blend = shape == .linear ? t : 0.5 - 0.5 * cos(t * .pi)
         return a.y + (b.y - a.y) * blend
     }
 }
