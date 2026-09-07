@@ -51,8 +51,9 @@ struct Entry: TimelineEntry {
     let state: WidgetState
 }
 
-/// One entry, never expiring: the app reloads the timeline whenever the
-/// session changes, and the countdown is drawn from the deadline.
+/// The app reloads the timeline whenever the session changes and the
+/// countdown is drawn from the deadline, so one entry does. A timed session
+/// adds a stopped entry at its deadline, in case the app is gone by then.
 struct Provider: TimelineProvider {
     private static let placeholder = WidgetState(mode: .focus, sound: "Rain", isPlaying: false, remaining: nil, deadline: nil)
 
@@ -61,11 +62,16 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
-        completion(Entry(date: .now, state: WidgetState.load() ?? Self.placeholder))
+        completion(Entry(date: .now, state: (WidgetState.load() ?? Self.placeholder).at(.now)))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
-        completion(Timeline(entries: [Entry(date: .now, state: WidgetState.load() ?? Self.placeholder)], policy: .never))
+        let state = WidgetState.load() ?? Self.placeholder
+        var entries = [Entry(date: .now, state: state.at(.now))]
+        if state.isPlaying, let deadline = state.deadline, deadline > .now {
+            entries.append(Entry(date: deadline, state: state.at(deadline)))
+        }
+        completion(Timeline(entries: entries, policy: .never))
     }
 }
 
@@ -208,7 +214,7 @@ struct ModeControlProvider: ControlValueProvider {
     var previewValue: ModeControlValue { ModeControlValue(mode: mode, isOn: false) }
 
     func currentValue() async throws -> ModeControlValue {
-        let state = WidgetState.load()
+        let state = WidgetState.load()?.at(.now)
         return ModeControlValue(mode: mode, isOn: state?.isPlaying == true && state?.mode == mode)
     }
 }

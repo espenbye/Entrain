@@ -311,6 +311,17 @@ struct SessionTests {
         #expect(mindful.segments.allSatisfy { $0.duration >= 0 && $0.end <= .now })
     }
 
+    @Test func widgetTreatsAPastDeadlineAsStopped() {
+        let playing = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: .now.addingTimeInterval(60))
+        #expect(playing.at(.now).isPlaying)
+        let over = playing.at(.now.addingTimeInterval(120))
+        #expect(!over.isPlaying)
+        #expect(over.deadline == nil)
+        #expect(over.mode == .relax)
+        let endless = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: nil)
+        #expect(endless.at(.distantFuture).isPlaying)
+    }
+
     @Test func countdownGrowsPastAnHour() {
         #expect(899.countdown == "14:59")
         #expect(3600.countdown == "1:00:00")
