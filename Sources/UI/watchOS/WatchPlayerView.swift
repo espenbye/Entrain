@@ -5,6 +5,7 @@ import SwiftUI
 /// Crown in the system Now Playing app, so it has no row here.
 struct WatchPlayerView: View {
     @Bindable var session: Session
+    @Bindable private var daylight = Daylight.shared
 
     var body: some View {
         NavigationStack {
@@ -31,9 +32,12 @@ struct WatchPlayerView: View {
                         ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
                     }
                     Toggle("Binaural Beats", isOn: $session.binaural)
+                    Toggle("Daylight", isOn: $daylight.followsLocation)
                 } footer: {
                     if session.binaural && !session.headphones {
                         Text("Binaural beats need headphones.")
+                    } else if daylight.followsLocation && daylight.denied {
+                        Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")
                     }
                 }
             }

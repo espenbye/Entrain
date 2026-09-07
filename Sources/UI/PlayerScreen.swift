@@ -11,6 +11,7 @@ struct PlayerScreen: View {
     @ScaledMetric(relativeTo: .largeTitle) private var heroSize = 64.0
     @ScaledMetric(relativeTo: .title) private var countdownSize = 34.0
     @ScaledMetric(relativeTo: .title) private var transportSize = 30.0
+    @Bindable private var daylight = Daylight.shared
     #if canImport(AlarmKit)
     @Bindable private var alarm = WakeAlarm.shared
     #endif
@@ -153,6 +154,23 @@ struct PlayerScreen: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, 12)
             }
+            Divider()
+            Row("Daylight") {
+                Toggle("Daylight", isOn: $daylight.followsLocation).labelsHidden()
+            }
+            Group {
+                if daylight.followsLocation && daylight.denied {
+                    Text("Allow location for Entrain in Settings to follow local sunrise and sunset.")
+                } else if daylight.followsLocation {
+                    Text("Brighter in the morning, warmer after sunset, from your approximate location.")
+                } else {
+                    Text("Brighter in the morning, warmer after sunset, assuming a 7 to 19 day.")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 12)
             if session.headTrackingAvailable {
                 Divider()
                 Row("Head Tracking") {

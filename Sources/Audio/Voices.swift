@@ -23,9 +23,10 @@ struct Rain {
         prepare(lfo: 0)
     }
 
-    /// Once per block. `lfo` in -1...1 moves the filter cutoff.
-    mutating func prepare(lfo: Float) {
-        coefficient = OnePoleLowpass.coefficient(cutoff: 700 + 300 * lfo, sampleRate: sampleRate)
+    /// Once per block. `lfo` in -1...1 moves the filter cutoff; `brightness`
+    /// scales it, 1 being where the voice was tuned.
+    mutating func prepare(lfo: Float, brightness: Float = 1) {
+        coefficient = OnePoleLowpass.coefficient(cutoff: (700 + 300 * lfo) * brightness, sampleRate: sampleRate)
     }
 
     mutating func next(rng: inout XorShift) -> Float {
@@ -78,9 +79,10 @@ struct Pad {
         root * pow(2, scale[note % scale.count] / 12)
     }
 
-    /// Once per block. `lfo` in -1...1 moves the filter cutoff.
-    mutating func prepare(lfo: Float) {
-        coefficient = OnePoleLowpass.coefficient(cutoff: 900 + 500 * lfo, sampleRate: sampleRate)
+    /// Once per block. `lfo` in -1...1 moves the filter cutoff; `brightness`
+    /// scales it, 1 being where the voice was tuned.
+    mutating func prepare(lfo: Float, brightness: Float = 1) {
+        coefficient = OnePoleLowpass.coefficient(cutoff: (900 + 500 * lfo) * brightness, sampleRate: sampleRate)
     }
 
     mutating func next(rng: inout XorShift) -> Float {
@@ -135,9 +137,10 @@ struct Drone {
         prepare(lfo: 0)
     }
 
-    /// Once per block. `lfo` in -1...1 moves the filter cutoff and the beat rate.
-    mutating func prepare(lfo: Float) {
-        coefficient = OnePoleLowpass.coefficient(cutoff: 500 + 200 * lfo, sampleRate: sampleRate)
+    /// Once per block. `lfo` in -1...1 moves the filter cutoff and the beat
+    /// rate; `brightness` scales the cutoff, 1 being where the voice was tuned.
+    mutating func prepare(lfo: Float, brightness: Float = 1) {
+        coefficient = OnePoleLowpass.coefficient(cutoff: (500 + 200 * lfo) * brightness, sampleRate: sampleRate)
         detunedIncrement = (Drone.base * 1.5 + 0.3 + 0.2 * lfo) / sampleRate
     }
 

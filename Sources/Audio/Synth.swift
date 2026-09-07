@@ -30,6 +30,10 @@ final class VoiceSynth: @unchecked Sendable {
     /// carrier evolves slowly to counter habituation while the rate stays fixed.
     private var drift = Phasor()
     private let driftIncrement: Float
+    /// The brightness atomic, followed over about two seconds so a switch
+    /// of day model is a swell rather than a step. Stepped once per block.
+    private var brightness: Float = 0
+    private let brightnessRate: Float
 
     /// Modulation is confined to 200 Hz...1 kHz. Below, the bass stays steady;
     /// above, rain droplets and pad harmonics do not flutter.
@@ -53,6 +57,7 @@ final class VoiceSynth: @unchecked Sendable {
         master = Smoother(0, seconds: 1, sampleRate: sampleRate)
         volume = Smoother(1, seconds: 0.05, sampleRate: sampleRate)
         driftIncrement = 1 / (900 * Float(sampleRate))
+        brightnessRate = 1 / (2 * Float(sampleRate))
         bandLowCoefficient = OnePoleLowpass.coefficient(cutoff: 200, sampleRate: Float(sampleRate))
         bandHighCoefficient = OnePoleLowpass.coefficient(cutoff: 1000, sampleRate: Float(sampleRate))
     }
@@ -71,10 +76,14 @@ final class VoiceSynth: @unchecked Sendable {
 
         // Evaluated once per block; far too slow to need per-sample resolution.
         let lfo = sin(twoPi * drift.next(driftIncrement * Float(frames)))
+        let target = Float(parameters.brightness.load(ordering: .relaxed))
+        brightness += (target - brightness) * min(1, brightnessRate * Float(frames))
+        // Half an octave each way at the ends of the range.
+        let scale = exp2(0.5 * brightness)
         switch soundscape {
-        case .rain: rain.prepare(lfo: lfo)
-        case .pad: pad.prepare(lfo: lfo)
-        case .drone: drone.prepare(lfo: lfo)
+        case .rain: rain.prepare(lfo: lfo, brightness: scale)
+        case .pad: pad.prepare(lfo: lfo, brightness: scale)
+        case .drone: drone.prepare(lfo: lfo, brightness: scale)
         case .noise: break
         }
 

@@ -27,6 +27,7 @@ targetTemplates:
     sources:
       - Sources/Session
       - Sources/Audio
+      - Sources/Adaptive
       - Sources/UI/PlayerView.swift
       - Resources
     settings:
@@ -79,10 +80,13 @@ targets:
             CFBundleURLSchemes: [entrain]
         LSApplicationCategoryType: public.app-category.healthcare-fitness
         NSHumanReadableCopyright: © Espen Bye
+        NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the Mac.
+        NSLocationDefaultAccuracyReduced: true
     entitlements:
       path: Entrain.entitlements
       properties:
         com.apple.security.app-sandbox: true
+        com.apple.security.personal-information.location: true
         # The widget snapshot. An App Group would need a certificate to sign,
         # and App Review rejects this exception: a Mac App Store archive passes
         # CODE_SIGN_ENTITLEMENTS=AppStore/$(TARGET_NAME).entitlements instead.
@@ -137,6 +141,8 @@ targets:
         UIBackgroundModes: [audio]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
         NSAlarmKitUsageDescription: Rings the Wake alarm at the time you choose, even on silent.
+        NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the device.
+        NSLocationDefaultAccuracyReduced: true
         NSMotionUsageDescription: Turns the room with your head when Head Tracking is on.
         NSSupportsLiveActivities: true
         # The backdrop's top colour, so launch does not flash white before the dark UI.
@@ -198,6 +204,8 @@ targets:
         WKCompanionAppBundleIdentifier: no.espenbye.entrain
         WKBackgroundModes: [audio]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
+        NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the watch.
+        NSLocationDefaultAccuracyReduced: true
     entitlements:
       path: watchOS/Entrain.entitlements
       properties:

@@ -479,3 +479,51 @@ extension SessionTests {
         #expect(makeSession().headTracking)
     }
 }
+
+@MainActor
+extension SessionTests {
+    /// An input as the session sees it: an adjustment and a change callback.
+    final class FakeInput: AdaptiveInput {
+        var adjustment = Adjustment.none
+        var onChange: (@MainActor () -> Void)?
+        var running: Mode?
+        var starts = 0
+        func start(for mode: Mode) { running = mode; starts += 1 }
+        func stop() { running = nil }
+        func change(to adjustment: Adjustment) {
+            self.adjustment = adjustment
+            onChange?()
+        }
+    }
+
+    /// Inputs run only while the session plays, start over on a mode
+    /// change, and their adjustment lands on depth and brightness without
+    /// touching the sleep beds' fixed depth.
+    @Test func inputsRunWhilePlayingAndShapeTheSound() async {
+        let daylight = FakeInput()
+        let body = FakeInput()
+        let session = Session(defaults: defaults, widgetDirectory: widgetDirectory, inputs: [daylight, body]) { [audio] _ in audio }
+        let p = session.parameters
+        session.mode = .focus
+        session.intensity = .medium
+        #expect(daylight.running == nil)
+
+        await session.play()
+        #expect(daylight.running == .focus && body.running == .focus)
+        daylight.change(to: Adjustment(depth: 0.8, brightness: -0.5))
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.4)
+        #expect(p.brightness.load(ordering: .relaxed) == -0.5)
+        body.change(to: Adjustment(depth: 0.5, brightness: -0.8))
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.2)
+        #expect(p.brightness.load(ordering: .relaxed) == -1)
+
+        session.mode = .deepSleep
+        #expect(daylight.starts == 2 && daylight.running == .deepSleep)
+        #expect(p.modulationDepth.load(ordering: .relaxed) == 0.5)
+
+        session.pause()
+        #expect(daylight.running == nil && body.running == nil)
+        session.mode = .relax
+        #expect(daylight.starts == 2)
+    }
+}

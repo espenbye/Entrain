@@ -141,6 +141,16 @@
         }
       }
     },
+    "Allow location for Entrain in Settings to follow local sunrise and sunset." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tillat posisjon for Entrain i Innstillinger for å følge lokal soloppgang og solnedgang."
+          }
+        }
+      }
+    },
     "Audio stopped" : {
       "localizations" : {
         "nb" : {
@@ -177,6 +187,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Binaurale toner trenger hodetelefoner."
+          }
+        }
+      }
+    },
+    "Brighter in the morning, warmer after sunset, assuming a 7 to 19 day." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lysere om morgenen, varmere etter solnedgang, med en dag fra 7 til 19."
+          }
+        }
+      }
+    },
+    "Brighter in the morning, warmer after sunset, from your approximate location." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lysere om morgenen, varmere etter solnedgang, ut fra din omtrentlige posisjon."
           }
         }
       }
@@ -247,6 +277,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kunne ikke slå på Åpne ved innlogging"
+          }
+        }
+      }
+    },
+    "Daylight" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dagslys"
           }
         }
       }

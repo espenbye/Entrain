@@ -8,7 +8,10 @@ import WidgetKit
 @MainActor
 @Observable
 final class Session {
-    static let shared = Session(defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default) {
+    static let shared = Session(
+        defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default,
+        inputs: [Circadian(daylight: Daylight.shared)]
+    ) {
         AudioEngine(parameters: $0)
     }
 
@@ -17,7 +20,12 @@ final class Session {
             endMindful()
             played = 0
             playStart = isPlaying ? .now : nil
-            if isPlaying { startMindful() }
+            if isPlaying {
+                startMindful()
+                // An input may care which mode it serves; it starts over.
+                inputs.forEach { $0.stop() }
+                inputs.forEach { $0.start(for: mode) }
+            }
             apply()
         }
     }
@@ -89,6 +97,9 @@ final class Session {
     private let widgetDirectory: URL?
     private let makeEngine: @MainActor (AudioParameters) -> any SessionAudio
     private let mindful: (any MindfulLog)?
+    /// Context and body inputs, running only while the session plays. Each
+    /// contributes an `Adjustment`; `applyAdjustment` composes them.
+    private let inputs: [any AdaptiveInput]
     /// iCloud's key-value store: a setting changed on one device reaches the
     /// others. Nil in tests. Without the entitlement or an account the store
     /// just does not sync, so a development build runs unchanged.
@@ -128,12 +139,14 @@ final class Session {
         widgetDirectory: URL? = WidgetState.directory,
         mindful: (any MindfulLog)? = nil,
         cloud: (any SettingsStore)? = nil,
+        inputs: [any AdaptiveInput] = [],
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
         self.widgetDirectory = widgetDirectory
         self.mindful = mindful
         self.cloud = cloud
+        self.inputs = inputs
         self.makeEngine = makeEngine
         widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
@@ -155,6 +168,9 @@ final class Session {
         })
         remaining = length == .endless ? nil : length.seconds
         parameters.volume.store(volume, ordering: .relaxed)
+        for input in inputs {
+            input.onChange = { [weak self] in self?.applyAdjustment() }
+        }
         apply()
         if nowPlaying { NowPlaying.attach(to: self) }
         route = OutputRoute { [weak self] headphones in self?.headphones = headphones }
@@ -245,6 +261,8 @@ final class Session {
         isPlaying = true
         playStart = .now
         startMindful()
+        inputs.forEach { $0.start(for: mode) }
+        applyAdjustment()
         startTimer()
         applyMaster()
         broadcast()
@@ -257,6 +275,7 @@ final class Session {
         played = playTime
         playStart = nil
         endMindful()
+        inputs.forEach { $0.stop() }
         stopTimer()
         applyMaster()
         broadcast()
@@ -331,7 +350,7 @@ final class Session {
     private func apply() {
         let p = parameters
         applyRate()
-        p.modulationDepth.store(mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier), ordering: .relaxed)
+        applyAdjustment()
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
@@ -340,6 +359,17 @@ final class Session {
         applyMaster()
         save()
         broadcast()
+    }
+
+    /// Every input's adjustment composed onto the mode's depth. The sleep
+    /// beds keep their fixed depth, as they ignore intensity: the 1 Hz swell
+    /// is the point of Deep Sleep, not a texture to ease at night. The
+    /// noise bed has no filter, so brightness passes it by on its own.
+    private func applyAdjustment() {
+        let adjustment = inputs.reduce(Adjustment.none) { $0.combined(with: $1.adjustment) }
+        let depth = mode.isSleep ? mode.depth : min(0.9, mode.depth * intensity.multiplier * adjustment.depth)
+        parameters.modulationDepth.store(depth, ordering: .relaxed)
+        parameters.brightness.store(adjustment.brightness, ordering: .relaxed)
     }
 
     private func applyRate() {

@@ -5,6 +5,9 @@ import Synchronization
 final class AudioParameters: Sendable {
     let modulationRate = Atomic<Double>(16)
     let modulationDepth = Atomic<Double>(0.5)
+    /// -1...1: the voice filters half an octave down or up from where the
+    /// texture drift puts them. Time of day sets it; see `Circadian`.
+    let brightness = Atomic<Double>(0)
     let binauralCarrier = Atomic<Double>(200)
     let binauralLevel = Atomic<Double>(0)
     /// Bitmask of active soundscapes, one bit per `Soundscape` index.
