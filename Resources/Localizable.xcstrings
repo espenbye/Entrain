@@ -31,6 +31,16 @@
         }
       }
     },
+    "%@, %@" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
     "%lld h" : {
       "localizations" : {
         "nb" : {
@@ -117,6 +127,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "90 minutter"
+          }
+        }
+      }
+    },
+    "Adds a slow beat between the ears. Needs headphones, so it is silent right now." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legger en langsom puls mellom ørene. Trenger hodetelefoner, så den er stille nå."
+          }
+        }
+      }
+    },
+    "Adds a slow beat between the ears. Needs headphones." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legger en langsom puls mellom ørene. Trenger hodetelefoner."
           }
         }
       }
@@ -301,6 +331,16 @@
         }
       }
     },
+    "Deep work" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dypt arbeid"
+          }
+        }
+      }
+    },
     "Dismiss" : {
       "localizations" : {
         "nb" : {
@@ -311,12 +351,32 @@
         }
       }
     },
+    "Done" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ferdig"
+          }
+        }
+      }
+    },
     "Drone" : {
       "localizations" : {
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drone"
+          }
+        }
+      }
+    },
+    "Ease toward bed" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot sengetid"
           }
         }
       }
@@ -392,6 +452,16 @@
         }
       }
     },
+    "Fall asleep" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovne"
+          }
+        }
+      }
+    },
     "Focus" : {
       "localizations" : {
         "nb" : {
@@ -418,6 +488,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gamma"
+          }
+        }
+      }
+    },
+    "Gentle rise" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Myk start"
           }
         }
       }
@@ -548,6 +628,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Middels"
+          }
+        }
+      }
+    },
+    "Memory and recall" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hukommelse og gjenkalling"
           }
         }
       }
@@ -762,6 +852,16 @@
         }
       }
     },
+    "Rest" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvile"
+          }
+        }
+      }
+    },
     "Returns the mode, whether it is playing, the sound, the time left, the intensity and whether binaural beats are on." : {
       "localizations" : {
         "nb" : {
@@ -882,6 +982,26 @@
         }
       }
     },
+    "Settings" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Innstillinger"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Innstillinger …"
+          }
+        }
+      }
+    },
     "Show in Dock" : {
       "localizations" : {
         "nb" : {
@@ -908,6 +1028,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lyd"
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
           }
         }
       }
@@ -962,6 +1092,26 @@
         }
       }
     },
+    "Stay asleep" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sove videre"
+          }
+        }
+      }
+    },
+    "Stillness" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stillhet"
+          }
+        }
+      }
+    },
     "Stop" : {
       "localizations" : {
         "nb" : {
@@ -1002,6 +1152,66 @@
         }
       }
     },
+    "Suggested before sunrise" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått før soloppgang"
+          }
+        }
+      }
+    },
+    "Suggested for a bright morning" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått for en lys morgen"
+          }
+        }
+      }
+    },
+    "Suggested for midday" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått midt på dagen"
+          }
+        }
+      }
+    },
+    "Suggested for the afternoon" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått for ettermiddagen"
+          }
+        }
+      }
+    },
+    "Suggested for the evening" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått for kvelden"
+          }
+        }
+      }
+    },
+    "Suggested for the night" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foreslått for natten"
+          }
+        }
+      }
+    },
     "Timer" : {
       "localizations" : {
         "nb" : {
@@ -1038,6 +1248,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Slår den binaurale tonen på eller av. Den spilles bare over hodetelefoner."
+          }
+        }
+      }
+    },
+    "Unwind" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koble av"
           }
         }
       }
@@ -1088,6 +1308,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ro ned"
+          }
+        }
+      }
+    },
+    "Work" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeid"
           }
         }
       }

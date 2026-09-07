@@ -110,6 +110,29 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Binaural carrier frequency in Hz for the left ear. Right ear is carrier + rate.
     var carrier: Double { isSleep ? 100 : 200 }
 
+    /// What the mode is for, in a line a first-time user understands
+    /// without knowing what 40 Hz does.
+    var blurb: LocalizedStringResource {
+        switch self {
+        case .focus: "Deep work"
+        case .gamma: "Memory and recall"
+        case .relax: "Unwind"
+        case .meditate: "Stillness"
+        case .sleep: "Fall asleep"
+        case .deepSleep: "Stay asleep"
+        case .windDown: "Ease toward bed"
+        case .wake: "Gentle rise"
+        }
+    }
+
+    var purpose: Purpose {
+        switch self {
+        case .focus, .gamma: .work
+        case .relax, .meditate: .rest
+        case .windDown, .sleep, .deepSleep, .wake: .sleep
+        }
+    }
+
     var symbol: String {
         switch self {
         case .focus: "scope"
@@ -122,6 +145,22 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         case .wake: "sunrise"
         }
     }
+}
+
+/// The three shelves the modes sit on in the player. Wake is on the sleep
+/// shelf as the bookend to Wind Down.
+enum Purpose: CaseIterable, Identifiable, Sendable {
+    case work, rest, sleep
+
+    var id: Self { self }
+    var title: LocalizedStringResource {
+        switch self {
+        case .work: "Work"
+        case .rest: "Rest"
+        case .sleep: "Sleep"
+        }
+    }
+    var modes: [Mode] { Mode.allCases.filter { $0.purpose == self } }
 }
 
 enum Intensity: String, CaseIterable, Identifiable, Sendable {

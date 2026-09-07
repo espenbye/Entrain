@@ -28,8 +28,11 @@ struct EntrainApp: App {
             PlayerScreen(session: session)
         }
         .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentMinSize)
-        .defaultSize(width: 380, height: 760)
+        .windowResizability(.contentSize)
+
+        Settings {
+            SettingsScreen(session: session)
+        }
     }
 }
 

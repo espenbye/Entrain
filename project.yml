@@ -68,6 +68,7 @@ targets:
       - Sources/App/macOS
       - Sources/UI/macOS
       - Sources/UI/PlayerScreen.swift
+      - Sources/UI/SettingsScreen.swift
     info:
       path: Info.plist
       properties:
@@ -128,6 +129,7 @@ targets:
     sources:
       - Sources/App/iOS
       - Sources/UI/PlayerScreen.swift
+      - Sources/UI/SettingsScreen.swift
     info:
       path: iOS/Info.plist
       properties:
