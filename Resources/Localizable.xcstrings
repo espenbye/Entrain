@@ -402,6 +402,16 @@
         }
       }
     },
+    "Head Tracking" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hodesporing"
+          }
+        }
+      }
+    },
     "High" : {
       "localizations" : {
         "nb" : {
@@ -428,6 +438,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spiller av"
+          }
+        }
+      }
+    },
+    "Keeps the room in place when you turn your head, with AirPods or Beats. Stays off in Sleep and Wind Down." : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Holder rommet på plass når du snur på hodet, med AirPods eller Beats. Er av i Søvn og Ro ned."
           }
         }
       }

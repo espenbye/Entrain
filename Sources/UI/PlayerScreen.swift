@@ -153,6 +153,19 @@ struct PlayerScreen: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, 12)
             }
+            if session.headTrackingAvailable {
+                Divider()
+                Row("Head Tracking") {
+                    Toggle("Head Tracking", isOn: $session.headTracking).labelsHidden()
+                }
+                if session.headTracking {
+                    Text("Keeps the room in place when you turn your head, with AirPods or Beats. Stays off in Sleep and Wind Down.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 12)
+                }
+            }
             Divider()
             HStack(spacing: 12) {
                 Image(systemName: "speaker.fill")

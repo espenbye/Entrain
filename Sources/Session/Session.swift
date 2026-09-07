@@ -26,6 +26,17 @@ final class Session {
     /// Whether the output is headphones. Binaural beats need one carrier per
     /// ear, so over speakers the layer is muted and the UI says why.
     var headphones: Bool { didSet { apply() } }
+    /// Whether the room turns with the head over motion-reporting headphones.
+    /// Off by default and never in bed: see `Mode.tracksHead`. Local, like
+    /// Now Playing: it is about the headphones on this device.
+    var headTracking: Bool {
+        didSet {
+            apply()
+            defaults.set(headTracking, forKey: "headTracking")
+        }
+    }
+    /// Whether any headphones on this platform can report motion.
+    let headTrackingAvailable: Bool
     private var route: OutputRoute?
     var length: SessionLength { didSet { resetTimer(); save() } }
     /// Control Center and media keys. Off keeps the media keys with the music player.
@@ -132,6 +143,12 @@ final class Session {
         volume = defaults.object(forKey: "volume") as? Double ?? 1
         nowPlaying = defaults.object(forKey: "nowPlaying") as? Bool ?? Self.nowPlayingByDefault
         headphones = OutputRoute.headphones
+        headTracking = defaults.bool(forKey: "headTracking")
+        #if canImport(CoreMotion) && !os(watchOS)
+        headTrackingAvailable = HeadTracker.isAvailable
+        #else
+        headTrackingAvailable = false
+        #endif
         layersByMode = Dictionary(uniqueKeysWithValues: Mode.allCases.compactMap { mode in
             let layers = Self.layers(from: defaults.string(forKey: Self.layersKey(mode)))
             return layers.isEmpty ? nil : (mode, layers)
@@ -188,6 +205,9 @@ final class Session {
 
     var title: String { "\(mode.title) · \(layers.title)" }
 
+    /// Head tracking as the engine should run it now.
+    private var tracksHead: Bool { headTracking && headphones && mode.tracksHead }
+
     /// Seconds into the current timed session. Nil when endless.
     var elapsed: Int? { remaining.map { length.seconds - $0 } }
 
@@ -210,6 +230,8 @@ final class Session {
             engine.onInterruption = { [weak self] in self?.interrupted() }
             engine.onInterruptionEnded = { [weak self] in await self?.interruptionEnded(shouldResume: $0) }
             engine.mixesWithOthers = !nowPlaying
+            engine.headphones = headphones
+            engine.headTracking = tracksHead
             self.engine = engine
             return engine
         }()
@@ -313,6 +335,8 @@ final class Session {
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
+        engine?.headphones = headphones
+        engine?.headTracking = tracksHead
         applyMaster()
         save()
         broadcast()

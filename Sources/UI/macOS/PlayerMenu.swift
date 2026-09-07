@@ -81,6 +81,7 @@ struct PlayerControls: View {
             intensity: $session.intensity,
             length: $session.length,
             binaural: $session.binaural,
+            headTracking: session.headTrackingAvailable ? $session.headTracking : nil,
             sleep: session.mode.isSleep
         )
         VolumeSection(volume: $session.volume)
@@ -93,6 +94,8 @@ struct SettingsSection: View {
     @Binding var intensity: Intensity
     @Binding var length: SessionLength
     @Binding var binaural: Bool
+    /// Nil where no headphones can report motion.
+    let headTracking: Binding<Bool>?
     /// Sleep modes play a fixed bed; sound and intensity have nothing to set.
     let sleep: Bool
 
@@ -108,6 +111,9 @@ struct SettingsSection: View {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
             }
             Toggle("Binaural Beats", isOn: $binaural)
+            if let headTracking {
+                Toggle("Head Tracking", isOn: headTracking)
+            }
         }
     }
 }

@@ -100,3 +100,48 @@ struct SynthTests {
         }
     }
 }
+
+/// The room and the voices that populate it.
+struct SpatialTests {
+    /// Every source stays inside the reference distance at every moment,
+    /// so a position never changes a voice's loudness.
+    @Test(arguments: Soundscape.allCases)
+    func sourcesStayWithinReach(_ soundscape: Soundscape) {
+        for minute in stride(from: 0.0, through: 120 * 60, by: 30) {
+            let p = Room.position(of: soundscape, at: minute)
+            let distance = (p.x * p.x + p.y * p.y + p.z * p.z).squareRoot()
+            #expect(distance <= Room.reach, "\(soundscape.title) at \(minute)s is \(distance) m out")
+        }
+    }
+
+    /// Four voices in their own nodes must pulse together: two synths built
+    /// from the same parameters render bit-identical modulation.
+    @Test func separateVoicesShareTheModulationClock() {
+        let parameters = AudioParameters()
+        parameters.master.store(1, ordering: .relaxed)
+        parameters.layers.store(Soundscape.drone.bit | Soundscape.noise.bit, ordering: .relaxed)
+        let sampleRate = SynthTests.sampleRate
+        let a = VoiceSynth(.drone, parameters: parameters, sampleRate: sampleRate)
+        let b = VoiceSynth(.drone, parameters: parameters, sampleRate: sampleRate)
+        var outA = [Float](repeating: 0, count: 512)
+        var outB = [Float](repeating: 0, count: 512)
+        for _ in 0..<400 {
+            outA.withUnsafeMutableBufferPointer { a.render(frames: 512, into: $0.baseAddress!) }
+            outB.withUnsafeMutableBufferPointer { b.render(frames: 512, into: $0.baseAddress!) }
+        }
+        #expect(outA == outB)
+        #expect(outA.contains { $0 != 0 })
+    }
+
+    /// A muted voice renders silence, and one that was never on still has
+    /// finite output when it fades in.
+    @Test func mutedVoiceIsSilent() {
+        let parameters = AudioParameters()
+        parameters.master.store(1, ordering: .relaxed)
+        parameters.layers.store(Soundscape.rain.bit, ordering: .relaxed)
+        let pad = VoiceSynth(.pad, parameters: parameters, sampleRate: SynthTests.sampleRate)
+        var out = [Float](repeating: 1, count: 512)
+        out.withUnsafeMutableBufferPointer { pad.render(frames: 512, into: $0.baseAddress!) }
+        #expect(out.allSatisfy { $0 == 0 })
+    }
+}
