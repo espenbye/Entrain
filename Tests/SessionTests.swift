@@ -11,6 +11,7 @@ struct SessionTests {
         var mixesWithOthers = false
         var headphones = true
         var headTracking = false
+        var space = Room.space(for: .focus)
         var starts = 0
         var stops = 0
         var failsToStart = false

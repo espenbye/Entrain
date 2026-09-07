@@ -5,11 +5,17 @@ import Synchronization
 final class AudioParameters: Sendable {
     let modulationRate = Atomic<Double>(16)
     let modulationDepth = Atomic<Double>(0.5)
+    /// Where the modulation envelope peaks within its cycle, 0.1...0.9. The
+    /// mode sets it; see `Mode.envelope` for what the shape is for.
+    let modulationShape = Atomic<Double>(0.5)
     /// -1...1: the voice filters half an octave down or up from where the
     /// texture drift puts them. Time of day sets it; see `Circadian`.
     let brightness = Atomic<Double>(0)
     let binauralCarrier = Atomic<Double>(200)
     let binauralLevel = Atomic<Double>(0)
+    /// The mode's `Tonality`, by raw value: the intervals and root the pad
+    /// and the drone share.
+    let tonality = Atomic<Int>(Tonality.open.rawValue)
     /// Bitmask of active soundscapes, one bit per `Soundscape` index.
     let layers = Atomic<Int>(1)
     /// 0...1. The synths ramp toward it over a second, so play and pause fade
@@ -22,6 +28,12 @@ final class AudioParameters: Sendable {
     /// the voice that leads the bed. Haptics read it rather than keeping a
     /// clock of their own, so touch and sound cannot drift apart over a night.
     let modulationPhase = Atomic<Double>(0)
+
+    /// How much room the mode is heard in, 0...1. On iPhone and Mac the
+    /// environment node carries the space and this is what the watch, which
+    /// has no such node, gives its own diffuser instead.
+    let space = Atomic<Double>(Double(Room.space(for: .focus).blend))
+
     /// A cue, `Cue.encode`d: every new value plays one tone. The trigger
     /// count in the high bits makes a repeat of the same cue a change.
     let cue = Atomic<Int>(0)

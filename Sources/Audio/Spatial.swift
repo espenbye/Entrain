@@ -37,6 +37,40 @@ enum Room {
     }
 }
 
+/// The room a mode is heard in: which space, how much of it comes back, and
+/// how much of each source is sent into it. One fixed medium room served
+/// eight different intents, which is one too few — a room is as much of what
+/// a mode is for as its rate is. Focus is close and nearly dry, so nothing
+/// arrives late enough to pull attention; Meditate and Relax are large and
+/// far, where a sound has somewhere to go; the beds that end the night are
+/// drier still, so nothing swims while you are trying to stop thinking.
+struct Space: Equatable, Sendable {
+    var preset: AVAudioUnitReverbPreset
+    /// What comes back from the room, in dB.
+    var level: Float
+    /// How much of each source is sent into it, 0...1.
+    var blend: Float
+}
+
+extension Room {
+    static func space(for mode: Mode) -> Space {
+        switch mode {
+        case .focus: Space(preset: .smallRoom, level: -20, blend: 0.12)
+        case .gamma: Space(preset: .smallRoom, level: -18, blend: 0.15)
+        case .relax: Space(preset: .mediumRoom, level: -12, blend: 0.30)
+        case .meditate: Space(preset: .largeRoom, level: -10, blend: 0.38)
+        case .windDown: Space(preset: .mediumRoom, level: -12, blend: 0.28)
+        case .wake: Space(preset: .mediumRoom, level: -14, blend: 0.22)
+        case .sleep, .deepSleep: Space(preset: .smallRoom, level: -24, blend: 0.08)
+        }
+    }
+
+    /// Where the send goes on the way between two rooms. The unit cannot
+    /// cross-fade one preset into another, so a change of room is taken down
+    /// to silence, swapped, and brought back up.
+    static let silentSend: Float = -40
+}
+
 #if canImport(CoreMotion) && !os(watchOS)
 /// Turns the listener with the head so the room stays where it is. Reads
 /// AirPods and Beats motion; nothing else reports. Yaw is measured from

@@ -20,6 +20,9 @@ protocol SessionAudio: AnyObject {
     /// Whether the listener turns with the head, so the room stays put.
     /// Needs headphones that report motion; otherwise it is a no-op.
     var headTracking: Bool { get set }
+    /// The room the mode is heard in. Changing it cross-fades rather than
+    /// cutting, so a mode change mid-session does not jump the space.
+    var space: Space { get set }
     func start() async throws
     func stop()
 }
@@ -33,15 +36,20 @@ final class AudioEngine: SessionAudio {
     }
 
     #if os(watchOS)
-    // The watch plays a stereo bed with no room, so these have nothing to drive.
+    // The watch has no environment node. Head tracking has nothing to drive,
+    // and the space reaches the bed through `AudioParameters` instead.
     var headphones = true
     var headTracking = false
+    var space = Room.space(for: .focus)
     #else
     var headphones = true {
         didSet { applyRendering() }
     }
     var headTracking = false {
         didSet { applyHeadTracking() }
+    }
+    var space = Room.space(for: .focus) {
+        didSet { applySpace(from: oldValue) }
     }
     #endif
 
@@ -58,6 +66,7 @@ final class AudioEngine: SessionAudio {
     private let environment = AVAudioEnvironmentNode()
     private let eq = AVAudioUnitEQ(numberOfBands: 1)
     private var orbit: Task<Void, Never>?
+    private var spaceFade: Task<Void, Never>?
     private var tracker: HeadTracker?
     #endif
 
@@ -135,18 +144,25 @@ final class AudioEngine: SessionAudio {
         environment.distanceAttenuationParameters.referenceDistance = Room.reach
         environment.distanceAttenuationParameters.maximumDistance = Room.reach * 4
         environment.reverbParameters.enable = true
-        environment.reverbParameters.loadFactoryReverbPreset(.mediumRoom)
-        environment.reverbParameters.level = -14
+        environment.reverbParameters.loadFactoryReverbPreset(space.preset)
+        environment.reverbParameters.level = space.level
         engine.attach(environment)
         for (node, soundscape) in zip(voiceNodes, Soundscape.allCases) {
             engine.attach(node)
             engine.connect(node, to: environment, format: mono)
             node.position = Room.position(of: soundscape, at: 0)
-            node.reverbBlend = 0.25
+            node.reverbBlend = space.blend
         }
         applyRendering()
 
-        // A gentle high shelf takes the edge off rain and droplets.
+        // The shelf was put here for the rain's droplets, which no longer
+        // need it: they are noise bursts now, and measure no brighter above
+        // 6 kHz than the pings did — every voice keeps less than half a
+        // percent of its energy up there, so on the dry path the shelf is
+        // worth about a fiftieth of a decibel. It stays because it sits
+        // after the environment node, where it damps the top of the reverb
+        // tail, and the wetter modes now send it a great deal more tail than
+        // one fixed medium room ever did.
         let shelf = eq.bands[0]
         shelf.filterType = .highShelf
         shelf.frequency = 6000
@@ -207,6 +223,8 @@ final class AudioEngine: SessionAudio {
         #if !os(watchOS)
         orbit?.cancel()
         orbit = nil
+        spaceFade?.cancel()
+        spaceFade = nil
         tracker?.stop()
         #endif
         engine.stop()
@@ -258,6 +276,43 @@ final class AudioEngine: SessionAudio {
                 }
                 try? await Task.sleep(for: .seconds(2))
             }
+        }
+    }
+
+    /// Moves the room to what the mode asks for without a discontinuity. The
+    /// send level and the blend are ramped; the preset cannot be ramped at
+    /// all, so when the room itself changes the send goes to silence first,
+    /// the room is swapped under it, and it comes back up in the new one.
+    private func applySpace(from old: Space) {
+        guard space != old else { return }
+        spaceFade?.cancel()
+        let target = space
+        spaceFade = Task { [weak self] in
+            if target.preset != old.preset {
+                await self?.rampSpace(from: old, to: Space(preset: old.preset, level: Room.silentSend, blend: 0), over: 0.7)
+                guard !Task.isCancelled, let self else { return }
+                environment.reverbParameters.loadFactoryReverbPreset(target.preset)
+                await rampSpace(
+                    from: Space(preset: target.preset, level: Room.silentSend, blend: 0), to: target, over: 0.7
+                )
+            } else {
+                await self?.rampSpace(from: old, to: target, over: 1.2)
+            }
+            self?.spaceFade = nil
+        }
+    }
+
+    /// A step every 25 ms: below what the ear resolves as a change in level,
+    /// and far cheaper than touching the graph per render block.
+    private func rampSpace(from old: Space, to target: Space, over seconds: Double) async {
+        let steps = max(1, Int(seconds / 0.025))
+        for step in 1...steps {
+            guard !Task.isCancelled else { return }
+            let t = Float(step) / Float(steps)
+            environment.reverbParameters.level = old.level + (target.level - old.level) * t
+            let blend = old.blend + (target.blend - old.blend) * t
+            for node in voiceNodes { node.reverbBlend = blend }
+            try? await Task.sleep(for: .seconds(0.025))
         }
     }
 

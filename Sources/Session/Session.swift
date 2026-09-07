@@ -295,6 +295,7 @@ final class Session {
             engine.mixesWithOthers = !nowPlaying
             engine.headphones = headphones
             engine.headTracking = tracksHead
+            engine.space = Room.space(for: mode)
             self.engine = engine
             return engine
         }()
@@ -449,11 +450,15 @@ final class Session {
         let p = parameters
         compileArc()
         applyArc()
+        p.modulationShape.store(mode.envelope, ordering: .relaxed)
+        p.tonality.store(mode.tonality.rawValue, ordering: .relaxed)
+        p.space.store(Double(Room.space(for: mode).blend), ordering: .relaxed)
         p.binauralCarrier.store(mode.carrier, ordering: .relaxed)
         p.binauralLevel.store(binaural && headphones ? 0.12 : 0, ordering: .relaxed)
         p.layers.store(layers.mask, ordering: .relaxed)
         engine?.headphones = headphones
         engine?.headTracking = tracksHead
+        engine?.space = Room.space(for: mode)
         save()
         broadcast()
     }

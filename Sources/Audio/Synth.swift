@@ -26,6 +26,11 @@ final class VoiceSynth: @unchecked Sendable {
     private var layerGain: Smoother
 
     private var modulation = Phasor()
+    /// Where in the modulation cycle this soundscape sits. See
+    /// `modulationOffset`.
+    private let modulationOffset: Float
+    /// The shape of one modulation cycle, set by the mode.
+    private var shape: PulseShape
     private var depth: Smoother
     private var master: Smoother
     private var volume: Smoother
@@ -52,12 +57,18 @@ final class VoiceSynth: @unchecked Sendable {
         self.soundscape = soundscape
         leads = soundscape == Soundscape.allCases.first
         rain = Rain(sampleRate: sampleRate)
-        pad = Pad(sampleRate: sampleRate)
-        drone = Drone(sampleRate: sampleRate)
+        // Built on the mode's own tonality, so a session that starts in Wind
+        // Down is in its key from the first sample instead of retuning into
+        // it a moment after the fade-in.
+        let tonality = Tonality(rawValue: parameters.tonality.load(ordering: .relaxed)) ?? .open
+        pad = Pad(sampleRate: sampleRate, tonality: tonality)
+        drone = Drone(sampleRate: sampleRate, tonality: tonality)
         noise = Noise(sampleRate: sampleRate)
         // A seed per voice, so two noise-based voices never share a stream.
         rng = XorShift(state: 0x9E37_79B9 &+ UInt32(soundscape.index) &* 0x632B_E5AB)
         layerGain = Smoother(0, seconds: 1.5, sampleRate: sampleRate)
+        modulationOffset = Self.modulationOffset(soundscape)
+        shape = PulseShape(peak: 0.5, sampleRate: sampleRate)
         depth = Smoother(0.5, seconds: 0.05, sampleRate: sampleRate)
         master = Smoother(0, seconds: 1, sampleRate: sampleRate)
         volume = Smoother(1, seconds: 0.05, sampleRate: sampleRate)
@@ -67,10 +78,31 @@ final class VoiceSynth: @unchecked Sendable {
         bandHighCoefficient = OnePoleLowpass.coefficient(cutoff: 1000, sampleRate: Float(sampleRate))
     }
 
+    /// The slice of the modulation cycle a soundscape's envelope is rotated
+    /// by, so two layers do not pulse in lockstep. Four voices falling
+    /// together doubles the mechanical quality of the pulse; rotated, total
+    /// energy stays roughly where it was and the emphasis moves between them
+    /// instead. Pad sits opposite Rain and Drone between the two. Noise is
+    /// the sleep bed, which never plays with anything else, so it has no one
+    /// to be offset from.
+    ///
+    /// This is applied at the lookup, not to the phasor: every voice keeps
+    /// the same clock, so a rate change still lands identically on all four
+    /// and a session started later is in the same relationship.
+    private static func modulationOffset(_ soundscape: Soundscape) -> Float {
+        switch soundscape {
+        case .rain: 0
+        case .pad: 0.5
+        case .drone: 0.25
+        case .noise: 0
+        }
+    }
+
     /// Writes `frames` samples to `out`, replacing what was there.
     func render(frames: Int, into out: UnsafeMutablePointer<Float>) {
         let rateIncrement = Float(parameters.modulationRate.load(ordering: .relaxed)) / sampleRate
         depth.target = Float(parameters.modulationDepth.load(ordering: .relaxed))
+        shape.target = Float(parameters.modulationShape.load(ordering: .relaxed))
         master.target = Float(parameters.master.load(ordering: .relaxed))
         volume.target = Float(parameters.volume.load(ordering: .relaxed))
         // Each voice is trimmed to the same loudness, so a mix of n layers is
@@ -85,16 +117,18 @@ final class VoiceSynth: @unchecked Sendable {
         brightness += (target - brightness) * min(1, brightnessRate * Float(frames))
         // Half an octave each way at the ends of the range.
         let scale = exp2(0.5 * brightness)
+        let tonality = Tonality(rawValue: parameters.tonality.load(ordering: .relaxed)) ?? .open
         switch soundscape {
         case .rain: rain.prepare(lfo: lfo, brightness: scale)
-        case .pad: pad.prepare(lfo: lfo, brightness: scale)
-        case .drone: drone.prepare(lfo: lfo, brightness: scale)
+        case .pad: pad.prepare(lfo: lfo, brightness: scale, tonality: tonality)
+        case .drone: drone.prepare(lfo: lfo, brightness: scale, tonality: tonality)
         case .noise: noise.prepare(brightness: scale)
         }
 
         for i in 0..<frames {
             let gain = layerGain.next()
-            let pulse = depth.next() * (0.5 - 0.5 * SineTable.sin(cycles: modulation.next(rateIncrement) + 0.25))
+            let rotated = modulation.next(rateIncrement) + modulationOffset
+            let pulse = depth.next() * shape.next(phase: rotated < 1 ? rotated : rotated - 1)
             let trim = master.next() * volume.next()
             // A silent voice still advances its clocks, so it comes back in phase.
             guard gain > 0.0005 else {
@@ -112,6 +146,9 @@ final class VoiceSynth: @unchecked Sendable {
             let mid = bandHigh.process(s, bandHighCoefficient) - low
             out[i] = (s - mid * pulse) * trim
         }
+        // The leading soundscape is the one with no rotation, so the phase
+        // the haptics follow is the phase they would have followed before
+        // the layers were spread around the cycle.
         if leads { parameters.modulationPhase.store(Double(modulation.phase), ordering: .relaxed) }
     }
 }
@@ -120,19 +157,27 @@ final class VoiceSynth: @unchecked Sendable {
 /// watch has no environment node, so it plays this straight into the mixer.
 /// Owned by the render thread.
 final class BedSynth: @unchecked Sendable {
+    private let parameters: AudioParameters
     private let voices: [VoiceSynth]
     private var drift = Phasor()
     private let driftIncrement: Float
+    /// The watch's whole sense of space: see `Diffuser`.
+    private var diffuser: Diffuser
     /// Scratch for one voice's block. Sized once for the largest block the
     /// hardware asks for, so the render path never allocates.
     private var scratch = [Float](repeating: 0, count: 4096)
 
     init(parameters: AudioParameters, sampleRate: Double) {
+        self.parameters = parameters
         voices = Soundscape.allCases.map { VoiceSynth($0, parameters: parameters, sampleRate: sampleRate) }
         driftIncrement = 1 / (900 * Float(sampleRate))
+        diffuser = Diffuser(
+            sampleRate: sampleRate, blend: Float(parameters.space.load(ordering: .relaxed))
+        )
     }
 
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        diffuser.target = Float(parameters.space.load(ordering: .relaxed))
         let pan = 0.3 * sin(twoPi * drift.next(driftIncrement * Float(frames)))
         let panL = cos((pan + 1) * Float.pi / 4)
         let panR = sin((pan + 1) * Float.pi / 4)
@@ -146,8 +191,7 @@ final class BedSynth: @unchecked Sendable {
         }
         for i in 0..<frames {
             let out = left[i]
-            left[i] = out * panL
-            right[i] = out * panR
+            (left[i], right[i]) = diffuser.next(out * panL, out * panR)
         }
     }
 }
