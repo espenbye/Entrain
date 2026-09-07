@@ -7,3 +7,4 @@
 - Keep the audio path free of allocations and locks. The render thread reads
   control values through atomics only.
 - Commit messages follow Conventional Commits: `type(scope): description`.
+- By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
