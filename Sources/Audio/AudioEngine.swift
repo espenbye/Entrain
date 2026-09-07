@@ -14,6 +14,12 @@ protocol SessionAudio: AnyObject {
     /// Whether other apps keep playing underneath. On iOS a session that mixes
     /// gives up Now Playing, so this follows the Now Playing toggle.
     var mixesWithOthers: Bool { get set }
+    /// Whether the output is headphones. Over headphones the room is rendered
+    /// with HRTFs; over speakers it falls back to panning.
+    var headphones: Bool { get set }
+    /// Whether the listener turns with the head, so the room stays put.
+    /// Needs headphones that report motion; otherwise it is a no-op.
+    var headTracking: Bool { get set }
     func start() async throws
     func stop()
 }
@@ -26,12 +32,31 @@ final class AudioEngine: SessionAudio {
         didSet { Self.configureSession(mixesWithOthers: mixesWithOthers) }
     }
 
+    #if os(watchOS)
+    // The watch plays a stereo bed with no room, so these have nothing to drive.
+    var headphones = true
+    var headTracking = false
+    #else
+    var headphones = true {
+        didSet { applyRendering() }
+    }
+    var headTracking = false {
+        didSet { applyHeadTracking() }
+    }
+    #endif
+
     private let engine = AVAudioEngine()
-    private let bedNode: AVAudioSourceNode
     private let binauralNode: AVAudioSourceNode
-    #if !os(watchOS)
+    #if os(watchOS)
+    private let bedNode: AVAudioSourceNode
+    #else
+    /// One mono node per soundscape, in `Soundscape.allCases` order, so each
+    /// sits at its own place in the room.
+    private let voiceNodes: [AVAudioSourceNode]
+    private let environment = AVAudioEnvironmentNode()
     private let eq = AVAudioUnitEQ(numberOfBands: 1)
-    private let reverb = AVAudioUnitReverb()
+    private var orbit: Task<Void, Never>?
+    private var tracker: HeadTracker?
     #endif
 
     /// Set by `start()` and `stop()`. After an output device change the engine
@@ -50,6 +75,7 @@ final class AudioEngine: SessionAudio {
         let sampleRate = hardwareRate > 0 ? hardwareRate : 48000
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
 
+        #if os(watchOS)
         let bed = BedSynth(parameters: parameters, sampleRate: sampleRate)
         bedNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, audioBufferList in
             let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
@@ -60,6 +86,17 @@ final class AudioEngine: SessionAudio {
             )
             return noErr
         }
+        #else
+        let mono = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        voiceNodes = Soundscape.allCases.map { soundscape in
+            let voice = VoiceSynth(soundscape, parameters: parameters, sampleRate: sampleRate)
+            return AVAudioSourceNode(format: mono) { @Sendable _, _, frameCount, audioBufferList in
+                let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
+                voice.render(frames: Int(frameCount), into: buffers[0].mData!.assumingMemoryBound(to: Float.self))
+                return noErr
+            }
+        }
+        #endif
 
         let binaural = BinauralSynth(parameters: parameters, sampleRate: sampleRate)
         binauralNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, audioBufferList in
@@ -72,26 +109,38 @@ final class AudioEngine: SessionAudio {
             return noErr
         }
 
-        engine.attach(bedNode)
         engine.attach(binauralNode)
         #if os(watchOS)
-        // watchOS has no EQ or reverb units; the bed goes straight to the mixer.
+        // watchOS has no environment node; the bed goes straight to the mixer.
+        engine.attach(bedNode)
         engine.connect(bedNode, to: engine.mainMixerNode, format: format)
         #else
+        // The room. Sources within `reach` keep their loudness, so a position
+        // is a direction, not a level. A small room's reverb is part of the
+        // same model rather than a hall pasted on after the mix.
+        environment.distanceAttenuationParameters.referenceDistance = Room.reach
+        environment.distanceAttenuationParameters.maximumDistance = Room.reach * 4
+        environment.reverbParameters.enable = true
+        environment.reverbParameters.loadFactoryReverbPreset(.mediumRoom)
+        environment.reverbParameters.level = -14
+        engine.attach(environment)
+        for (node, soundscape) in zip(voiceNodes, Soundscape.allCases) {
+            engine.attach(node)
+            engine.connect(node, to: environment, format: mono)
+            node.position = Room.position(of: soundscape, at: 0)
+            node.reverbBlend = 0.25
+        }
+        applyRendering()
+
+        // A gentle high shelf takes the edge off rain and droplets.
         let shelf = eq.bands[0]
         shelf.filterType = .highShelf
         shelf.frequency = 6000
         shelf.gain = -4
         shelf.bypass = false
-
-        reverb.loadFactoryPreset(.mediumHall)
-        reverb.wetDryMix = 25
-
         engine.attach(eq)
-        engine.attach(reverb)
-        engine.connect(bedNode, to: eq, format: format)
-        engine.connect(eq, to: reverb, format: format)
-        engine.connect(reverb, to: engine.mainMixerNode, format: format)
+        engine.connect(environment, to: eq, format: format)
+        engine.connect(eq, to: engine.mainMixerNode, format: format)
         #endif
         engine.connect(binauralNode, to: engine.mainMixerNode, format: format)
         engine.prepare()
@@ -129,6 +178,10 @@ final class AudioEngine: SessionAudio {
         guard !engine.isRunning else { return }
         try await activateSession()
         try engine.start()
+        #if !os(watchOS)
+        startOrbit()
+        applyHeadTracking()
+        #endif
     }
 
     /// `stop()` rather than `pause()`: a paused engine keeps its output unit
@@ -136,6 +189,11 @@ final class AudioEngine: SessionAudio {
     /// coreaudiod's overload reports) for as long as it lives.
     func stop() {
         shouldRun = false
+        #if !os(watchOS)
+        orbit?.cancel()
+        orbit = nil
+        tracker?.stop()
+        #endif
         engine.stop()
         #if !os(macOS)
         // Hands the output back so the music underneath resumes.
@@ -159,6 +217,47 @@ final class AudioEngine: SessionAudio {
         shouldRun = false
         onInterruption?()
     }
+
+    // MARK: Room
+
+    #if !os(watchOS)
+    /// HRTF rendering needs headphones; anything else gets equal-power panning.
+    private func applyRendering() {
+        let algorithm: AVAudio3DMixingRenderingAlgorithm = headphones ? .HRTFHQ : .equalPowerPanning
+        for node in voiceNodes where node.renderingAlgorithm != algorithm {
+            node.renderingAlgorithm = algorithm
+        }
+    }
+
+    /// Moves the sources along their orbits. A step every two seconds is a
+    /// fraction of a degree at these speeds, well under what the ear resolves.
+    private func startOrbit() {
+        guard orbit == nil else { return }
+        let began = ContinuousClock.now
+        orbit = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let seconds = Double(began.duration(to: .now).components.seconds)
+                for (node, soundscape) in zip(voiceNodes, Soundscape.allCases) where soundscape != .noise {
+                    node.position = Room.position(of: soundscape, at: seconds)
+                }
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
+    }
+
+    private func applyHeadTracking() {
+        guard headTracking, shouldRun else {
+            tracker?.stop()
+            return
+        }
+        let tracker = self.tracker ?? HeadTracker { [weak self] orientation in
+            self?.environment.listenerAngularOrientation = orientation
+        }
+        self.tracker = tracker
+        tracker.start()
+    }
+    #endif
 
     // MARK: Audio session
 

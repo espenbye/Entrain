@@ -9,6 +9,8 @@ struct SessionTests {
         var onInterruption: (() -> Void)?
         var onInterruptionEnded: ((Bool) async -> Void)?
         var mixesWithOthers = false
+        var headphones = true
+        var headTracking = false
         var starts = 0
         var stops = 0
         var failsToStart = false
@@ -447,5 +449,33 @@ struct SessionTests {
         #expect(paused?.pausedAt == now)
         #expect(paused?.deadline == deadline)
         #expect(paused?.isPlaying == false)
+    }
+}
+
+@MainActor
+extension SessionTests {
+    /// Head tracking reaches the engine only over headphones, in a mode
+    /// that allows it, and persists across launches.
+    @Test func headTrackingIsGatedByModeAndRoute() async {
+        let session = makeSession()
+        session.headphones = true
+        session.mode = .meditate
+        session.headTracking = true
+        await session.play()
+        #expect(audio.headTracking)
+        session.mode = .sleep
+        #expect(!audio.headTracking)
+        session.mode = .windDown
+        #expect(!audio.headTracking)
+        session.mode = .focus
+        #expect(audio.headTracking)
+        session.headphones = false
+        #expect(!audio.headTracking)
+        #expect(!audio.headphones)
+        session.headphones = true
+        session.headTracking = false
+        #expect(!audio.headTracking)
+        session.headTracking = true
+        #expect(makeSession().headTracking)
     }
 }

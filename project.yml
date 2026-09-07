@@ -73,6 +73,7 @@ targets:
         CFBundleDisplayName: Entrain
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
+        NSMotionUsageDescription: Turns the room with your head when Head Tracking is on.
         CFBundleURLTypes:
           - CFBundleURLName: no.espenbye.entrain
             CFBundleURLSchemes: [entrain]
@@ -136,6 +137,7 @@ targets:
         UIBackgroundModes: [audio]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
         NSAlarmKitUsageDescription: Rings the Wake alarm at the time you choose, even on silent.
+        NSMotionUsageDescription: Turns the room with your head when Head Tracking is on.
         NSSupportsLiveActivities: true
         # The backdrop's top colour, so launch does not flash white before the dark UI.
         UILaunchScreen:

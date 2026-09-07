@@ -96,6 +96,10 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Whether head tracking may run. Not in bed: rolling over would swing
+    /// the room, and the sensors cost power over an eight-hour session.
+    var tracksHead: Bool { !isSleep && self != .windDown }
+
     /// Whether a timed session tapers over its last minutes rather than
     /// stopping. Wind Down tapers like the sleep modes: its timer ends in bed.
     var tapers: Bool { isSleep || self == .windDown }
