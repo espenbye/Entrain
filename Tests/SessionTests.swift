@@ -281,11 +281,11 @@ struct SessionTests {
 
     @Test func timedRampsFollowTheTimer() {
         // Wake ramps over the whole timer.
-        #expect(Mode.wake.rampSeconds(for: .sixty) == 60 * 60)
+        #expect(Mode.wake.rampSeconds(for: .sixty) == 3600.0)
         #expect(Mode.wake.rate(elapsed: 30 * 60, length: .sixty) == 9)
         #expect(Mode.wake.rate(elapsed: 60 * 60, length: .sixty) == 16)
         // Wind Down reaches 2 Hz when its five-minute taper begins.
-        #expect(Mode.windDown.rampSeconds(for: .fifteen) == 10 * 60)
+        #expect(Mode.windDown.rampSeconds(for: .fifteen) == 600.0)
         #expect(Mode.windDown.rate(elapsed: 5 * 60, length: .fifteen) == 6)
         #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .fifteen) == 2)
         #expect(Mode.windDown.rate(elapsed: 10 * 60, length: .eightHours) > 9)
