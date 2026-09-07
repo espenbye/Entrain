@@ -45,10 +45,10 @@ struct MenuBarLabel: View {
     }
 }
 
-/// Transport, mode and settings as menu items, for the menu bar menu.
+/// Transport, mode and timer as menu items, for the menu bar menu. The
+/// rest is a click away in the window or Settings.
 struct PlayerControls: View {
     @Bindable var session: Session
-    @Bindable private var daylight = Daylight.shared
 
     var body: some View {
         TransportSection(
@@ -59,68 +59,9 @@ struct PlayerControls: View {
             toggle: session.toggle
         )
         ModeSection(selection: $session.mode)
-        SettingsSection(
-            layers: session.layers,
-            setLayer: session.setLayer,
-            intensity: $session.intensity,
-            length: $session.length,
-            binaural: $session.binaural,
-            headTracking: session.headTrackingAvailable ? $session.headTracking : nil,
-            daylight: $daylight.followsLocation,
-            sleep: session.mode.isSleep
-        )
-        VolumeSection(volume: $session.volume)
-    }
-}
-
-struct SettingsSection: View {
-    let layers: Set<Soundscape>
-    let setLayer: (Soundscape, Bool) -> Void
-    @Binding var intensity: Intensity
-    @Binding var length: SessionLength
-    @Binding var binaural: Bool
-    /// Nil where no headphones can report motion.
-    let headTracking: Binding<Bool>?
-    /// Whether sunrise and sunset come from the device's location.
-    @Binding var daylight: Bool
-    /// Sleep modes play a fixed bed; sound and intensity have nothing to set.
-    let sleep: Bool
-
-    var body: some View {
         Section {
-            if !sleep {
-                Menu("Sound") { LayerToggles(layers: layers, setLayer: setLayer) }
-                Picker("Intensity", selection: $intensity) {
-                    ForEach(Intensity.allCases) { Text($0.title).tag($0) }
-                }
-            }
-            Picker("Timer", selection: $length) {
+            Picker("Timer", selection: $session.length) {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
-            }
-            Toggle("Binaural Beats", isOn: $binaural)
-            if let headTracking {
-                Toggle("Head Tracking", isOn: headTracking)
-            }
-            Toggle("Daylight", isOn: $daylight)
-        }
-    }
-}
-
-/// Menus cannot host a slider, so volume is a submenu of steps.
-struct VolumeSection: View {
-    @Binding var volume: Double
-
-    private static let steps: [Double] = [0.25, 0.5, 0.75, 1]
-
-    var body: some View {
-        Section {
-            Picker("Volume", selection: Binding(
-                get: { Self.steps.min { abs($0 - volume) < abs($1 - volume) } ?? 1 },
-                set: { volume = $0 }
-            )) {
-                ForEach(Self.steps, id: \.self) { step in
-                    Text(step, format: .percent).tag(step)
-                }
             }
         }
     }
