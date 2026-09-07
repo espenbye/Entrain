@@ -29,7 +29,8 @@ Wind Down and Wake ramp their rate linearly over play time, then hold; pausing s
 
 The two sleep modes play a fixed brown noise bed, ignore intensity, and taper over the last five minutes of a timed session instead of stopping. Sleep is unmodulated; its 2 Hz rate only matters if binaural is on. Deep Sleep swells the bed once a second, the slow-oscillation rate that rhythmic sound studies use to deepen slow-wave sleep. When the Mac goes to sleep the session pauses, so it does not resume on wake.
 
-Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, from `entrain://` URLs, and optionally from a system-wide ⌃⌥E shortcut. The small widget shows the mode, sound and countdown with a play/pause button; the medium one adds a button per mode. Control Center offers a toggle per mode, lit while that mode plays. The media keys work through Now Playing, which shows the timer's progress; it can be turned off so the media keys stay with the music Entrain is sitting under. The app can show in the Dock and launch at login; both are off by default. The UI is in English and Norwegian.
+Settings persist between launches. Play/pause works from the menu bar menu, from Shortcuts and Siri ("Start Focus in Entrain", "Stop Entrain"), from a desktop or Notification Center widget, from `entrain://` URLs, and optionally from a system-wide ⌃⌥E shortcut. Shortcuts can also set the timer, intensity, volume and binaural beats, and ask for the current state ("What is Entrain playing"): mode, whether it is playing, the sound, the seconds left, intensity and binaural, so an automation can branch on them.
+
 
 For Raycast, Alfred and shell scripts, the app answers `entrain://` URLs on Mac, iPhone and iPad, using the same mode and length values as the intents:
 

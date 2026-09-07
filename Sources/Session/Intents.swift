@@ -150,6 +150,12 @@ struct EntrainShortcuts: AppShortcutsProvider {
             shortTitle: "Play or Pause",
             systemImageName: "playpause.fill"
         )
+        AppShortcut(
+            intent: GetStateIntent(),
+            phrases: ["What is \(.applicationName) playing"],
+            shortTitle: "What's Playing",
+            systemImageName: "info.circle"
+        )
     }
 }
 #endif
@@ -167,6 +173,15 @@ extension Mode: AppEnum {
         .deepSleep: "Deep Sleep",
         .windDown: "Wind Down",
         .wake: "Wake",
+    ]
+}
+
+extension Intensity: AppEnum {
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Intensity")
+    static let caseDisplayRepresentations: [Intensity: DisplayRepresentation] = [
+        .low: "Low",
+        .medium: "Medium",
+        .high: "High",
     ]
 }
 

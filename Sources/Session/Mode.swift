@@ -120,7 +120,7 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 }
 
-enum Intensity: String, CaseIterable, Identifiable {
+enum Intensity: String, CaseIterable, Identifiable, Sendable {
     case low, medium, high
 
     var id: Self { self }

@@ -68,6 +68,16 @@
           }
         }
       }
+    },
+    "What is ${applicationName} playing" : {
+      "localizations" : {
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hva spiller ${applicationName}"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
