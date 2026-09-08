@@ -338,9 +338,9 @@ private struct SessionCard: View {
                     Picker("Intensity", selection: $session.intensity) {
                         ForEach(Intensity.allCases) { Text($0.title).tag($0) }
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
                     .labelsHidden()
-                    .frame(maxWidth: 200)
+                    .tint(.primary)
                 }
                 Divider()
             }
