@@ -175,7 +175,7 @@ extension Mode: AppEnum {
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Mode")
     static let caseDisplayRepresentations: [Mode: DisplayRepresentation] = [
         .focus: "Focus",
-        .gamma: "Gamma",
+        .gamma: "Recall",
         .relax: "Relax",
         .meditate: "Meditate",
         .sleep: "Sleep",
@@ -191,6 +191,7 @@ extension Intensity: AppEnum {
         .low: "Low",
         .medium: "Medium",
         .high: "High",
+        .strong: "Strong",
     ]
 }
 

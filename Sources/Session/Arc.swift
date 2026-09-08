@@ -143,11 +143,59 @@ extension Mode {
         return elapsed < (arc ?? self.arc).settles
     }
 
+    /// The modulation rate as the mode plays it, for the person who wants
+    /// the number: one figure for a steady mode, the span for a ramping one.
+    var frequency: String {
+        let first = rate(elapsed: 0, length: .endless)
+        let last = arc.rate.value(at: arc.rate.end)
+        return first == last
+            ? String(localized: "\(Self.hertz(first)) Hz")
+            : String(localized: "\(Self.hertz(first)) to \(Self.hertz(last)) Hz")
+    }
+
+    /// The deepest the mode ever modulates, before intensity, as a percentage.
+    var depthRange: String {
+        let deepest = stride(from: 0.0, through: 3 * 3600, by: 60).map { depth(elapsed: $0) }.max() ?? 0
+        return deepest.formatted(.percent.precision(.fractionLength(0)))
+    }
+
+    private static func hertz(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...1)))
+    }
+
     /// The signature that opens the modes that end in bed. Always the same
     /// sound, and never heard anywhere else, so that after a few nights it
     /// means bedtime by itself: a cue that reliably precedes sleep comes to
     /// bring it on, the way a fixed bedtime routine does.
     var cue: Cue? { tapers ? .bedtime : nil }
+}
+
+/// The rate handover when the program moves the session from one mode to
+/// the next on its own. It lives beside the ramps rather than in `Program`
+/// because it is the same kind of thing they are: a modulation rate walked
+/// linearly in hertz over play time, for the same reason. Wind Down walks 10
+/// to 2 Hz over twenty minutes and nobody hears it move; the same eight
+/// hertz stepped in one buffer is unmistakable, and a program the listener
+/// catches switching is a program they turn off. Everything else about a
+/// mode change is already gradual — the room cross-fades, the key glides,
+/// the audio never stops — so the rate was the one seam left.
+///
+/// Three minutes is long enough that the walk is under a hertz a minute for
+/// every pair of modes the day puts next to each other, and short enough to
+/// be over long before the incoming mode's own arc has gone anywhere.
+struct RateGlide: Sendable {
+    static let seconds: Double = 3 * 60
+    /// The rate the outgoing mode was playing at the moment it handed over.
+    let from: Double
+
+    /// The rate to play `elapsed` seconds into the new mode, on its way to
+    /// where that mode's own arc wants to be.
+    func rate(to target: Double, elapsed: Double) -> Double {
+        let blend = min(1, max(0, elapsed / Self.seconds))
+        return from + (target - from) * blend
+    }
+
+    func isOver(elapsed: Double) -> Bool { elapsed >= Self.seconds }
 }
 
 /// One point on a mode's arc, in seconds of play. A keyframe names only the

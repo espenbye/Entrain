@@ -10,13 +10,27 @@ import WidgetKit
 final class Session {
     static let shared = Session(
         defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default,
-        inputs: [Circadian(daylight: Daylight.shared)], health: HealthSignals.shared
+        inputs: [Circadian(daylight: Daylight.shared)], health: HealthSignals.shared,
+        schedule: { date in
+            Program.at(
+                date, day: Daylight.shared.day(on:),
+                sleep: HealthSignals.shared.sleep, vitals: HealthSignals.shared.vitals
+            )
+        }
     ) {
         AudioEngine(parameters: $0)
     }
 
     var mode: Mode {
         didSet {
+            // A mode picked by hand — here, in Shortcuts, from a widget, from
+            // a Focus filter or on another device — ends the program. The
+            // other reading, an override the program quietly took back at the
+            // next boundary, is invisible state: the listener would have no
+            // way to tell how long their choice was going to last. A tap
+            // turns the program off, the switch that turns it back on is in
+            // the same card, and there is only ever one thing in charge.
+            if program && !advancing { program = false }
             endMindful()
             played = 0
             playStart = isPlaying ? .now : nil
@@ -34,6 +48,19 @@ final class Session {
             apply()
         }
     }
+    /// Whether the session follows the day on its own: see `Program`. Off by
+    /// default, synced like the mode, and only ever awake while something
+    /// plays — a paused session runs no clock of its own, here as everywhere.
+    var program: Bool {
+        didSet {
+            program ? startProgram() : stopProgram()
+            save()
+        }
+    }
+    /// What the program is playing and what it has lined up next, for the
+    /// player to show. Nil whenever the program is not running.
+    private(set) var plan: Program.Plan?
+
     /// The breathing exercise over Meditate, and how long it runs. Synced
     /// like the mode: which exercise you do is a preference, not a device.
     var breathing: BreathingPattern {
@@ -53,6 +80,19 @@ final class Session {
     /// Counts cues, so the render thread sees each one as a new value.
     private var cues = 0
     var intensity: Intensity { didSet { apply() } }
+    /// Whether the one first-launch question — how much background sound
+    /// this listener wants — is still to be put. Skipping answers it: it is
+    /// asked once, not until answered, and Settings holds the same setting
+    /// afterwards.
+    private(set) var asksIntensity: Bool
+
+    /// The answer, or nil for a skip, which leaves the default alone.
+    func answerIntensity(_ answer: Intensity?) {
+        asksIntensity = false
+        store(true, forKey: "intensity.asked")
+        if let answer { intensity = answer }
+    }
+
     var binaural: Bool { didSet { apply() } }
     /// Whether the beat is felt as well as heard. On by default on the
     /// devices that can: the phone is in the bed and the watch is on the
@@ -159,6 +199,18 @@ final class Session {
     private var widgetState: WidgetState?
     /// The current mode's arc, compiled around this listener's own onset.
     private var arc = Mode.focus.arc
+    /// The day the program walks, and the clock it reads. Injected rather
+    /// than reached for, so tests can drive a fixed day and the session does
+    /// not have to know about Daylight or Health to schedule itself.
+    private let schedule: (@MainActor (Date) -> Program.Plan)?
+    private let clock: @MainActor () -> Date
+    private var programTask: Task<Void, Never>?
+    /// Set while the program itself moves the mode, so the setter above can
+    /// tell its own change from a tap.
+    private var advancing = false
+    /// The rate handover left over from the last program transition, if one
+    /// is still under way.
+    private var glide: RateGlide?
     #if os(iOS)
     private let activity = SessionLiveActivity()
     #endif
@@ -173,6 +225,8 @@ final class Session {
         cloud: (any SettingsStore)? = nil,
         inputs: [any AdaptiveInput] = [],
         health: HealthSignals? = nil,
+        schedule: (@MainActor (Date) -> Program.Plan)? = nil,
+        clock: @escaping @MainActor () -> Date = { .now },
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
         self.defaults = defaults
@@ -181,6 +235,8 @@ final class Session {
         self.health = health
         self.cloud = cloud
         self.inputs = inputs
+        self.schedule = schedule
+        self.clock = clock
         self.makeEngine = makeEngine
         widgetState = WidgetState.load(from: widgetDirectory)
         mode = Mode(rawValue: defaults.string(forKey: "mode") ?? "") ?? .focus
@@ -194,6 +250,8 @@ final class Session {
         breathing = BreathingPattern(rawValue: defaults.string(forKey: "breathing") ?? "") ?? .none
         breathingLength = BreathingLength(rawValue: defaults.integer(forKey: "breathingLength")) ?? .session
         haptics = defaults.object(forKey: "haptics") as? Bool ?? true
+        program = defaults.bool(forKey: "program")
+        asksIntensity = !defaults.bool(forKey: "intensity.asked")
         hapticPlayer = HapticPlayer(parameters: parameters)
         #if canImport(CoreMotion) && !os(watchOS)
         headTrackingAvailable = HeadTracker.isAvailable
@@ -316,6 +374,7 @@ final class Session {
         compileArc()
         applyArc()
         playCue()
+        startProgram()
         broadcast()
     }
 
@@ -330,6 +389,7 @@ final class Session {
         breath.stop()
         hapticPlayer.stop()
         inputs.forEach { $0.stop() }
+        stopProgram()
         stopTimer()
         applyMaster()
         broadcast()
@@ -490,7 +550,72 @@ final class Session {
     }
 
     private func applyRate() {
-        parameters.modulationRate.store(mode.rate(elapsed: playTime, length: length), ordering: .relaxed)
+        let elapsed = playTime
+        var rate = mode.rate(elapsed: elapsed, length: length)
+        if let glide {
+            if glide.isOver(elapsed: elapsed) {
+                self.glide = nil
+            } else {
+                rate = glide.rate(to: rate, elapsed: elapsed)
+            }
+        }
+        parameters.modulationRate.store(rate, ordering: .relaxed)
+    }
+
+    // MARK: Program
+
+    /// Walks the day: ask what should be playing, play it, then sleep until
+    /// the next boundary rather than polling. One task, no sensors, and
+    /// nothing at all while the session is paused.
+    private func startProgram() {
+        stopProgram()
+        guard program, isPlaying, let schedule else { return }
+        // The first step is taken here and not in the task: switching the
+        // program on should move the session now, not one hop later.
+        let first = step(schedule)
+        programTask = Task { [weak self] in
+            var wait = first
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(wait))
+                guard !Task.isCancelled, let self else { return }
+                wait = step(schedule)
+            }
+        }
+    }
+
+    /// One turn of the program: play what the day asks for, and say how many
+    /// seconds until it asks for something else.
+    private func step(_ schedule: @MainActor (Date) -> Program.Plan) -> Double {
+        let plan = schedule(clock())
+        self.plan = plan
+        advance(to: plan.mode)
+        return plan.at.map { max(1, $0.timeIntervalSince(clock())) } ?? Program.step
+    }
+
+    private func stopProgram() {
+        programTask?.cancel()
+        programTask = nil
+        plan = nil
+    }
+
+    /// Hands the session to the next mode without the listener catching it:
+    /// the mode change cross-fades the room and glides the key as it always
+    /// has, and the rate walks over from where the outgoing mode left it
+    /// rather than stepping. Audio never stops.
+    private func advance(to next: Mode) {
+        guard next != mode else { return }
+        if isPlaying {
+            glide = RateGlide(from: parameters.modulationRate.load(ordering: .relaxed))
+        }
+        advancing = true
+        mode = next
+        advancing = false
+    }
+
+    /// Whether anything is still moving on its own: the mode's own arc, or a
+    /// program transition still walking the rate into place.
+    private var evolving: Bool {
+        glide != nil || mode.evolves(at: playTime, length: length, in: arc)
     }
 
     private func save() {
@@ -502,6 +627,7 @@ final class Session {
         store(breathing.rawValue, forKey: "breathing")
         store(breathingLength.rawValue, forKey: "breathingLength")
         store(haptics, forKey: "haptics")
+        store(program, forKey: "program")
         // Now Playing means something else on each platform, so it stays local.
         defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
@@ -519,7 +645,7 @@ final class Session {
         cloud.set(value, forKey: key)
     }
 
-    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength", "haptics"]
+    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength", "haptics", "program", "intensity.asked"]
         + Mode.allCases.map { layersKey($0) }
 
     nonisolated private static func layersKey(_ mode: Mode) -> String { "layers.\(mode.rawValue)" }
@@ -546,6 +672,14 @@ final class Session {
                 if let value = cloud.object(forKey: key) as? Bool, value != binaural { binaural = value }
             case "haptics":
                 if let value = cloud.object(forKey: key) as? Bool, value != haptics { haptics = value }
+            case "program":
+                if let value = cloud.object(forKey: key) as? Bool, value != program { program = value }
+            case "intensity.asked":
+                // Answered on another device: this one does not ask again.
+                if cloud.object(forKey: key) as? Bool == true, asksIntensity {
+                    asksIntensity = false
+                    defaults.set(true, forKey: key)
+                }
             case "length":
                 if let value = (cloud.object(forKey: key) as? Int).flatMap(SessionLength.init), value != length { length = value }
             case "volume":
@@ -626,7 +760,7 @@ final class Session {
         tickTask?.cancel()
         tickTask = nil
         let deadline = remaining.map { ContinuousClock.now + .seconds($0) }
-        guard deadline != nil || mode.evolves(at: playTime, length: length, in: arc) else { return }
+        guard deadline != nil || evolving else { return }
         self.deadline = remaining.map { Date.now.addingTimeInterval(Double($0)) }
         tickTask = Task {
             while !Task.isCancelled {
@@ -634,7 +768,7 @@ final class Session {
                 if let left { remaining = left }
                 applyArc()
                 guard let deadline, let left else {
-                    if !mode.evolves(at: playTime, length: length, in: arc) {
+                    if !evolving {
                         tickTask = nil
                         return
                     }

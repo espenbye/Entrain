@@ -84,11 +84,19 @@ struct EnvelopeTests {
     /// The rate a mode opens on, before any ramp.
     private static func start(of mode: Mode) -> Double { mode.rate(elapsed: 0, length: .endless) }
 
-    /// The deepest a mode ever modulates. The sleep beds move over the night,
-    /// and roughness grows with depth, so the ceiling has to be checked where
-    /// each mode is at its worst rather than where it starts.
-    private static func deepest(_ mode: Mode) -> Double {
-        stride(from: 0.0, through: 3 * 3600, by: 60).map { mode.depth(elapsed: $0) }.max() ?? 0
+    /// The deepest a mode ever modulates, at the strongest intensity it can
+    /// be played at. The sleep beds move over the night and ignore intensity;
+    /// everything else is scaled by it, and the daylight input only ever
+    /// scales down. Roughness grows with depth, so the ceiling has to be
+    /// checked where each mode is at its worst, not where it starts — which
+    /// is what makes `noModeIsRougherThanGammaAlreadyWas` the test a new
+    /// intensity multiplier has to pass. Raise `Intensity.strong` and the
+    /// mode that gives first is Focus: its deep 16 Hz pulse puts the most
+    /// energy in the roughness band of anything that is not already Gamma.
+    static func deepest(_ mode: Mode) -> Double {
+        let arc = stride(from: 0.0, through: 3 * 3600, by: 60).map { mode.depth(elapsed: $0) }.max() ?? 0
+        let scale = mode.isSleep ? 1 : Intensity.allCases.map(\.multiplier).max()!
+        return min(0.9, arc * scale)
     }
 }
 
