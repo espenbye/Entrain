@@ -39,13 +39,14 @@ extension Session {
 }
 
 struct ModeSection: View {
-    @Binding var selection: Mode
+    @Bindable var session: Session
 
     var body: some View {
         Section {
-            Picker("Mode", selection: $selection) {
+            Picker("Mode", selection: $session.choice) {
+                Label("Follow the Day", systemImage: ModeChoice.symbol).tag(ModeChoice.day)
                 ForEach(Mode.allCases) { mode in
-                    Label(mode.title, systemImage: mode.symbol).tag(mode)
+                    Label(mode.title, systemImage: mode.symbol).tag(ModeChoice.mode(mode))
                 }
             }
             .pickerStyle(.inline)

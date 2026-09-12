@@ -120,6 +120,16 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 }
 
+/// What the listener picks in a mode list: a mode, or the day itself. The
+/// program is not a `Mode` — it plays one of them — but it sits in the same
+/// list because it answers the same question, what should be playing.
+enum ModeChoice: Hashable, Sendable {
+    case day
+    case mode(Mode)
+
+    static let symbol = "sun.horizon"
+}
+
 /// The three shelves the modes sit on in the player. Wake is on the sleep
 /// shelf as the bookend to Wind Down.
 enum Purpose: CaseIterable, Identifiable, Sendable {
