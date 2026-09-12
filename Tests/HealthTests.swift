@@ -281,9 +281,9 @@ struct HealthTests {
     @Test func onsetIsClamped() {
         var nights = Self.fortnight(bedtime: (23, 0), wake: (7, 0))
         for index in nights.indices { nights[index].latency = 2 * 3600 }
-        #expect(SleepSignature.from(nights, calendar: Self.calendar)!.onset == 45 * 60)
+        #expect(SleepSignature.from(nights, calendar: Self.calendar)!.onset == 45.0 * 60)
         for index in nights.indices { nights[index].latency = 30 }
-        #expect(SleepSignature.from(nights, calendar: Self.calendar)!.onset == 5 * 60)
+        #expect(SleepSignature.from(nights, calendar: Self.calendar)!.onset == 5.0 * 60)
     }
 
     /// A night spent awake in bed for hours should not double the onset for

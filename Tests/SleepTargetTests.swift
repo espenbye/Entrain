@@ -18,8 +18,8 @@ struct SleepTargetTests {
     }
 
     @Test func theOfferedLengthsStayInsideTheAdultRange() {
-        #expect(SleepTarget.lengths.first == 6 * 3600)
-        #expect(SleepTarget.lengths.last == 10 * 3600)
+        #expect(SleepTarget.lengths.first == 6.0 * 3600)
+        #expect(SleepTarget.lengths.last == 10.0 * 3600)
     }
 
     @Test func offTheTargetIsNotConsulted() throws {
