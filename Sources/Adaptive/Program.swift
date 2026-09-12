@@ -42,10 +42,10 @@ struct Program {
 
     static func at(
         _ date: Date, day: (Date) -> SolarDay, sleep: SleepSignature? = nil,
-        vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
+        target: SleepTarget? = nil, vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
     ) -> Plan {
         func suggested(_ when: Date) -> Mode {
-            Suggestion.at(when, day: day, sleep: sleep, vitals: vitals, calendar: calendar).mode
+            Suggestion.at(when, day: day, sleep: sleep, target: target, vitals: vitals, calendar: calendar).mode
         }
         let now = suggested(date)
         var plan = Plan(mode: mode(for: now))

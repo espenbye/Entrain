@@ -11,10 +11,11 @@ final class Session {
     static let shared = Session(
         defaults: .standard, mindful: health, cloud: NSUbiquitousKeyValueStore.default,
         inputs: [Circadian(daylight: Daylight.shared)], health: HealthSignals.shared,
-        schedule: { date in
+        schedule: { date, target in
             Program.at(
                 date, day: Daylight.shared.day(on:),
-                sleep: HealthSignals.shared.sleep, vitals: HealthSignals.shared.vitals
+                sleep: HealthSignals.shared.sleep, target: target,
+                vitals: HealthSignals.shared.vitals
             )
         }
     ) {
@@ -122,6 +123,20 @@ final class Session {
             save()
         }
     }
+    /// The night this person is aiming at, and whether they are aiming at
+    /// one at all. It changes nothing about what a mode sounds like; it
+    /// moves where the night's two edges sit, which is what every
+    /// suggestion, the program and the day ring hang off.
+    var sleepTarget: SleepTarget {
+        didSet {
+            guard sleepTarget != oldValue else { return }
+            save()
+            // The day is drawn from these edges, so the widget is a day out
+            // of date until it is told.
+            DayPublisher.shared.publish()
+        }
+    }
+
     /// 0...1, on top of the system output level.
     var volume: Double {
         didSet {
@@ -202,7 +217,7 @@ final class Session {
     /// The day the program walks, and the clock it reads. Injected rather
     /// than reached for, so tests can drive a fixed day and the session does
     /// not have to know about Daylight or Health to schedule itself.
-    private let schedule: (@MainActor (Date) -> Program.Plan)?
+    private let schedule: (@MainActor (Date, SleepTarget) -> Program.Plan)?
     private let clock: @MainActor () -> Date
     private var programTask: Task<Void, Never>?
     /// Set while the program itself moves the mode, so the setter above can
@@ -225,7 +240,7 @@ final class Session {
         cloud: (any SettingsStore)? = nil,
         inputs: [any AdaptiveInput] = [],
         health: HealthSignals? = nil,
-        schedule: (@MainActor (Date) -> Program.Plan)? = nil,
+        schedule: (@MainActor (Date, SleepTarget) -> Program.Plan)? = nil,
         clock: @escaping @MainActor () -> Date = { .now },
         makeEngine: @escaping @MainActor (AudioParameters) -> any SessionAudio
     ) {
@@ -251,6 +266,11 @@ final class Session {
         breathingLength = BreathingLength(rawValue: defaults.integer(forKey: "breathingLength")) ?? .session
         haptics = defaults.object(forKey: "haptics") as? Bool ?? true
         program = defaults.bool(forKey: "program")
+        sleepTarget = SleepTarget(
+            wake: defaults.object(forKey: "sleep.wake") as? Double ?? SleepTarget.default.wake,
+            hours: defaults.object(forKey: "sleep.hours") as? Double ?? SleepTarget.default.hours,
+            isOn: defaults.bool(forKey: "sleep.target")
+        )
         asksIntensity = !defaults.bool(forKey: "intensity.asked")
         hapticPlayer = HapticPlayer(parameters: parameters)
         #if canImport(CoreMotion) && !os(watchOS)
@@ -585,8 +605,8 @@ final class Session {
 
     /// One turn of the program: play what the day asks for, and say how many
     /// seconds until it asks for something else.
-    private func step(_ schedule: @MainActor (Date) -> Program.Plan) -> Double {
-        let plan = schedule(clock())
+    private func step(_ schedule: @MainActor (Date, SleepTarget) -> Program.Plan) -> Double {
+        let plan = schedule(clock(), sleepTarget)
         self.plan = plan
         advance(to: plan.mode)
         return plan.at.map { max(1, $0.timeIntervalSince(clock())) } ?? Program.step
@@ -628,6 +648,9 @@ final class Session {
         store(breathingLength.rawValue, forKey: "breathingLength")
         store(haptics, forKey: "haptics")
         store(program, forKey: "program")
+        store(sleepTarget.isOn, forKey: "sleep.target")
+        store(sleepTarget.wake, forKey: "sleep.wake")
+        store(sleepTarget.hours, forKey: "sleep.hours")
         // Now Playing means something else on each platform, so it stays local.
         defaults.set(nowPlaying, forKey: "nowPlaying")
         for (mode, layers) in layersByMode {
@@ -645,7 +668,7 @@ final class Session {
         cloud.set(value, forKey: key)
     }
 
-    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength", "haptics", "program", "intensity.asked"]
+    private static let syncedKeys = ["mode", "intensity", "binaural", "length", "volume", "breathing", "breathingLength", "haptics", "program", "intensity.asked", "sleep.target", "sleep.wake", "sleep.hours"]
         + Mode.allCases.map { layersKey($0) }
 
     nonisolated private static func layersKey(_ mode: Mode) -> String { "layers.\(mode.rawValue)" }
@@ -674,6 +697,12 @@ final class Session {
                 if let value = cloud.object(forKey: key) as? Bool, value != haptics { haptics = value }
             case "program":
                 if let value = cloud.object(forKey: key) as? Bool, value != program { program = value }
+            case "sleep.target":
+                if let value = cloud.object(forKey: key) as? Bool, value != sleepTarget.isOn { sleepTarget.isOn = value }
+            case "sleep.wake":
+                if let value = cloud.object(forKey: key) as? Double, value != sleepTarget.wake { sleepTarget.wake = value }
+            case "sleep.hours":
+                if let value = cloud.object(forKey: key) as? Double, value != sleepTarget.hours { sleepTarget.hours = value }
             case "intensity.asked":
                 // Answered on another device: this one does not ask again.
                 if cloud.object(forKey: key) as? Bool == true, asksIntensity {

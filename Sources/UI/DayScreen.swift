@@ -48,7 +48,8 @@ struct DayScreen: View {
     private var content: some View {
         TimelineView(.everyMinute) { context in
             let day = CircadianDay.on(
-                context.date, day: daylight.day(on:), sleep: health.sleep, vitals: health.vitals
+                context.date, day: daylight.day(on:), sleep: health.sleep,
+                target: session.sleepTarget, vitals: health.vitals
             )
             ScrollView {
                 VStack(spacing: 20) {
@@ -72,6 +73,7 @@ struct DayScreen: View {
                         NowCard(span: span, session: session)
                     }
                     PhaseList(day: day, now: context.date, session: session)
+                    TargetCard(target: session.sleepTarget, measured: health.sleep)
                     RhythmCard(sleep: health.sleep, daylight: health.vitals[.timeInDaylight])
                     Text(footer(day))
                         .font(.footnote)
@@ -201,6 +203,85 @@ private struct PhaseList: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 4)
         .glassEffect(.regular, in: .rect(cornerRadius: 18))
+    }
+}
+
+/// The night being aimed at, tonight's step toward it, and the night
+/// actually being had. Three rows, because the distance between them is the
+/// whole point: a target you cannot see yourself missing is a wish.
+///
+/// It is not a streak and not a score. Nothing here counts nights kept or
+/// congratulates anyone; it reports the gap and stops, which is the same
+/// thing `BodySignal` does with a resting heart rate.
+private struct TargetCard: View {
+    let target: SleepTarget
+    let measured: SleepSignature?
+
+    private var tonight: SleepEdges? { SleepEdges.tonight(target: target, measured: measured) }
+
+    var body: some View {
+        if target.isOn {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Sleep Target")
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
+                    .foregroundStyle(.secondary)
+                row("Aiming For", Self.night(target.bedtime, target.wake), Self.length(target.hours))
+                if let tonight, !tonight.hasArrived {
+                    row("Tonight", Self.night(tonight.bedtime, tonight.wake), nil)
+                    Text("Twenty minutes earlier than your last fortnight. A body clock will not jump, so Entrain walks your evenings toward the target rather than asking for it tonight.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let measured, measured.isSettled {
+                    Text("You are sleeping the night you are aiming for.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                if let measured, measured.isSettled {
+                    row("You Usually Sleep", Self.night(measured.bedtime, measured.wake), nil)
+                } else {
+                    Text("Entrain aims straight at the target until Health has enough settled nights to walk from.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassEffect(.regular, in: .rect(cornerRadius: 18))
+        }
+    }
+
+    private func row(_ title: LocalizedStringResource, _ value: String, _ trailing: String?) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(.subheadline)
+            Spacer(minLength: 8)
+            if let trailing {
+                Text(trailing)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text(value)
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+        }
+    }
+
+    private static func night(_ bedtime: TimeInterval, _ wake: TimeInterval) -> String {
+        "\(clock(bedtime))–\(clock(wake))"
+    }
+
+    private static func clock(_ seconds: TimeInterval) -> String {
+        Calendar.current.startOfDay(for: .now)
+            .addingTimeInterval(seconds)
+            .formatted(date: .omitted, time: .shortened)
+    }
+
+    private static func length(_ seconds: TimeInterval) -> String {
+        let allowed: Set<Duration.UnitsFormatStyle.Unit> = seconds.truncatingRemainder(dividingBy: 3600) == 0
+            ? [.hours] : [.hours, .minutes]
+        return Duration.seconds(seconds).formatted(.units(allowed: allowed, width: .abbreviated))
     }
 }
 

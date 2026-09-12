@@ -311,6 +311,16 @@
         }
       }
     },
+    "Aiming For": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sikter mot"
+          }
+        }
+      }
+    },
     "Alarm": {
       "localizations": {
         "nb": {
@@ -407,6 +417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bakgrunnslyd forstyrrer meg"
+          }
+        }
+      }
+    },
+    "Bedtime": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leggetid"
           }
         }
       }
@@ -752,6 +772,16 @@
         }
       }
     },
+    "Entrain aims straight at the target until Health has enough settled nights to walk from.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain sikter rett på målet til Helse har nok jevne netter å gå ut fra."
+          }
+        }
+      }
+    },
     "Entrain cannot measure your body clock, and nothing can from a wrist. These phases are estimated from when you actually sleep and where the sun is, and nothing more.": {
       "localizations": {
         "nb": {
@@ -938,6 +968,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Global hurtigtast ⌃⌥E"
+          }
+        }
+      }
+    },
+    "Haptics": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vibrasjon"
           }
         }
       }
@@ -1288,6 +1328,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Av lar Entrain spille under musikk og podkaster. På tar avspillingskontrollene og setter annen lyd på pause."
+          }
+        }
+      }
+    },
+    "Off, Entrain follows the sleep it measures. On, you set a wake time and a length, and it walks your evenings toward them.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Av følger Entrain søvnen den måler. På setter du når du vil stå opp og hvor lenge du vil sove, og den går kveldene dine dit."
           }
         }
       }
@@ -1692,6 +1742,26 @@
         }
       }
     },
+    "Sleep For": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sover i"
+          }
+        }
+      }
+    },
+    "Sleep Target": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søvnmål"
+          }
+        }
+      }
+    },
     "Sound": {
       "localizations": {
         "nb": {
@@ -1852,6 +1922,26 @@
         }
       }
     },
+    "Suggested before your target bedtime": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før leggetiden du sikter mot"
+          }
+        }
+      }
+    },
+    "Suggested before your target wake": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før du vil stå opp"
+          }
+        }
+      }
+    },
     "Suggested before your usual bedtime": {
       "localizations": {
         "nb": {
@@ -1918,6 +2008,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Foreslått for natten"
+          }
+        }
+      }
+    },
+    "Taps in time with the sound, for the slow modes. Off above a few beats a second, where the pulse only buzzes.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dunk i takt med lyden, for de langsomme modusene. Av over noen få slag i sekundet, der pulsen bare surrer."
           }
         }
       }
@@ -2022,6 +2122,16 @@
         }
       }
     },
+    "Tonight": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I natt"
+          }
+        }
+      }
+    },
     "Turn binaural beats ${value}": {
       "localizations": {
         "nb": {
@@ -2038,6 +2148,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slår den binaurale tonen på eller av. Den spilles bare over hodetelefoner."
+          }
+        }
+      }
+    },
+    "Twenty minutes earlier than your last fortnight. A body clock will not jump, so Entrain walks your evenings toward the target rather than asking for it tonight.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tjue minutter tidligere enn de siste to ukene. En døgnrytme lar seg ikke flytte i ett byks, så Entrain går kveldene dine mot målet i stedet for å be om det i natt."
           }
         }
       }
@@ -2092,6 +2212,16 @@
         }
       }
     },
+    "Wake At": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Står opp"
+          }
+        }
+      }
+    },
     "Weekdays at %@.": {
       "localizations": {
         "nb": {
@@ -2142,6 +2272,16 @@
         }
       }
     },
+    "Wind Down opens three hours before this bedtime and Wake covers the two hours before this wake. Entrain moves toward it about twenty minutes a night from the sleep it measures, because a body clock will not jump.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roe ned åpner tre timer før denne leggetiden, og Våkne dekker de to timene før du står opp. Entrain flytter seg mot målet omtrent tjue minutter per natt fra søvnen den måler, fordi en døgnrytme ikke lar seg flytte i ett byks."
+          }
+        }
+      }
+    },
     "Wind-Down Window": {
       "localizations": {
         "nb": {
@@ -2158,6 +2298,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arbeid"
+          }
+        }
+      }
+    },
+    "You Usually Sleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du sover vanligvis"
+          }
+        }
+      }
+    },
+    "You are sleeping the night you are aiming for.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du sover natten du sikter mot."
           }
         }
       }

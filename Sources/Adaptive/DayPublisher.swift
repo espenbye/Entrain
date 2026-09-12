@@ -20,11 +20,17 @@ final class DayPublisher {
     private var published: DayPhases?
     private let daylight: Daylight
     private let health: HealthSignals
+    private let target: @MainActor () -> SleepTarget?
     private let now: () -> Date
 
-    init(daylight: Daylight = .shared, health: HealthSignals = .shared, now: @escaping () -> Date = { .now }) {
+    init(
+        daylight: Daylight = .shared, health: HealthSignals = .shared,
+        target: @escaping @MainActor () -> SleepTarget? = { Session.shared.sleepTarget },
+        now: @escaping () -> Date = { .now }
+    ) {
         self.daylight = daylight
         self.health = health
+        self.target = target
         self.now = now
     }
 
@@ -33,7 +39,7 @@ final class DayPublisher {
     /// is 288 evaluations of arithmetic and a small file.
     func publish(to directory: URL? = WidgetState.directory) {
         let phases = CircadianDay.on(
-            now(), day: daylight.day(on:), sleep: health.sleep, vitals: health.vitals
+            now(), day: daylight.day(on:), sleep: health.sleep, target: target(), vitals: health.vitals
         ).phases
         guard phases != published else { return }
         published = phases

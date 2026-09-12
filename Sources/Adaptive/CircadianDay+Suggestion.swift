@@ -8,17 +8,17 @@ extension CircadianDay {
     /// The calendar day holding `date`, phase by phase.
     static func on(
         _ date: Date, day: (Date) -> SolarDay, sleep: SleepSignature? = nil,
-        vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
+        target: SleepTarget? = nil, vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
     ) -> CircadianDay {
         let start = calendar.startOfDay(for: date)
         let today = day(start.addingTimeInterval(12 * 3600))
-        let signature = sleep?.isSettled == true ? sleep : nil
+        let edges = SleepEdges.tonight(target: target, measured: sleep)
 
         var spans: [Span] = []
         var at: TimeInterval = 0
         while at < Self.span {
             let when = start.addingTimeInterval(at)
-            let suggestion = Suggestion.at(when, day: day, sleep: sleep, vitals: vitals, calendar: calendar)
+            let suggestion = Suggestion.at(when, day: day, sleep: sleep, target: target, vitals: vitals, calendar: calendar)
             let next = min(Self.span, at + Program.step)
             if var last = spans.last, last.phase == suggestion.phase, last.mode == suggestion.mode {
                 last.interval = DateInterval(start: last.interval.start, end: start.addingTimeInterval(next))
@@ -41,8 +41,8 @@ extension CircadianDay {
             // The habitual times as they fall on this calendar day, so a
             // bedtime in the small hours lands at the top of the ring rather
             // than off the end of it.
-            bedtime: signature.map { start.addingTimeInterval($0.bedtime) },
-            wake: signature.map { start.addingTimeInterval($0.wake) }
+            bedtime: edges.map { start.addingTimeInterval($0.bedtime) },
+            wake: edges.map { start.addingTimeInterval($0.wake) }
         )
     }
 }
