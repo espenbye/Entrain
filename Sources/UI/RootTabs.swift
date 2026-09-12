@@ -9,9 +9,13 @@ import SwiftUI
 /// the twenty-four hours the session sits in. Two tabs say that; a button
 /// said the day was a detail of the player.
 ///
-/// The Mac keeps the button. Its window is two columns wide and has no tab
-/// bar to put anything in, so the day stays a sheet off `PlayerScreen`
-/// there; this file is iOS and iPadOS only.
+/// Settings sits in the same bar for the same reason: a gear over the
+/// player said settings belonged to the player, when most of them are about
+/// the day and the system.
+///
+/// The Mac keeps the buttons. Its window is two columns wide and has no tab
+/// bar to put anything in, so the day stays a sheet off `PlayerScreen` and
+/// settings the Settings window; this file is iOS and iPadOS only.
 struct RootTabs: View {
     @Bindable var session: Session
 
@@ -22,6 +26,9 @@ struct RootTabs: View {
             }
             Tab("Day", systemImage: "clock") {
                 DayScreen(session: session)
+            }
+            Tab("Settings", systemImage: "gearshape") {
+                SettingsScreen(session: session)
             }
         }
         // The tab bar takes the mode's tint like everything else, so
