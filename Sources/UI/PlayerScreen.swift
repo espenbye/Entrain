@@ -13,8 +13,6 @@ struct PlayerScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     #if os(macOS)
     @State private var showsDay = false
-    #else
-    @State private var showsSettings = false
     #endif
 
     var body: some View {
@@ -22,11 +20,11 @@ struct PlayerScreen: View {
             .background(Backdrop(mode: session.mode))
             .preferredColorScheme(.dark)
             .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: session.mode)
+            #if os(macOS)
             .overlay(alignment: .topTrailing) {
                 settingsButton
                     .padding(16)
             }
-            #if os(macOS)
             .overlay(alignment: .topLeading) {
                 dayButton
                     .padding(16)
@@ -89,9 +87,6 @@ struct PlayerScreen: View {
             .padding(.bottom, 32)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .sheet(isPresented: $showsSettings) {
-            SettingsScreen(session: session)
-        }
         #endif
     }
 
@@ -107,22 +102,15 @@ struct PlayerScreen: View {
             .controlSize(.large)
             .accessibilityLabel("Your Day")
     }
-    #endif
 
     private var settingsButton: some View {
-        Group {
-            #if os(macOS)
-            SettingsLink { Image(systemName: "gearshape") }
-            #else
-            Button("Settings", systemImage: "gearshape") { showsSettings = true }
-                .labelStyle(.iconOnly)
-            #endif
-        }
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .controlSize(.large)
-        .accessibilityLabel("Settings")
+        SettingsLink { Image(systemName: "gearshape") }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .accessibilityLabel("Settings")
     }
+    #endif
 }
 
 /// The current mode, its sound, the countdown and the transport.

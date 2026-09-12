@@ -2,13 +2,10 @@ import SwiftUI
 
 /// Everything set once rather than per session: the layers under the sound,
 /// where the day comes from, and how Entrain sits with the system. The Mac
-/// shows it as the Settings window, the iPhone as a sheet.
+/// shows it as the Settings window, the iPhone and iPad as the third tab.
 struct SettingsScreen: View {
     @Bindable var session: Session
     @Bindable private var daylight = Daylight.shared
-    #if !os(macOS)
-    @Environment(\.dismiss) private var dismiss
-    #endif
 
     var body: some View {
         #if os(macOS)
@@ -19,10 +16,6 @@ struct SettingsScreen: View {
             form
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    Button("Done") { dismiss() }
-                        .fontWeight(.semibold)
-                }
         }
         .preferredColorScheme(.dark)
         #endif
