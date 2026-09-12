@@ -20,6 +20,13 @@ struct SleepSignature: Equatable, Sendable {
     /// How far the bedtimes scatter, as a circular standard deviation in
     /// seconds. A wide scatter means there is no habitual bedtime to speak of.
     var spread: TimeInterval
+    /// How far the middle of sleep moves between working nights and free
+    /// ones, the measure chronobiology calls social jetlag (Wittmann et al.
+    /// 2006): a body kept on one schedule five nights and another two is
+    /// doing a small time-zone change every weekend. Signed, so a later
+    /// free-night middle — the usual direction — is positive. Nil unless
+    /// there are enough of both kinds of night to compare.
+    var drift: TimeInterval? = nil
     /// Nights the signature rests on.
     var nights: Int
 }
@@ -33,6 +40,15 @@ extension SleepSignature {
     /// Past this scatter the bedtimes describe no habit worth acting on, so
     /// the sun keeps the night's edges.
     static let widestSpread: TimeInterval = 2 * 3600
+    /// Nights of each kind before the two are worth differencing. One free
+    /// night against one working night is two nights, not a rhythm.
+    static let leastOfEachKind = 2
+    /// The nights most people are not woken by an obligation. It is an
+    /// assumption, and a weekend worker is the case it gets wrong, so the
+    /// figure is shown and never acted on.
+    static func isFree(_ night: SleepNight, calendar: Calendar) -> Bool {
+        [6, 7].contains(calendar.component(.weekday, from: night.night))
+    }
 
     /// The signature is only used where it says something the sun does not,
     /// and where the ordinary reading of "bedtime" and "morning" holds:
@@ -69,8 +85,29 @@ extension SleepSignature {
             // hours should not double the onset for a fortnight.
             latency: latencies.isEmpty ? nil : latencies[latencies.count / 2],
             spread: spread,
+            drift: drift(of: Array(recent), calendar: calendar),
             nights: recent.count
         )
+    }
+
+    /// The middle of sleep on free nights against working ones. Mid-sleep,
+    /// not bedtime: a late night that still ends at an alarm has moved half
+    /// as far as its bedtime suggests, and mid-sleep is what the literature
+    /// differences. Both means are circular, so a middle at 03:40 and one at
+    /// 04:20 are forty minutes apart and not twenty-three hours.
+    static func drift(of nights: [SleepNight], calendar: Calendar = .current) -> TimeInterval? {
+        func middle(_ night: SleepNight) -> TimeInterval {
+            secondsOfDay(of: night.interval.start.addingTimeInterval(night.interval.duration / 2), calendar: calendar)
+        }
+        let free = nights.filter { isFree($0, calendar: calendar) }.map(middle)
+        let working = nights.filter { !isFree($0, calendar: calendar) }.map(middle)
+        guard free.count >= leastOfEachKind, working.count >= leastOfEachKind else { return nil }
+        let difference = circularMean(of: free).mean - circularMean(of: working).mean
+        // The difference is itself a point on the clock face, so it wraps:
+        // anything past twelve hours apart is nearer the other way round.
+        if difference > 43200 { return difference - 86400 }
+        if difference < -43200 { return difference + 86400 }
+        return difference
     }
 
     /// The habitual wake that ends the night on the day holding `date`. It

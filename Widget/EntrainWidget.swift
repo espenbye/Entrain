@@ -6,6 +6,7 @@ import WidgetKit
 struct EntrainWidgets: WidgetBundle {
     var body: some Widget {
         EntrainWidget()
+        DayWidget()
         #if canImport(AlarmKit)
         WakeActivity()
         SessionActivity()

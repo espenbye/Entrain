@@ -11,7 +11,9 @@ struct PlayerScreen: View {
     static let windowID = "player"
     @Bindable var session: Session
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    #if !os(macOS)
+    #if os(macOS)
+    @State private var showsDay = false
+    #else
     @State private var showsSettings = false
     #endif
 
@@ -24,6 +26,15 @@ struct PlayerScreen: View {
                 settingsButton
                     .padding(16)
             }
+            #if os(macOS)
+            .overlay(alignment: .topLeading) {
+                dayButton
+                    .padding(16)
+            }
+            .sheet(isPresented: $showsDay) {
+                DayScreen(session: session)
+            }
+            #endif
             // The one first-launch question. Not dismissible by swipe: it
             // has a Skip, and a half-swiped sheet is not an answer.
             .sheet(isPresented: .constant(session.asksIntensity)) {
@@ -83,6 +94,20 @@ struct PlayerScreen: View {
         }
         #endif
     }
+
+    #if os(macOS)
+    /// The day, opposite the gear. The Mac window is two columns wide and
+    /// has no tab bar to put anything in, so the day is a sheet here; on
+    /// iPhone and iPad it is the second tab. See `RootTabs`.
+    private var dayButton: some View {
+        Button("Your Day", systemImage: "clock") { showsDay = true }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .accessibilityLabel("Your Day")
+    }
+    #endif
 
     private var settingsButton: some View {
         Group {
@@ -543,7 +568,7 @@ private struct WeekdayPicker: View {
 #endif
 
 /// Night gradient from the icon, warmed by the mode's tint at the top.
-private struct Backdrop: View {
+struct Backdrop: View {
     let mode: Mode
 
     var body: some View {

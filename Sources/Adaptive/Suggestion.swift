@@ -20,6 +20,11 @@ import Foundation
 /// sound like, and the suggestion is a suggestion either way.
 struct Suggestion: Equatable, Sendable {
     var mode: Mode
+    /// What the body clock is doing at this hour, which is not the same
+    /// question as what to play through it: a strained morning is still a
+    /// morning, it is simply suggested as Relax. `CircadianDay` reads the
+    /// day off this rather than keeping a table of its own.
+    var phase: CircadianPhase
     var reason: LocalizedStringResource
 
     static func == (a: Self, b: Self) -> Bool { a.mode == b.mode }
@@ -69,12 +74,13 @@ struct Suggestion: Equatable, Sendable {
             // stays at the far end of the afternoon until Wind Down takes over.
             let span = today.sunset.timeIntervalSince(today.sunrise)
             let p = span > 0 ? min(1, max(0, date.timeIntervalSince(today.sunrise) / span)) : 1
+            let phase: CircadianPhase = p < 0.4 ? .morning : p < 0.6 ? .sharpest : .afternoon
             if isStrained(vitals) && p < 0.6 {
-                return Suggestion(mode: .relax, reason: "Suggested for a day below your usual")
+                return Suggestion(mode: .relax, phase: phase, reason: "Suggested for a day below your usual")
             }
-            if p < 0.4 { return Suggestion(mode: .focus, reason: "Suggested for a bright morning") }
-            if p < 0.6 { return Suggestion(mode: .gamma, reason: "Suggested for midday") }
-            return Suggestion(mode: .relax, reason: "Suggested for the afternoon")
+            if p < 0.4 { return Suggestion(mode: .focus, phase: phase, reason: "Suggested for a bright morning") }
+            if p < 0.6 { return Suggestion(mode: .gamma, phase: phase, reason: "Suggested for midday") }
+            return Suggestion(mode: .relax, phase: phase, reason: "Suggested for the afternoon")
         }
         let tomorrow = date.addingTimeInterval(86400)
         let closes = signature?.morning(on: tomorrow, calendar: calendar) ?? day(tomorrow).sunrise
@@ -85,15 +91,17 @@ struct Suggestion: Equatable, Sendable {
         if date.timeIntervalSince(evening) < windDownLead {
             return Suggestion(
                 mode: .windDown,
+                phase: .windDown,
                 reason: habitual ? "Suggested before your usual bedtime" : "Suggested for the evening"
             )
         }
         if morning.timeIntervalSince(date) <= wakeLead {
             return Suggestion(
                 mode: .wake,
+                phase: .wake,
                 reason: habitual ? "Suggested before you usually wake" : "Suggested before sunrise"
             )
         }
-        return Suggestion(mode: .sleep, reason: "Suggested for the night")
+        return Suggestion(mode: .sleep, phase: .night, reason: "Suggested for the night")
     }
 }

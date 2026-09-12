@@ -43,6 +43,11 @@ final class HealthSignals {
     private(set) var sleep: SleepSignature?
     /// Today against this person's own baseline, per metric.
     private(set) var vitals: [BodyMetric: BodySignal] = [:]
+    /// Called when a read finished and the signals may have moved. Health
+    /// arrives a second or two after launch, well after anything that asked
+    /// for it has already drawn, so the day widget is republished from here
+    /// rather than left a day behind on a fresh install.
+    var onChange: (@MainActor () -> Void)?
 
     private let source: (any BodySensing)?
     private var work: Task<Void, Never>?
@@ -97,5 +102,6 @@ final class HealthSignals {
             )
         }
         work = nil
+        onChange?()
     }
 }

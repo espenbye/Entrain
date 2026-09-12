@@ -12,6 +12,10 @@ struct EntrainApp: App {
         if defaults.bool(forKey: HotKey.key) {
             HotKey.enable { Task { await Session.shared.toggle() } }
         }
+        MainActor.assumeIsolated {
+            HealthSignals.shared.onChange = { DayPublisher.shared.publish() }
+            DayPublisher.shared.publish()
+        }
     }
 
     var body: some Scene {
