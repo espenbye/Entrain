@@ -130,4 +130,34 @@ struct CircadianDayTests {
         #expect(abs(day.progress(of: Self.date(12)) - 0.5) < 1e-9)
         #expect(day.progress(of: day.end) == 1)
     }
+
+    /// Two days a year the day is not twenty-four hours. It still runs
+    /// midnight to midnight, the spans still cover it exactly, and the
+    /// widget's reload — which is `day.end` — still lands on the real one.
+    @Test(arguments: [(29, 23.0), (25, 25.0)])
+    func theClocksChangingDoesNotStretchTheDay(day date: Int, hours: Double) {
+        let month = date == 29 ? 3 : 10
+        let noon = Self.calendar.date(from: DateComponents(year: 2026, month: month, day: date, hour: 12))!
+        let day = CircadianDay.on(
+            noon, day: { SolarDay.clock(on: $0, calendar: Self.calendar) }, calendar: Self.calendar
+        )
+        #expect(day.length == hours * 3600)
+        #expect(day.end == Self.calendar.date(from: DateComponents(year: 2026, month: month, day: date + 1)))
+        #expect(day.spans.first?.interval.start == day.start)
+        #expect(day.spans.last?.interval.end == day.end)
+        #expect(day.progress(of: day.end) == 1)
+        #expect(day.span(at: day.end.addingTimeInterval(-60)) != nil)
+    }
+
+    /// A snapshot laid over a day the clocks change ends at that day's own
+    /// midnight rather than an hour past it.
+    @Test func aSnapshotEndsAtTheRightMidnight() {
+        let noon = Self.calendar.date(from: DateComponents(year: 2026, month: 3, day: 29, hour: 12))!
+        let day = Self.day(sleep: Self.owl).phases.day(on: noon, calendar: Self.calendar)
+        #expect(day.length == 23 * 3600)
+        #expect(day.spans.last?.interval.end == day.end)
+        for (a, b) in zip(day.spans, day.spans.dropFirst()) {
+            #expect(a.interval.end == b.interval.start)
+        }
+    }
 }

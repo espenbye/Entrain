@@ -67,8 +67,14 @@ struct CircadianDay: Equatable, Sendable {
         var id: Date { interval.start }
     }
 
-    /// Local midnight, and the twenty-four hours from it.
+    /// Local midnight, and the day that runs from it.
     var start: Date
+    /// The next local midnight. Stored rather than start plus a day,
+    /// because two days a year it is not: the clocks put twenty-three hours
+    /// in one of them and twenty-five in the other, and a ring that drew a
+    /// flat twenty-four would leave its marker an hour out and the widget
+    /// would reload an hour late or twice.
+    var end: Date
     var spans: [Span]
     /// The sun on this day, for the two marks on the ring.
     var sunrise: Date
@@ -79,9 +85,17 @@ struct CircadianDay: Equatable, Sendable {
     var bedtime: Date?
     var wake: Date?
 
+    /// An ordinary day, for a snapshot with nothing better to go on.
     static let span: TimeInterval = 24 * 3600
 
-    var end: Date { start.addingTimeInterval(Self.span) }
+    /// How long this day actually is.
+    var length: TimeInterval { end.timeIntervalSince(start) }
+
+    /// The local midnight after `date`, which is not always a day later.
+    /// Noon the following day is inside the next day whatever the clocks do.
+    static func midnight(after date: Date, calendar: Calendar) -> Date {
+        calendar.startOfDay(for: calendar.startOfDay(for: date).addingTimeInterval(36 * 3600))
+    }
 
     /// Whether the night's edges came from Health rather than the sun.
     var isAnchored: Bool { bedtime != nil }
@@ -93,7 +107,7 @@ struct CircadianDay: Equatable, Sendable {
 
     /// How far through the day `date` sits, 0...1, for placing it on the ring.
     func progress(of date: Date) -> Double {
-        min(1, max(0, date.timeIntervalSince(start) / Self.span))
+        min(1, max(0, date.timeIntervalSince(start) / length))
     }
 }
 
@@ -109,7 +123,9 @@ struct CircadianDay: Equatable, Sendable {
 /// off the end of the ring. What the day is made of moves slowly — sunrise
 /// by a minute or two, a habitual bedtime hardly at all — so a snapshot a
 /// few days stale is still right to within minutes, while one holding
-/// yesterday's dates is simply wrong.
+/// yesterday's dates is simply wrong. The app republishes on every
+/// foreground and on every change Health reports, so the snapshot is only
+/// ever as old as the last time this person opened Entrain.
 struct DayPhases: Codable, Equatable, Sendable {
     static let kind = "no.espenbye.entrain.day"
 
@@ -143,16 +159,18 @@ struct DayPhases: Codable, Equatable, Sendable {
     /// clocks change, which is smaller than the thing being drawn.
     func day(on date: Date, calendar: Calendar = .current) -> CircadianDay {
         let start = calendar.startOfDay(for: date)
-        func at(_ seconds: TimeInterval) -> Date { start.addingTimeInterval(seconds) }
+        let end = CircadianDay.midnight(after: start, calendar: calendar)
+        func at(_ seconds: TimeInterval) -> Date { min(end, start.addingTimeInterval(seconds)) }
         return CircadianDay(
             start: start,
+            end: end,
             spans: spans.indices.map { index in
                 CircadianDay.Span(
                     phase: spans[index].phase,
                     mode: spans[index].mode,
                     interval: DateInterval(
                         start: at(spans[index].start),
-                        end: at(index + 1 < spans.count ? spans[index + 1].start : CircadianDay.span)
+                        end: index + 1 < spans.count ? at(spans[index + 1].start) : end
                     )
                 )
             },

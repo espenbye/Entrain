@@ -11,15 +11,17 @@ extension CircadianDay {
         target: SleepTarget? = nil, vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
     ) -> CircadianDay {
         let start = calendar.startOfDay(for: date)
+        let end = Self.midnight(after: start, calendar: calendar)
+        let length = end.timeIntervalSince(start)
         let today = day(start.addingTimeInterval(12 * 3600))
         let edges = SleepEdges.tonight(target: target, measured: sleep)
 
         var spans: [Span] = []
         var at: TimeInterval = 0
-        while at < Self.span {
+        while at < length {
             let when = start.addingTimeInterval(at)
             let suggestion = Suggestion.at(when, day: day, sleep: sleep, target: target, vitals: vitals, calendar: calendar)
-            let next = min(Self.span, at + Program.step)
+            let next = min(length, at + Program.step)
             if var last = spans.last, last.phase == suggestion.phase, last.mode == suggestion.mode {
                 last.interval = DateInterval(start: last.interval.start, end: start.addingTimeInterval(next))
                 spans[spans.count - 1] = last
@@ -35,6 +37,7 @@ extension CircadianDay {
 
         return CircadianDay(
             start: start,
+            end: end,
             spans: spans,
             sunrise: today.sunrise,
             sunset: today.sunset,

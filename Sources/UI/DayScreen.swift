@@ -136,8 +136,7 @@ private struct NowCard: View {
                 }
                 Spacer(minLength: 8)
                 Button(span.mode.title) {
-                    session.mode = span.mode
-                    Task { await session.play() }
+                    Task { await session.start(span.mode) }
                 }
                 .buttonStyle(.glassProminent)
                 .tint(span.mode.tint)
@@ -167,8 +166,7 @@ private struct PhaseList: View {
             ForEach(Array(day.spans.enumerated()), id: \.element.id) { index, span in
                 if index > 0 { Divider().opacity(0.4) }
                 Button {
-                    session.mode = span.mode
-                    Task { await session.play() }
+                    Task { await session.start(span.mode) }
                 } label: {
                     HStack(spacing: 12) {
                         Text(span.interval.start.formatted(date: .omitted, time: .shortened))

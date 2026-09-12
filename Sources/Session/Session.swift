@@ -361,6 +361,15 @@ final class Session {
         if isPlaying { pause() } else { await play() }
     }
 
+    /// Switch to a mode and play it, without interrupting a session that is
+    /// already running. Picking a mode off the grid or out of the day is a
+    /// change of mode, not a new session: starting one over would reset the
+    /// timer and the arc under someone who only wanted a different sound.
+    func start(_ mode: Mode) async {
+        self.mode = mode
+        if !isPlaying { await play() }
+    }
+
     /// Async because the watch may have to ask which headphones to use before
     /// its audio route exists; on the Mac and iPhone the engine starts at once.
     func play() async {

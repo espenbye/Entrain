@@ -36,10 +36,19 @@ struct DayEntry: TimelineEntry {
     let day: CircadianDay
 }
 
-/// One entry per boundary to the end of the day, then a reload. The whole
-/// day is known in advance, so there is nothing to poll and nothing to wake
-/// the app for; the reload at midnight is what picks up tomorrow's sun.
+/// Entries to the end of the day, then a reload. The whole day is known in
+/// advance, so there is nothing to poll and nothing to wake the app for;
+/// the reload at midnight is what picks up tomorrow's sun.
 struct DayProvider: TimelineProvider {
+    /// How often the ring gets a new entry. A widget only draws at the
+    /// dates its timeline names, so the marker would otherwise sit still
+    /// for the hours between two phases — on a sleep bed, all night. A
+    /// quarter hour is four degrees of the ring, small enough to read as
+    /// the marker having moved and coarse enough that a day is a hundred
+    /// entries rather than three hundred. Entries are not reloads: the
+    /// system renders these from one timeline and never wakes the app.
+    private static let step: TimeInterval = 15 * 60
+
     /// What a fresh install draws before the app has ever run: the clock
     /// day, which is the same fallback everything else uses without Health
     /// or a location.
@@ -73,10 +82,14 @@ struct DayProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<DayEntry>) -> Void) {
         let now = Date.now
         let day = Self.day(at: now)
-        var entries = [DayEntry(date: now, day: day)]
-        for span in day.spans where span.interval.start > now {
-            entries.append(DayEntry(date: span.interval.start, day: day))
+        var dates: Set<Date> = [now]
+        dates.formUnion(day.spans.map(\.interval.start).filter { $0 > now })
+        var at = now.addingTimeInterval(Self.step)
+        while at < day.end {
+            dates.insert(at)
+            at = at.addingTimeInterval(Self.step)
         }
+        let entries = dates.sorted().map { DayEntry(date: $0, day: day) }
         // Tomorrow is the same shape a few minutes shifted, so the reload is
         // at midnight rather than at every boundary.
         completion(Timeline(entries: entries, policy: .after(day.end)))
