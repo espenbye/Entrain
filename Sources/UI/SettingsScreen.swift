@@ -67,6 +67,7 @@ struct SettingsScreen: View {
                 }
             }
             SleepTargetSection(session: session)
+            NotificationsSection()
             #if !os(macOS)
             BodySection()
             #endif
@@ -139,5 +140,34 @@ private struct SleepTargetSection: View {
         let allowed: Set<Duration.UnitsFormatStyle.Unit> = seconds.truncatingRemainder(dividingBy: 3600) == 0
             ? [.hours] : [.hours, .minutes]
         return Duration.seconds(seconds).formatted(.units(allowed: allowed, width: .abbreviated))
+    }
+}
+
+/// One switch per stretch of the day, in the order the day runs. The
+/// times are not shown here because they are not settings: they are
+/// whatever the ring says, and move with the sun and your sleep.
+private struct NotificationsSection: View {
+    @Bindable private var notifications = PhaseNotifications.shared
+
+    private static let order: [CircadianPhase] = [.wake, .morning, .sharpest, .afternoon, .windDown, .night]
+
+    var body: some View {
+        Section {
+            ForEach(Self.order, id: \.self) { phase in
+                Toggle(
+                    String(localized: phase.title),
+                    isOn: Binding(
+                        get: { notifications.isOn(phase) },
+                        set: { notifications.set(phase, on: $0) }
+                    )
+                )
+            }
+        } header: {
+            Text("Notifications")
+        } footer: {
+            Text(notifications.denied && !notifications.enabled.isEmpty
+                ? "Allow notifications for Entrain in Settings to be told when a phase begins."
+                : "A note when each stretch of the day begins, at the times shown in Your Day.")
+        }
     }
 }

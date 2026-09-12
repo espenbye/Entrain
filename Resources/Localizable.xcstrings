@@ -1,6 +1,46 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Notifications": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Varsler"
+          }
+        }
+      }
+    },
+    "%@ fits the hour.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ passer timen."
+          }
+        }
+      }
+    },
+    "A note when each stretch of the day begins, at the times shown in Your Day.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Et varsel når hver del av dagen begynner, på tidene som vises i Din dag."
+          }
+        }
+      }
+    },
+    "Allow notifications for Entrain in Settings to be told when a phase begins.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillat varsler for Entrain i Innstillinger for å få beskjed når en fase begynner."
+          }
+        }
+      }
+    },
     "%1$@ at %2$@.": {
       "localizations": {
         "nb": {

@@ -22,19 +22,22 @@ final class DayPublisher {
     private let health: HealthSignals
     private let target: @MainActor () -> SleepTarget?
     private let now: () -> Date
+    private let notify: @MainActor (DayPhases) -> Void
 
     init(
         daylight: Daylight = .shared, health: HealthSignals = .shared,
         target: @escaping @MainActor () -> SleepTarget? = { Session.shared.sleepTarget },
-        now: @escaping () -> Date = { .now }
+        now: @escaping () -> Date = { .now },
+        notify: @escaping @MainActor (DayPhases) -> Void = { PhaseNotifications.shared.follow($0) }
     ) {
         self.daylight = daylight
         self.health = health
         self.target = target
         self.now = now
+        self.notify = notify
     }
 
-    /// Writes the day and reloads the widget, unless it would write the same
+    /// Writes the day, reschedules the phase notes and reloads the widget, unless it would write the same
     /// day twice. Cheap enough to call on any hint that an input moved: it
     /// is 288 evaluations of arithmetic and a small file.
     func publish(to directory: URL? = WidgetState.directory) {
@@ -44,6 +47,7 @@ final class DayPublisher {
         guard phases != published else { return }
         published = phases
         phases.save(to: directory)
+        notify(phases)
         WidgetCenter.shared.reloadTimelines(ofKind: DayPhases.kind)
     }
 }
