@@ -202,6 +202,60 @@ struct HealthTests {
         #expect(SleepSignature.from(nights, calendar: Self.calendar)!.isSettled == false)
     }
 
+    // MARK: Social jetlag
+
+    /// March 2026 opens on a Sunday, so days 6 and 7 are the Friday and
+    /// Saturday nights — the two a fortnight of ten nights from the first
+    /// contains, which is exactly the minimum the difference needs.
+    static func withLateWeekend(_ shift: TimeInterval) -> [SleepNight] {
+        fortnight(bedtime: (23, 0), wake: (7, 0)).map { night in
+            guard SleepSignature.isFree(night, calendar: calendar) else { return night }
+            var late = night
+            late.interval = DateInterval(
+                start: night.interval.start.addingTimeInterval(shift),
+                end: night.interval.end.addingTimeInterval(shift)
+            )
+            return late
+        }
+    }
+
+    @Test func freeNightsShiftTheMiddleOfSleep() {
+        let signature = SleepSignature.from(Self.withLateWeekend(2 * 3600), calendar: Self.calendar)!
+        // Two of ten nights moved two hours, so the difference between the
+        // two means is the full two hours, not a tenth of it.
+        #expect(Self.minutes(signature.drift!) == 120)
+    }
+
+    /// The same schedule every night is no drift at all, and the sign says
+    /// which way it went rather than only how far.
+    @Test func aSteadySleeperHasNoDrift() {
+        let signature = SleepSignature.from(Self.withLateWeekend(0), calendar: Self.calendar)!
+        #expect(Self.minutes(signature.drift!) == 0)
+        let early = SleepSignature.from(Self.withLateWeekend(-3600), calendar: Self.calendar)!
+        #expect(Self.minutes(early.drift!) == -60)
+    }
+
+    /// Mid-sleep, not bedtime: a late night that still ends at the same
+    /// alarm has moved the middle half as far as its bedtime.
+    @Test func driftIsMeasuredAtTheMiddleAndNotTheBedtime() {
+        let nights = Self.fortnight(bedtime: (23, 0), wake: (7, 0)).map { night -> SleepNight in
+            guard SleepSignature.isFree(night, calendar: Self.calendar) else { return night }
+            var late = night
+            late.interval = DateInterval(
+                start: night.interval.start.addingTimeInterval(2 * 3600), end: night.interval.end
+            )
+            return late
+        }
+        #expect(Self.minutes(SleepSignature.from(nights, calendar: Self.calendar)!.drift!) == 60)
+    }
+
+    /// One night of each kind is two nights, not a rhythm, so there is
+    /// nothing to report.
+    @Test func tooFewOfEitherKindReportNoDrift() {
+        let nights = Array(Self.fortnight(bedtime: (23, 0), wake: (7, 0)).prefix(6))
+        #expect(SleepSignature.from(nights, calendar: Self.calendar)!.drift == nil)
+    }
+
     /// A rhythm that is not an evening-to-morning night is left to the sun
     /// rather than mapped onto one it does not have.
     @Test func aDaytimeSleeperIsNotSettled() {

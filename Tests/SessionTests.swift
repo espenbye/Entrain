@@ -520,7 +520,7 @@ struct SessionTests {
         let clock = Clock()
         let session = Session(
             defaults: defaults, widgetDirectory: widgetDirectory,
-            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+            schedule: { [clock] _, _ in clock.plan }, clock: { [clock] in clock.now }
         ) { [audio] _ in audio }
         session.mode = .focus
         session.program = true
@@ -548,7 +548,7 @@ struct SessionTests {
         let clock = Clock()
         let session = Session(
             defaults: defaults, widgetDirectory: widgetDirectory,
-            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+            schedule: { [clock] _, _ in clock.plan }, clock: { [clock] in clock.now }
         ) { [audio] _ in audio }
         session.mode = .focus
         session.program = true
@@ -571,7 +571,7 @@ struct SessionTests {
         let clock = Clock()
         let session = Session(
             defaults: defaults, widgetDirectory: widgetDirectory,
-            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+            schedule: { [clock] _, _ in clock.plan }, clock: { [clock] in clock.now }
         ) { [audio] _ in audio }
         session.program = true
         await session.play()
@@ -596,7 +596,7 @@ struct SessionTests {
         let clock = Clock()
         let session = Session(
             defaults: defaults, widgetDirectory: widgetDirectory, cloud: cloud,
-            schedule: { [clock] _ in clock.plan }, clock: { [clock] in clock.now }
+            schedule: { [clock] _, _ in clock.plan }, clock: { [clock] in clock.now }
         ) { [audio] _ in audio }
         session.program = true
         await session.play()

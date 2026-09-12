@@ -271,6 +271,16 @@
         }
       }
     },
+    "A steadier bedtime is the single thing that moves a body clock the most.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En jevnere leggetid er det enkelttiltaket som flytter kroppsklokken mest."
+          }
+        }
+      }
+    },
     "Adds a slow beat between the ears. Needs headphones, so it is silent right now.": {
       "localizations": {
         "nb": {
@@ -291,12 +301,52 @@
         }
       }
     },
+    "Afternoon": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ettermiddag"
+          }
+        }
+      }
+    },
+    "Aiming For": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sikter mot"
+          }
+        }
+      }
+    },
     "Alarm": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "Alarm"
+          }
+        }
+      }
+    },
+    "Alertness climbs over the first hours after waking, and light this early pulls the clock earlier. The carrier is at its brightest here.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Våkenheten stiger gjennom de første timene etter at du har våknet, og lys så tidlig trekker kroppsklokken fremover. Bærebølgen er lysest her."
+          }
+        }
+      }
+    },
+    "Alertness dips in the afternoon, most noticeably around seven hours after waking, and recovers into the evening.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Våkenheten faller om ettermiddagen, tydeligst rundt sju timer etter at du våknet, og tar seg opp igjen mot kvelden."
           }
         }
       }
@@ -367,6 +417,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bakgrunnslyd forstyrrer meg"
+          }
+        }
+      }
+    },
+    "Bedtime": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leggetid"
+          }
+        }
+      }
+    },
+    "Bedtime Varies By": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leggetiden varierer med"
+          }
+        }
+      }
+    },
+    "Before Waking": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Før du våkner"
           }
         }
       }
@@ -541,6 +621,16 @@
         }
       }
     },
+    "Core temperature falls through the night and bottoms out a couple of hours before you wake, which is when sleep is deepest and waking is worst.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kroppstemperaturen faller gjennom natten og er lavest et par timer før du våkner, der søvnen er dypest og oppvåkning er verst."
+          }
+        }
+      }
+    },
     "Could not disable Launch at Login": {
       "localizations": {
         "nb": {
@@ -561,12 +651,32 @@
         }
       }
     },
+    "Day": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dag"
+          }
+        }
+      }
+    },
     "Daylight": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "Dagslys"
+          }
+        }
+      }
+    },
+    "Daylight Today": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dagslys i dag"
           }
         }
       }
@@ -658,6 +768,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Entrain-tilstand"
+          }
+        }
+      }
+    },
+    "Entrain aims straight at the target until Health has enough settled nights to walk from.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain sikter rett på målet til Helse har nok jevne netter å gå ut fra."
+          }
+        }
+      }
+    },
+    "Entrain cannot measure your body clock, and nothing can from a wrist. These phases are estimated from when you actually sleep and where the sun is, and nothing more.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain kan ikke måle kroppsklokken din, og ingenting kan det fra et håndledd. Disse fasene er anslått ut fra når du faktisk sover og hvor solen står, og ikke noe mer."
           }
         }
       }
@@ -782,6 +912,16 @@
         }
       }
     },
+    "Free Nights Shift": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frinetter forskyves"
+          }
+        }
+      }
+    },
     "From the last %lld nights on this device. Entrain reads Health; it never writes anything but your Meditate minutes, and nothing leaves the device.": {
       "localizations": {
         "nb": {
@@ -828,6 +968,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Global hurtigtast ⌃⌥E"
+          }
+        }
+      }
+    },
+    "Haptics": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vibrasjon"
           }
         }
       }
@@ -1032,6 +1182,16 @@
         }
       }
     },
+    "Melatonin starts rising a couple of hours before your usual bedtime. Bright light and sharp sound push it later, so Entrain goes warm and shallow.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melatoninet begynner å stige et par timer før din vanlige leggetid. Skarpt lys og skarp lyd skyver det senere, så Entrain blir varm og grunn."
+          }
+        }
+      }
+    },
     "Memory and learning": {
       "localizations": {
         "nb": {
@@ -1052,6 +1212,16 @@
         }
       }
     },
+    "Midday": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Midt på dagen"
+          }
+        }
+      }
+    },
     "Mode": {
       "localizations": {
         "nb": {
@@ -1062,12 +1232,42 @@
         }
       }
     },
+    "Morning": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morgen"
+          }
+        }
+      }
+    },
     "Moves between modes as the day goes, without stopping the sound. Runs while something is playing.": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "Bytter modus etter hvert som dagen går, uten å stoppe lyden. Går mens noe spilles."
+          }
+        }
+      }
+    },
+    "Next": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neste"
+          }
+        }
+      }
+    },
+    "Night": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Natt"
           }
         }
       }
@@ -1128,6 +1328,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Av lar Entrain spille under musikk og podkaster. På tar avspillingskontrollene og setter annen lyd på pause."
+          }
+        }
+      }
+    },
+    "Off, Entrain follows the sleep it measures. On, you set a wake time and a length, and it walks your evenings toward them.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Av følger Entrain søvnen den måler. På setter du når du vil stå opp og hvor lenge du vil sove, og den går kveldene dine dit."
           }
         }
       }
@@ -1218,6 +1428,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Spill av, pause og bytt modus."
+          }
+        }
+      }
+    },
+    "Player": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller"
           }
         }
       }
@@ -1338,6 +1558,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Returnerer modusen, om den spiller, lyden, tiden som er igjen, intensiteten og om binaurale toner er på."
+          }
+        }
+      }
+    },
+    "Rhythm": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rytme"
           }
         }
       }
@@ -1512,6 +1742,26 @@
         }
       }
     },
+    "Sleep For": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sover i"
+          }
+        }
+      }
+    },
+    "Sleep Target": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søvnmål"
+          }
+        }
+      }
+    },
     "Sound": {
       "localizations": {
         "nb": {
@@ -1672,6 +1922,26 @@
         }
       }
     },
+    "Suggested before your target bedtime": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før leggetiden du sikter mot"
+          }
+        }
+      }
+    },
+    "Suggested before your target wake": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått før du vil stå opp"
+          }
+        }
+      }
+    },
     "Suggested before your usual bedtime": {
       "localizations": {
         "nb": {
@@ -1742,12 +2012,92 @@
         }
       }
     },
+    "Taps in time with the sound, for the slow modes. Off above a few beats a second, where the pulse only buzzes.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dunk i takt med lyden, for de langsomme modusene. Av over noen få slag i sekundet, der pulsen bare surrer."
+          }
+        }
+      }
+    },
+    "Temperature and cortisol climb toward your usual wake time. A gentle rise meets that rather than cutting across it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temperatur og kortisol stiger mot din vanlige oppvåkningstid. En myk stigning møter det i stedet for å bryte med det."
+          }
+        }
+      }
+    },
     "The bed swells once a second, the slow-oscillation rate, and follows the ninety-minute sleep cycle: deepest around its forty-fifth minute where slow-wave sleep peaks, shallow toward the REM end, so it never pushes all night.": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "Teppet sveller én gang i sekundet, raten til de langsomme oscillasjonene, og følger den nittiminutters søvnsyklusen: dypest rundt det førtifemte minuttet der dypsøvnen topper seg, grunt mot REM-enden, så den aldri presser hele natten."
+          }
+        }
+      }
+    },
+    "The day is assumed to run 7 to 19. Turn on Daylight in Settings to follow the real sun where you are.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dagen antas å gå fra 7 til 19. Slå på Dagslys i Innstillinger for å følge den virkelige solen der du er."
+          }
+        }
+      }
+    },
+    "The middle of the day is where attention holds longest and reaction times are shortest.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Midt på dagen holder oppmerksomheten lengst og reaksjonstiden er kortest."
+          }
+        }
+      }
+    },
+    "The middle of your sleep moves this far between working nights and free ones — a small time-zone change every week.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Midtpunktet i søvnen din flytter seg så mye mellom arbeidsnetter og frinetter — et lite tidssonebytte hver uke."
+          }
+        }
+      }
+    },
+    "The night's edges come from the sun until Health has enough nights to know your own bedtime.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nattens kanter kommer fra solen til Helse har nok netter til å kjenne din egen leggetid."
+          }
+        }
+      }
+    },
+    "The phase you are in and the ones around it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fasen du er i, og de rundt den."
+          }
+        }
+      }
+    },
+    "Time in Daylight": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tid i dagslys"
           }
         }
       }
@@ -1772,6 +2122,16 @@
         }
       }
     },
+    "Tonight": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I natt"
+          }
+        }
+      }
+    },
     "Turn binaural beats ${value}": {
       "localizations": {
         "nb": {
@@ -1788,6 +2148,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slår den binaurale tonen på eller av. Den spilles bare over hodetelefoner."
+          }
+        }
+      }
+    },
+    "Twenty minutes earlier than your last fortnight. A body clock will not jump, so Entrain walks your evenings toward the target rather than asking for it tonight.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tjue minutter tidligere enn de siste to ukene. En døgnrytme lar seg ikke flytte i ett byks, så Entrain går kveldene dine mot målet i stedet for å be om det i natt."
           }
         }
       }
@@ -1842,6 +2212,16 @@
         }
       }
     },
+    "Wake At": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Står opp"
+          }
+        }
+      }
+    },
     "Weekdays at %@.": {
       "localizations": {
         "nb": {
@@ -1892,12 +2272,62 @@
         }
       }
     },
+    "Wind Down opens three hours before this bedtime and Wake covers the two hours before this wake. Entrain moves toward it about twenty minutes a night from the sleep it measures, because a body clock will not jump.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roe ned åpner tre timer før denne leggetiden, og Våkne dekker de to timene før du står opp. Entrain flytter seg mot målet omtrent tjue minutter per natt fra søvnen den måler, fordi en døgnrytme ikke lar seg flytte i ett byks."
+          }
+        }
+      }
+    },
+    "Wind-Down Window": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nedtrappingsvinduet"
+          }
+        }
+      }
+    },
     "Work": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "Arbeid"
+          }
+        }
+      }
+    },
+    "You Usually Sleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du sover vanligvis"
+          }
+        }
+      }
+    },
+    "You are sleeping the night you are aiming for.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du sover natten du sikter mot."
+          }
+        }
+      }
+    },
+    "Your Day": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dagen din"
           }
         }
       }

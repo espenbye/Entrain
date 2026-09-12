@@ -14,6 +14,7 @@ final class HealthReader: BodySensing {
         HKCategoryType(.sleepAnalysis),
         HKQuantityType(.restingHeartRate),
         HKQuantityType(.heartRateVariabilitySDNN),
+        HKQuantityType(.timeInDaylight),
     ]
 
     private let defaults: UserDefaults
@@ -128,13 +129,13 @@ final class HealthReader: BodySensing {
                 type: HKQuantityType(metric.identifier),
                 predicate: HKQuery.predicateForSamples(withStart: start, end: nil)
             ),
-            options: .discreteAverage,
+            options: metric.statistics,
             anchorDate: today,
             intervalComponents: DateComponents(day: 1)
         )
         guard let collection = try? await descriptor.result(for: Self.store) else { return [] }
         return collection.statistics().compactMap { statistics in
-            statistics.averageQuantity().map {
+            metric.quantity(in: statistics).map {
                 DailyValue(day: statistics.startDate, value: $0.doubleValue(for: metric.unit))
             }
         }
@@ -146,13 +147,27 @@ extension BodyMetric {
         switch self {
         case .restingHeartRate: .restingHeartRate
         case .heartRateVariability: .heartRateVariabilitySDNN
+        case .timeInDaylight: .timeInDaylight
         }
+    }
+
+    /// A heart rate is a rate, so a day's figure is its average; minutes
+    /// outdoors are minutes, so a day's figure is their sum. Averaging the
+    /// daylight samples would report the length of a typical walk rather
+    /// than how long the day was spent outside.
+    var statistics: HKStatisticsOptions {
+        self == .timeInDaylight ? .cumulativeSum : .discreteAverage
+    }
+
+    func quantity(in statistics: HKStatistics) -> HKQuantity? {
+        self == .timeInDaylight ? statistics.sumQuantity() : statistics.averageQuantity()
     }
 
     var unit: HKUnit {
         switch self {
         case .restingHeartRate: .count().unitDivided(by: .minute())
         case .heartRateVariability: .secondUnit(with: .milli)
+        case .timeInDaylight: .minute()
         }
     }
 }

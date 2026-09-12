@@ -22,7 +22,11 @@ struct BodySection: View {
                 ForEach(BodyMetric.allCases, id: \.self) { metric in
                     if let signal = health.vitals[metric] {
                         LabeledContent(String(localized: metric.title)) {
-                            Text(signal.summary)
+                            if let reading = signal.reading {
+                                Text(reading) + Text(verbatim: " · ") + Text(signal.summary)
+                            } else {
+                                Text(signal.summary)
+                            }
                         }
                     }
                 }

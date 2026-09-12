@@ -4,11 +4,20 @@ import Foundation
 enum BodyMetric: String, CaseIterable, Sendable {
     case restingHeartRate
     case heartRateVariability
+    /// Minutes outdoors, from the watch's ambient light sensor. The only
+    /// one of the three that is a cause rather than a consequence: light is
+    /// what sets circadian phase (Czeisler et al. 1989; Duffy & Czeisler
+    /// 2009), and the other two only track what the clock and the night
+    /// before did to the body. It is read and shown; nothing acts on it.
+    /// See `Suggestion.isStrained`, which names its two metrics and is not
+    /// widened by this one.
+    case timeInDaylight
 
     var title: LocalizedStringResource {
         switch self {
         case .restingHeartRate: "Resting Heart Rate"
         case .heartRateVariability: "Heart Rate Variability"
+        case .timeInDaylight: "Time in Daylight"
         }
     }
 
@@ -20,6 +29,14 @@ enum BodyMetric: String, CaseIterable, Sendable {
     /// a variability figure. Resting heart rate is near enough symmetric to
     /// take as it stands.
     var isLogNormal: Bool { self == .heartRateVariability }
+
+    /// Whether zero is a reading rather than a gap. A resting heart rate of
+    /// zero is a missing sample and nothing else; a day with no minutes
+    /// outdoors is a real day, and the one most worth seeing, so it must
+    /// not be filtered out as a gap. Daylight is right-skewed like
+    /// variability, but a log cannot hold the zeros that carry the point,
+    /// so it is baselined as it stands.
+    var countsZero: Bool { self == .timeInDaylight }
 }
 
 /// One day against this person's own recent history.
@@ -61,6 +78,18 @@ extension BodySignal {
         }
     }
 
+    /// Today in its own unit, where the number is worth acting on. Minutes
+    /// outdoors is: "get twenty more tomorrow" is a thing a person can do.
+    /// A resting heart rate is not, for the reason above — 48 bpm means
+    /// nothing without knowing whose it is — so it has no reading and shows
+    /// only where it sits against this person's own range.
+    var reading: String? {
+        guard metric == .timeInDaylight else { return nil }
+        let allowed: Set<Duration.UnitsFormatStyle.Unit> = today >= 60 ? [.hours, .minutes] : [.minutes]
+        return Duration.seconds((today * 60).rounded())
+            .formatted(.units(allowed: allowed, width: .abbreviated))
+    }
+
     /// The rolling window. Sixty days is long enough that a bad fortnight
     /// does not become the new normal and short enough to follow a season
     /// of training or illness; it is also the window iOS's own Vitals uses,
@@ -77,8 +106,8 @@ extension BodySignal {
     /// include today. Nil when there is not enough history to say anything,
     /// which is the state a fresh install and a Health-less Mac are both in.
     static func from(history: [Double], today: Double, metric: BodyMetric) -> BodySignal? {
-        let values = history.suffix(window).filter { $0 > 0 }
-        guard values.count >= leastDays, today > 0 else { return nil }
+        let values = history.suffix(window).filter { metric.countsZero ? $0 >= 0 : $0 > 0 }
+        guard values.count >= leastDays, metric.countsZero ? today >= 0 : today > 0 else { return nil }
         let scaled = metric.isLogNormal ? values.map(log) : Array(values)
         let point = metric.isLogNormal ? log(today) : today
         let mean = scaled.reduce(0, +) / Double(scaled.count)

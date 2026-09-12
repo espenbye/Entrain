@@ -6,9 +6,10 @@ import Foundation
 /// is for sleep, and the last two hours before morning are for waking.
 ///
 /// The day is measured against the sun, like the circadian arc. The night's
-/// two edges are not: when Health knows this person's habitual bedtime and
-/// wake, those replace sunset and sunrise, because the sun is the worst
-/// guide exactly where it matters most. Three hours after a Norwegian
+/// two edges are not: a target replaces them where one is set, this person's
+/// habitual bedtime and wake where Health knows them, and the sun only when
+/// neither does — because the sun is the worst guide exactly where it
+/// matters most. Three hours after a Norwegian
 /// midsummer sunset is half past one in the morning, and three hours after
 /// a December one is dinner. Without a settled signature — a fresh install,
 /// a Mac, or a refusal, which look the same — the sun stands in, which is
@@ -20,6 +21,11 @@ import Foundation
 /// sound like, and the suggestion is a suggestion either way.
 struct Suggestion: Equatable, Sendable {
     var mode: Mode
+    /// What the body clock is doing at this hour, which is not the same
+    /// question as what to play through it: a strained morning is still a
+    /// morning, it is simply suggested as Relax. `CircadianDay` reads the
+    /// day off this rather than keeping a table of its own.
+    var phase: CircadianPhase
     var reason: LocalizedStringResource
 
     static func == (a: Self, b: Self) -> Bool { a.mode == b.mode }
@@ -49,18 +55,18 @@ struct Suggestion: Equatable, Sendable {
 
     static func at(
         _ date: Date, day: (Date) -> SolarDay, sleep: SleepSignature? = nil,
-        vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
+        target: SleepTarget? = nil, vitals: [BodyMetric: BodySignal] = [:], calendar: Calendar = .current
     ) -> Suggestion {
-        let signature = sleep?.isSettled == true ? sleep : nil
+        let edges = SleepEdges.tonight(target: target, measured: sleep)
         let today = day(date)
-        let morning = signature?.morning(on: date, calendar: calendar) ?? today.sunrise
-        let evening = signature.map { $0.evening(on: date, calendar: calendar) - windDownLead } ?? today.sunset
+        let morning = edges?.morning(on: date, calendar: calendar) ?? today.sunrise
+        let evening = edges.map { $0.evening(on: date, calendar: calendar) - windDownLead } ?? today.sunset
 
         if date < morning {
             let yesterday = date.addingTimeInterval(-86400)
-            let opened = signature.map { $0.evening(on: yesterday, calendar: calendar) - windDownLead }
+            let opened = edges.map { $0.evening(on: yesterday, calendar: calendar) - windDownLead }
                 ?? day(yesterday).sunset
-            return night(date, evening: opened, morning: morning, habitual: signature != nil)
+            return night(date, evening: opened, morning: morning, source: edges?.source)
         }
         if date < evening {
             // The daylight hours keep the sun: a bright morning is a fact
@@ -69,31 +75,36 @@ struct Suggestion: Equatable, Sendable {
             // stays at the far end of the afternoon until Wind Down takes over.
             let span = today.sunset.timeIntervalSince(today.sunrise)
             let p = span > 0 ? min(1, max(0, date.timeIntervalSince(today.sunrise) / span)) : 1
+            let phase: CircadianPhase = p < 0.4 ? .morning : p < 0.6 ? .sharpest : .afternoon
             if isStrained(vitals) && p < 0.6 {
-                return Suggestion(mode: .relax, reason: "Suggested for a day below your usual")
+                return Suggestion(mode: .relax, phase: phase, reason: "Suggested for a day below your usual")
             }
-            if p < 0.4 { return Suggestion(mode: .focus, reason: "Suggested for a bright morning") }
-            if p < 0.6 { return Suggestion(mode: .gamma, reason: "Suggested for midday") }
-            return Suggestion(mode: .relax, reason: "Suggested for the afternoon")
+            if p < 0.4 { return Suggestion(mode: .focus, phase: phase, reason: "Suggested for a bright morning") }
+            if p < 0.6 { return Suggestion(mode: .gamma, phase: phase, reason: "Suggested for midday") }
+            return Suggestion(mode: .relax, phase: phase, reason: "Suggested for the afternoon")
         }
         let tomorrow = date.addingTimeInterval(86400)
-        let closes = signature?.morning(on: tomorrow, calendar: calendar) ?? day(tomorrow).sunrise
-        return night(date, evening: evening, morning: closes, habitual: signature != nil)
+        let closes = edges?.morning(on: tomorrow, calendar: calendar) ?? day(tomorrow).sunrise
+        return night(date, evening: evening, morning: closes, source: edges?.source)
     }
 
-    private static func night(_ date: Date, evening: Date, morning: Date, habitual: Bool) -> Suggestion {
+    private static func night(_ date: Date, evening: Date, morning: Date, source: SleepEdges.Source?) -> Suggestion {
         if date.timeIntervalSince(evening) < windDownLead {
-            return Suggestion(
-                mode: .windDown,
-                reason: habitual ? "Suggested before your usual bedtime" : "Suggested for the evening"
-            )
+            let reason: LocalizedStringResource = switch source {
+            case .target: "Suggested before your target bedtime"
+            case .habit: "Suggested before your usual bedtime"
+            case nil: "Suggested for the evening"
+            }
+            return Suggestion(mode: .windDown, phase: .windDown, reason: reason)
         }
         if morning.timeIntervalSince(date) <= wakeLead {
-            return Suggestion(
-                mode: .wake,
-                reason: habitual ? "Suggested before you usually wake" : "Suggested before sunrise"
-            )
+            let reason: LocalizedStringResource = switch source {
+            case .target: "Suggested before your target wake"
+            case .habit: "Suggested before you usually wake"
+            case nil: "Suggested before sunrise"
+            }
+            return Suggestion(mode: .wake, phase: .wake, reason: reason)
         }
-        return Suggestion(mode: .sleep, reason: "Suggested for the night")
+        return Suggestion(mode: .sleep, phase: .night, reason: "Suggested for the night")
     }
 }

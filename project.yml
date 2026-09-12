@@ -42,9 +42,12 @@ targetTemplates:
     type: app-extension
     sources:
       - Widget/EntrainWidget.swift
+      - Widget/DayWidget.swift
       - Widget/WakeActivity.swift
       - Widget/SessionActivity.swift
       - Sources/Session/Mode.swift
+      - Sources/Session/CircadianDay.swift
+      - Sources/UI/DayRing.swift
       - Sources/Session/WakeAlarmMetadata.swift
       - Sources/Session/SessionActivityAttributes.swift
       - Sources/Session/WidgetState.swift
@@ -71,6 +74,8 @@ targets:
       - Sources/App/macOS
       - Sources/UI/macOS
       - Sources/UI/PlayerScreen.swift
+      - Sources/UI/DayScreen.swift
+      - Sources/UI/DayRing.swift
       - Sources/UI/SettingsScreen.swift
       - Sources/UI/IntensityQuestion.swift
     info:
@@ -132,7 +137,10 @@ targets:
     platform: iOS
     sources:
       - Sources/App/iOS
+      - Sources/UI/RootTabs.swift
       - Sources/UI/PlayerScreen.swift
+      - Sources/UI/DayScreen.swift
+      - Sources/UI/DayRing.swift
       - Sources/UI/SettingsScreen.swift
       - Sources/UI/IntensityQuestion.swift
     info:
@@ -147,7 +155,7 @@ targets:
             CFBundleURLSchemes: [entrain]
         UIBackgroundModes: [audio]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
-        NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, and your resting heart rate and heart rate variability so it can tell an ordinary day from a tired one. Nothing leaves the device.
+        NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, your resting heart rate and heart rate variability so it can tell an ordinary day from a tired one, and your time in daylight, which is what sets a body clock. Nothing leaves the device.
         NSAlarmKitUsageDescription: Rings the Wake alarm at the time you choose, even on silent.
         NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the device.
         NSLocationDefaultAccuracyReduced: true
@@ -218,7 +226,7 @@ targets:
         # Meditate or Relax session; no workout is ever saved.
         WKBackgroundModes: [audio, workout-processing]
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
-        NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, your resting heart rate and heart rate variability so it can tell an ordinary day from a tired one, and your heart rate during a session. Nothing leaves the watch.
+        NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, your resting heart rate, heart rate variability and time in daylight so it can tell an ordinary day from a tired one, and your heart rate during a session. Nothing leaves the watch.
         NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the watch.
         NSLocationDefaultAccuracyReduced: true
     entitlements:
