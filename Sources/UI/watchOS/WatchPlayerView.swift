@@ -24,7 +24,7 @@ struct WatchPlayerView: View {
                             .padding(.vertical, 8)
                     }
                 }
-                ModeSection(selection: $session.mode)
+                ModeSection(session: session)
                 Section {
                     if session.mode == .meditate {
                         BreathingPickers(session: session)
@@ -41,7 +41,6 @@ struct WatchPlayerView: View {
                     Picker("Timer", selection: $session.length) {
                         ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
                     }
-                    Toggle("Follow the Day", isOn: $session.program)
                     Toggle("Binaural Beats", isOn: $session.binaural)
                     Toggle("Haptics", isOn: $session.haptics)
                     Toggle("Daylight", isOn: $daylight.followsLocation)

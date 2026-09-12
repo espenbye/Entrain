@@ -228,23 +228,24 @@ private struct SuggestionCard: View {
     }
 }
 
-/// Every mode on three shelves, two to a row: all of them visible, the
-/// current one filled with its tint, each with a line on what it is for.
-/// A tap picks the mode, and starts it when nothing is playing.
+/// The day as one tile, then every mode on three shelves, two to a row: all
+/// of them visible, the current one filled with its tint, each with a line
+/// on what it is for. A tap picks it, and starts it when nothing is playing.
 private struct ModeGrid: View {
     @Bindable var session: Session
 
-    private var selection: Mode { session.mode }
+    private var selection: ModeChoice { session.choice }
 
-    /// Makes `mode` current and, if nothing is playing, starts it. While a
-    /// session plays, the tap only switches the mode so it does not restart.
-    private func select(_ mode: Mode) {
-        Task { await session.start(mode) }
+    /// Makes `choice` current and, if nothing is playing, starts it. While a
+    /// session plays, the tap only switches so it does not restart.
+    private func select(_ choice: ModeChoice) {
+        Task { await session.start(choice) }
     }
 
     var body: some View {
         GlassEffectContainer(spacing: 10) {
             VStack(alignment: .leading, spacing: 18) {
+                DayTile(session: session, selected: selection == .day) { select(.day) }
                 ForEach(Purpose.allCases) { purpose in
                     VStack(alignment: .leading, spacing: 8) {
                         Text(purpose.title)
@@ -254,7 +255,7 @@ private struct ModeGrid: View {
                             .padding(.horizontal, 4)
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                             ForEach(purpose.modes) { mode in
-                                ModeTile(mode: mode, selected: mode == selection) { select(mode) }
+                                ModeTile(mode: mode, selected: selection == .mode(mode)) { select(.mode(mode)) }
                             }
                         }
                     }
@@ -295,6 +296,53 @@ private struct ModeTile: View {
     }
 }
 
+/// The program as a tile of its own, above the shelves. Selected, it takes
+/// the tint of whatever the day is playing and says what comes next; the
+/// program walks Focus to Relax on its own but never puts anyone to bed,
+/// so where the day says sleep it names the bed and leaves it a tap.
+private struct DayTile: View {
+    @Bindable var session: Session
+    let selected: Bool
+    let select: () -> Void
+
+    private var caption: Text {
+        if let plan = session.plan, let next = plan.next, let at = plan.at {
+            return plan.asks
+                ? Text("\(String(localized: next.blurb)) from \(at.formatted(date: .omitted, time: .shortened)). Start it yourself when you are ready.")
+                : Text("\(String(localized: next.blurb)) at \(at.formatted(date: .omitted, time: .shortened)).")
+        }
+        return selected
+            ? Text("Moves between modes as the day goes, without stopping the sound. Runs while something is playing.")
+            : Text("Moves between modes as the day goes, without stopping the sound.")
+    }
+
+    var body: some View {
+        Button(action: select) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: ModeChoice.symbol)
+                    .font(.body.weight(.medium))
+                    .frame(width: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Follow the Day")
+                        .font(.subheadline.weight(.medium))
+                    caption
+                        .font(.caption)
+                        .opacity(0.7)
+                }
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(.rect(cornerRadius: 18))
+        }
+        .buttonStyle(.plain)
+        .glassEffect(selected ? .regular.tint(session.mode.tint).interactive() : .regular.interactive(), in: .rect(cornerRadius: 18))
+        .foregroundStyle(selected ? session.mode.onTint : .primary)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
 /// One sound layer as a chip. On is a filled, tinted capsule; off is a plain
 /// glass outline with dimmed text, so the two states read apart at a glance.
 private struct LayerChip: View {
@@ -328,8 +376,6 @@ private struct SessionCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ProgramRow(session: session)
-            Divider()
             ModeDetails(mode: session.mode)
             Divider()
             if !session.mode.isSleep {
@@ -441,39 +487,6 @@ private struct SessionCard: View {
         .toggleStyle(.switch)
         .tint(session.mode.tint)
         .glassEffect(.regular, in: .rect(cornerRadius: 24))
-    }
-}
-
-/// The single control for the program, and what it is doing. One switch:
-/// on, the session walks the day by itself; picking a mode by hand turns it
-/// off again, and the switch says so by going off with it.
-private struct ProgramRow: View {
-    @Bindable var session: Session
-
-    var body: some View {
-        Row("Follow the Day") {
-            Toggle("Follow the Day", isOn: $session.program)
-                .labelsHidden()
-        }
-        Group {
-            if let plan = session.plan, let next = plan.next, let at = plan.at {
-                if plan.asks {
-                    // The program walks Focus to Relax on its own; it does
-                    // not put anyone to bed. Sleep stays a tap.
-                    Text("\(String(localized: next.blurb)) from \(at.formatted(date: .omitted, time: .shortened)). Start it yourself when you are ready.")
-                } else {
-                    Text("\(String(localized: next.blurb)) at \(at.formatted(date: .omitted, time: .shortened)).")
-                }
-            } else if session.program {
-                Text("Moves between modes as the day goes, without stopping the sound. Runs while something is playing.")
-            } else {
-                Text("Lets Entrain pick the mode as the day goes, and move between them without stopping the sound.")
-            }
-        }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.bottom, 12)
     }
 }
 

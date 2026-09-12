@@ -58,7 +58,7 @@ struct PlayerControls: View {
             error: session.error,
             toggle: session.toggle
         )
-        ModeSection(selection: $session.mode)
+        ModeSection(session: session)
         Section {
             Picker("Timer", selection: $session.length) {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
@@ -66,7 +66,6 @@ struct PlayerControls: View {
             if session.mode == .meditate {
                 BreathingPickers(session: session)
             }
-            Toggle("Follow the Day", isOn: $session.program)
         }
     }
 }

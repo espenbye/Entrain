@@ -1122,12 +1122,12 @@
         }
       }
     },
-    "Lets Entrain pick the mode as the day goes, and move between them without stopping the sound.": {
+    "Moves between modes as the day goes, without stopping the sound.": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lar Entrain velge modus etter hvert som dagen går, og bytte mellom dem uten å stoppe lyden."
+            "value": "Bytter modus etter hvert som dagen går, uten å stoppe lyden."
           }
         }
       }

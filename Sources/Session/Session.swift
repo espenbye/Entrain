@@ -62,6 +62,18 @@ final class Session {
     /// player to show. Nil whenever the program is not running.
     private(set) var plan: Program.Plan?
 
+    /// The mode list's selection. Picking the day turns the program on;
+    /// picking a mode is a pick by hand, which turns it off.
+    var choice: ModeChoice {
+        get { program ? .day : .mode(mode) }
+        set {
+            switch newValue {
+            case .day: program = true
+            case .mode(let mode): self.mode = mode
+            }
+        }
+    }
+
     /// The breathing exercise over Meditate, and how long it runs. Synced
     /// like the mode: which exercise you do is a preference, not a device.
     var breathing: BreathingPattern {
@@ -361,14 +373,17 @@ final class Session {
         if isPlaying { pause() } else { await play() }
     }
 
-    /// Switch to a mode and play it, without interrupting a session that is
-    /// already running. Picking a mode off the grid or out of the day is a
-    /// change of mode, not a new session: starting one over would reset the
-    /// timer and the arc under someone who only wanted a different sound.
-    func start(_ mode: Mode) async {
-        self.mode = mode
+    /// Switch to a mode, or to the day, and play it without interrupting a
+    /// session that is already running. Picking off the grid or out of the
+    /// day is a change of mode, not a new session: starting one over would
+    /// reset the timer and the arc under someone who only wanted a
+    /// different sound.
+    func start(_ choice: ModeChoice) async {
+        self.choice = choice
         if !isPlaying { await play() }
     }
+
+    func start(_ mode: Mode) async { await start(.mode(mode)) }
 
     /// Async because the watch may have to ask which headphones to use before
     /// its audio route exists; on the Mac and iPhone the engine starts at once.
