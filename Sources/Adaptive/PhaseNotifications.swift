@@ -78,9 +78,14 @@ final class PhaseNotifications {
         }
     }
 
+    /// Each rewrite waits for the one before it, so two cannot interleave
+    /// their reads and removals; the last one to run is the one that wins.
     private func reschedule() {
-        work?.cancel()
-        work = Task { await apply() }
+        let previous = work
+        work = Task {
+            await previous?.value
+            await apply()
+        }
     }
 
     private func apply() async {
@@ -92,7 +97,11 @@ final class PhaseNotifications {
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .sound])
             denied = !granted
-            guard granted, !Task.isCancelled else { return }
+            guard granted else {
+                // A refusal leaves every switch off, as the alarm's does.
+                enabled = []
+                return
+            }
             for request in requests {
                 let content = UNMutableNotificationContent()
                 content.title = String(localized: request.phase.title)

@@ -165,7 +165,7 @@ private struct NotificationsSection: View {
         } header: {
             Text("Notifications")
         } footer: {
-            Text(notifications.denied && !notifications.enabled.isEmpty
+            Text(notifications.denied
                 ? "Allow notifications for Entrain in Settings to be told when a phase begins."
                 : "A note when each stretch of the day begins, at the times shown in Your Day.")
         }
