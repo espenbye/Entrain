@@ -367,12 +367,9 @@ private struct LayerChip: View {
     }
 }
 
-/// What changes per session: sound, intensity, timer, the Wake alarm, volume.
+/// What changes per session: sound, intensity, timer, volume.
 private struct SessionCard: View {
     @Bindable var session: Session
-    #if canImport(AlarmKit)
-    @Bindable private var alarm = WakeAlarm.shared
-    #endif
 
     var body: some View {
         VStack(spacing: 0) {
@@ -435,35 +432,6 @@ private struct SessionCard: View {
                 .labelsHidden()
                 .tint(.primary)
             }
-            #if canImport(AlarmKit)
-            if session.mode == .wake {
-                Divider()
-                Row("Alarm") {
-                    DatePicker("Alarm", selection: $alarm.time, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                    Toggle("Alarm", isOn: Binding(
-                        get: { alarm.isOn },
-                        set: { alarm.set(on: $0) }
-                    ))
-                    .labelsHidden()
-                }
-                WeekdayPicker(selection: $alarm.days)
-                    .padding(.bottom, 12)
-                Group {
-                    if alarm.denied {
-                        Text("Allow alarms for Entrain in Settings to use the Wake alarm.")
-                    } else if let error = alarm.error {
-                        Text(verbatim: error)
-                    } else {
-                        Text(verbatim: alarm.summary + " ") + Text("Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes.")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 12)
-            }
-            #endif
             if session.binaural && !session.headphones {
                 Divider()
                 Text("Binaural beats need headphones.")
@@ -535,36 +503,6 @@ private struct Row<Content: View>: View {
         .padding(.vertical, 12)
     }
 }
-
-#if canImport(AlarmKit)
-/// Seven circles, Monday first where the locale says so. None selected
-/// means the alarm rings once.
-private struct WeekdayPicker: View {
-    @Binding var selection: Set<Locale.Weekday>
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(Locale.Weekday.ordered, id: \.self) { day in
-                let on = selection.contains(day)
-                Button {
-                    if on { selection.remove(day) } else { selection.insert(day) }
-                } label: {
-                    Text(day.letter)
-                        .font(.footnote.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 36)
-                        .contentShape(.circle)
-                }
-                .buttonStyle(.plain)
-                .glassEffect(on ? .regular.tint(Mode.wake.tint).interactive() : .regular.interactive(), in: .circle)
-                .foregroundStyle(on ? Mode.wake.onTint : .primary)
-                .accessibilityLabel(day.shortName)
-                .accessibilityAddTraits(on ? .isSelected : [])
-            }
-        }
-    }
-}
-#endif
 
 /// Night gradient from the icon, warmed by the mode's tint at the top.
 struct Backdrop: View {

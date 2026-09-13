@@ -1622,16 +1622,6 @@
         }
       }
     },
-    "Rings even on silent. Start Wake on the alarm plays the ramp for 30 minutes.": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ringer også i stillemodus. Start Våkne på alarmen spiller rampen i 30 minutter."
-          }
-        }
-      }
-    },
     "Set Binaural Beats": {
       "localizations": {
         "nb": {
@@ -2428,6 +2418,196 @@
           "stringUnit": {
             "state": "translated",
             "value": "godt under det vanlige"
+          }
+        }
+      }
+    },
+    "Rings even on silent.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ringer også i stillemodus."
+          }
+        }
+      }
+    },
+    "Scan to Stop": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skann for å stoppe"
+          }
+        }
+      }
+    },
+    "Code": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kode"
+          }
+        }
+      }
+    },
+    "Register Another Code": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrer en annen kode"
+          }
+        }
+      }
+    },
+    "Forget Code": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glem koden"
+          }
+        }
+      }
+    },
+    "Register a Code": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrer en kode"
+          }
+        }
+      }
+    },
+    "Get Me Up": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Få meg opp"
+          }
+        }
+      }
+    },
+    "Allow the camera for Entrain in Settings to register a code.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillat kameraet for Entrain i Innstillinger for å registrere en kode."
+          }
+        }
+      }
+    },
+    "Scan any barcode or QR code that lives where you want to end up, like the toothpaste. On, the alarm rings again every 2 minutes for 20 minutes, and only scanning that code stops it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skann en strekkode eller QR-kode som ligger der du vil ende opp, som tannkremen. På ringer alarmen igjen hvert 2. minutt i 20 minutter, og bare å skanne den koden stopper den."
+          }
+        }
+      }
+    },
+    "On, Stop only silences the ring in progress. The alarm rings again every 2 minutes for 20 minutes until you scan the code, and then Wake plays.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "På demper Stopp bare ringingen som pågår. Alarmen ringer igjen hvert 2. minutt i 20 minutter til du skanner koden, og så spiller Våkne."
+          }
+        }
+      }
+    },
+    "Point the camera at the barcode or QR code that will stop the alarm.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pek kameraet mot strekkoden eller QR-koden som skal stoppe alarmen."
+          }
+        }
+      }
+    },
+    "Time to get up": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "På tide å stå opp"
+          }
+        }
+      }
+    },
+    "Scan the code you registered to stop the alarm.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skann koden du registrerte for å stoppe alarmen."
+          }
+        }
+      }
+    },
+    "Entrain has no camera. Allow it in Settings to scan the code.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrain har ikke kameraet. Tillat det i Innstillinger for å skanne koden."
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Innstillinger"
+          }
+        }
+      }
+    },
+    "Not that one.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikke den."
+          }
+        }
+      }
+    },
+    "It rings again every 2 minutes for 20 minutes until you do.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Den ringer igjen hvert 2. minutt i 20 minutter til du gjør det."
+          }
+        }
+      }
+    },
+    "I'm Up": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeg er oppe"
+          }
+        }
+      }
+    },
+    "Time": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tid"
           }
         }
       }

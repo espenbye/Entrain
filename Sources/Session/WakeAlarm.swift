@@ -1,4 +1,5 @@
 #if canImport(AlarmKit)
+import ActivityKit
 import AlarmKit
 import AppIntents
 import Foundation
@@ -11,6 +12,13 @@ import Observation
 /// system shows it as a Live Activity until it rings. With days picked it is
 /// a repeating clock alarm, which the system re-arms after each ring and
 /// shows only while ringing.
+///
+/// With Scan to Stop on, the first ring is followed by nine more two minutes
+/// apart (see `WakeVolley`), and the only thing that cancels the followers
+/// is scanning the code registered here. The first ring is the alarm above,
+/// so a morning slept through does not cost the next one; the followers are
+/// one-shot alarms re-armed for the next morning after every scan and
+/// every launch.
 @MainActor
 @Observable
 final class WakeAlarm {
@@ -32,14 +40,28 @@ final class WakeAlarm {
             if isOn { set(on: true) }
         }
     }
+    /// Whether the alarm keeps ringing until the code is scanned.
+    var scanToStop: Bool {
+        didSet {
+            save()
+            if isOn { set(on: true) }
+        }
+    }
+    /// The barcode or QR payload that ends a volley. Nil until one is registered.
+    private(set) var code: String?
     /// True while an alarm is scheduled or ringing.
     private(set) var isOn = false
+    /// True while a volley is going on, which is when the app is the scanner.
+    private(set) var live = false
     /// The user declined alarms; only Settings can turn them back on.
     private(set) var denied = false
     /// Why the last attempt to schedule failed. Nil once one succeeds.
     private(set) var error: String?
 
     private let defaults: UserDefaults
+    /// Every alarm of ours the system holds, by id, with the follower's
+    /// fixed time where it has one.
+    private var scheduled: [UUID: Date?] = [:]
     /// The pending schedule or cancel. Each request replaces the last, so
     /// scrubbing the time picker ends with one alarm at the final time.
     private var work: Task<Void, Never>?
@@ -52,14 +74,74 @@ final class WakeAlarm {
         time = Calendar.current.date(from: parts) ?? .now
         let stored = defaults.string(forKey: "wakeAlarm.days")?.split(separator: ",") ?? []
         days = Set(stored.compactMap { Locale.Weekday(rawValue: String($0)) })
+        scanToStop = defaults.bool(forKey: "wakeAlarm.scanToStop")
+        code = defaults.string(forKey: "wakeAlarm.code")
         denied = AlarmManager.shared.authorizationState == .denied
-        isOn = (try? AlarmManager.shared.alarms)?.contains { $0.id == Self.id } ?? false
+        read((try? AlarmManager.shared.alarms) ?? [])
         Task { [weak self] in
             for await alarms in AlarmManager.shared.alarmUpdates {
                 guard let self else { return }
-                isOn = alarms.contains { $0.id == Self.id }
+                read(alarms)
             }
         }
+    }
+
+    private func read(_ alarms: [Alarm]) {
+        scheduled = Dictionary(uniqueKeysWithValues: alarms.filter { Self.isOurs($0.id) }.map { alarm in
+            if case .fixed(let date) = alarm.schedule { return (alarm.id, date) }
+            return (alarm.id, nil)
+        })
+        isOn = !scheduled.isEmpty
+        live = isLive(at: .now)
+    }
+
+    /// Whether a volley is going on right now: a first ring within the last
+    /// twenty minutes, and a follower of that ring still to come. Tomorrow's
+    /// followers, armed after a scan, sit a day away and do not count.
+    private func isLive(at now: Date) -> Bool {
+        guard scanToStop, code != nil,
+              let start = WakeVolley.liveStart(time, days: days, at: now) else { return false }
+        let end = start.addingTimeInterval(WakeVolley.window)
+        return scheduled.values.contains { date in
+            guard let date else { return false }
+            return date >= start && date < end
+        }
+    }
+
+    /// Scanning the registered code. Ends the volley, arms the next
+    /// morning's, and starts the Wake ramp, which is what the alarm was for.
+    func pass(_ scanned: String) -> Bool {
+        guard scanned == code else { return false }
+        for id in Self.followerIDs { try? AlarmManager.shared.cancel(id: id) }
+        for id in Self.followerIDs { scheduled[id] = nil }
+        live = false
+        work?.cancel()
+        work = Task { await armFollowers() }
+        Self.startWake()
+        return true
+    }
+
+    /// Remembers the code that ends a volley.
+    func register(_ code: String) {
+        self.code = code
+        defaults.set(code, forKey: "wakeAlarm.code")
+    }
+
+    /// Forgets it, which turns Scan to Stop off with it.
+    func forgetCode() {
+        code = nil
+        defaults.removeObject(forKey: "wakeAlarm.code")
+        scanToStop = false
+    }
+
+    /// Called whenever the app comes forward. A volley that ran out
+    /// without a scan left nothing armed for the next morning; this arms
+    /// it. During a volley it does nothing, so the followers stay put.
+    func refresh(at now: Date = .now) {
+        live = isLive(at: now)
+        guard isOn, scanToStop, code != nil, !live else { return }
+        work?.cancel()
+        work = Task { await armFollowers(from: now) }
     }
 
     /// Schedules at the next occurrence of `time`, or cancels. Asks for
@@ -70,10 +152,11 @@ final class WakeAlarm {
     }
 
     private func apply(on: Bool) async {
-        // The id is fixed, so an existing alarm has to go before its
+        // The ids are fixed, so an existing alarm has to go before its
         // replacement; scheduling over it fails.
-        try? AlarmManager.shared.cancel(id: Self.id)
+        for id in Self.ids { try? AlarmManager.shared.cancel(id: id) }
         guard on else {
+            scheduled = [:]
             isOn = false
             return
         }
@@ -81,25 +164,16 @@ final class WakeAlarm {
             let state = try await AlarmManager.shared.requestAuthorization()
             denied = state == .denied
             guard state == .authorized, !Task.isCancelled else { return }
-            let alert = AlarmPresentation.Alert(
-                title: "Wake",
-                stopButton: AlarmButton(text: "Dismiss", textColor: .white, systemImageName: "xmark"),
-                secondaryButton: AlarmButton(text: "Start Wake", textColor: .white, systemImageName: "sunrise"),
-                secondaryButtonBehavior: .custom
-            )
-            // Only the one-shot counts down; a clock alarm with a countdown
-            // presentation is rejected as an invalid configuration.
-            let countdown = days.isEmpty ? AlarmPresentation.Countdown(title: "Wake") : nil
-            let attributes = AlarmAttributes<WakeAlarmMetadata>(
-                presentation: AlarmPresentation(alert: alert, countdown: countdown),
-                tintColor: Mode.wake.tint
-            )
+            let hard = scanToStop && code != nil
+            let secondary: any LiveActivityIntent = hard ? GetUpIntent() : StartWakeIntent()
+            let attributes = attributes(countdown: days.isEmpty)
             let parts = Calendar.current.dateComponents([.hour, .minute], from: time)
             let configuration = days.isEmpty
                 ? AlarmManager.AlarmConfiguration.timer(
                     duration: Self.secondsUntilNext(time),
                     attributes: attributes,
-                    secondaryIntent: StartWakeIntent()
+                    secondaryIntent: secondary,
+                    sound: Self.sound
                 )
                 : AlarmManager.AlarmConfiguration.alarm(
                     schedule: .relative(.init(
@@ -107,16 +181,67 @@ final class WakeAlarm {
                         repeats: .weekly(Locale.Weekday.ordered.filter(days.contains))
                     )),
                     attributes: attributes,
-                    secondaryIntent: StartWakeIntent()
+                    secondaryIntent: secondary,
+                    sound: Self.sound
                 )
             _ = try await AlarmManager.shared.schedule(id: Self.id, configuration: configuration)
+            scheduled[Self.id] = .some(nil)
             isOn = true
+            if hard { try await scheduleFollowers(from: .now) }
+            live = isLive(at: .now)
             self.error = nil
         } catch {
             guard !Task.isCancelled else { return }
             isOn = false
             self.error = error.localizedDescription
         }
+    }
+
+    /// Replaces the followers with the next morning's.
+    private func armFollowers(from now: Date = .now) async {
+        for id in Self.followerIDs { try? AlarmManager.shared.cancel(id: id) }
+        for id in Self.followerIDs { scheduled[id] = nil }
+        do {
+            try await scheduleFollowers(from: now)
+            error = nil
+        } catch {
+            guard !Task.isCancelled else { return }
+            self.error = error.localizedDescription
+        }
+    }
+
+    private func scheduleFollowers(from now: Date) async throws {
+        guard let first = WakeVolley.next(time, days: days, after: now) else { return }
+        let attributes = attributes(countdown: false)
+        for (id, date) in zip(Self.followerIDs, WakeVolley.followers(after: first)) {
+            guard !Task.isCancelled else { return }
+            _ = try await AlarmManager.shared.schedule(
+                id: id,
+                configuration: .alarm(schedule: .fixed(date), attributes: attributes, secondaryIntent: GetUpIntent(), sound: Self.sound)
+            )
+            scheduled[id] = date
+        }
+    }
+
+    private func attributes(countdown: Bool) -> AlarmAttributes<WakeAlarmMetadata> {
+        let hard = scanToStop && code != nil
+        let alert = AlarmPresentation.Alert(
+            title: "Wake",
+            stopButton: AlarmButton(
+                text: hard ? "Stop" : "Dismiss", textColor: .white, systemImageName: "xmark"
+            ),
+            secondaryButton: AlarmButton(
+                text: hard ? "I'm Up" : "Start Wake", textColor: .white,
+                systemImageName: hard ? "figure.walk" : "sunrise"
+            ),
+            secondaryButtonBehavior: .custom
+        )
+        // Only the one-shot counts down; a clock alarm with a countdown
+        // presentation is rejected as an invalid configuration.
+        return AlarmAttributes<WakeAlarmMetadata>(
+            presentation: AlarmPresentation(alert: alert, countdown: countdown ? .init(title: "Wake") : nil),
+            tintColor: Mode.wake.tint
+        )
     }
 
     /// Seconds to the next occurrence of the time of day, tomorrow if it has passed.
@@ -137,29 +262,55 @@ final class WakeAlarm {
         return String(localized: "\(names) at \(clock).")
     }
 
+    /// The Wake ramp, on screen. An endless timer becomes half an hour, so
+    /// the ramp has a length to follow and a wake-up soundscape is not
+    /// still playing at lunch.
+    static func startWake() {
+        let session = Session.shared
+        session.mode = .wake
+        if session.length == .endless { session.length = .thirty }
+        Task { await session.play() }
+    }
+
     private func save() {
         let parts = Calendar.current.dateComponents([.hour, .minute], from: time)
         defaults.set(parts.hour, forKey: "wakeAlarm.hour")
         defaults.set(parts.minute, forKey: "wakeAlarm.minute")
         defaults.set(Locale.Weekday.ordered.filter(days.contains).map(\.rawValue).joined(separator: ","), forKey: "wakeAlarm.days")
+        defaults.set(scanToStop, forKey: "wakeAlarm.scanToStop")
     }
+
+    /// Rendered by Tools/alarm.swift: full-scale beeps, made to be loud.
+    /// How loud is the ringer volume in Settings, which the app cannot raise.
+    private static let sound = AlertConfiguration.AlertSound.named("Alarm.caf")
+
+    private static let ids = [id] + followerIDs
+    private static let followerIDs = WakeAlarmMetadata.followerIDs
+    private static func isOurs(_ id: UUID) -> Bool { id == Self.id || followerIDs.contains(id) }
 }
 
 /// Behind the alarm's second button. A Live Activity intent runs in the app,
-/// and foreground mode brings the app up, so the ramp starts on screen. An
-/// endless timer becomes half an hour, so the ramp has a length to follow
-/// and a wake-up soundscape is not still playing at lunch.
+/// and foreground mode brings the app up, so the ramp starts on screen.
 struct StartWakeIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Start Wake"
     static var supportedModes: IntentModes { .foreground }
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        let session = Session.shared
-        session.mode = .wake
-        if session.length == .endless { session.length = .thirty }
-        await session.play()
+        WakeAlarm.startWake()
         return .result()
+    }
+}
+
+/// The second button while Scan to Stop is on. It only brings the app up:
+/// the app sees a volley in progress and shows the scanner, and nothing
+/// short of the code gets past it.
+struct GetUpIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "I'm Up"
+    static var supportedModes: IntentModes { .foreground }
+
+    func perform() async throws -> some IntentResult {
+        .result()
     }
 }
 

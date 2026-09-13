@@ -49,6 +49,7 @@ targetTemplates:
       - Sources/Session/CircadianDay.swift
       - Sources/UI/DayRing.swift
       - Sources/Session/WakeAlarmMetadata.swift
+      - Sources/Session/WakeVolley.swift
       - Sources/Session/SessionActivityAttributes.swift
       - Sources/Session/WidgetState.swift
       - Sources/Session/Intents.swift
@@ -138,6 +139,8 @@ targets:
     sources:
       - Sources/App/iOS
       - Sources/UI/RootTabs.swift
+      - Sources/UI/AlarmScreen.swift
+      - Sources/UI/CodeScanner.swift
       - Sources/UI/PlayerScreen.swift
       - Sources/UI/DayScreen.swift
       - Sources/UI/DayRing.swift
@@ -157,6 +160,7 @@ targets:
         NSHealthUpdateUsageDescription: Entrain logs Meditate sessions as mindful minutes.
         NSHealthShareUsageDescription: Entrain reads your recent sleep so Wind Down and the sleep beds follow your own bedtime, your resting heart rate and heart rate variability so it can tell an ordinary day from a tired one, and your time in daylight, which is what sets a body clock. Nothing leaves the device.
         NSAlarmKitUsageDescription: Rings the Wake alarm at the time you choose, even on silent.
+        NSCameraUsageDescription: Reads the code that stops the Wake alarm, and registers it in the first place. Nothing is recorded.
         NSLocationWhenInUseUsageDescription: Follows local sunrise and sunset. Only an approximate location is used, and it never leaves the device.
         NSLocationDefaultAccuracyReduced: true
         NSMotionUsageDescription: Turns the room with your head when Head Tracking is on.
