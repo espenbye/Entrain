@@ -115,13 +115,28 @@ final class WakeAlarm {
     /// morning's, and starts the Wake ramp, which is what the alarm was for.
     func pass(_ scanned: String) -> Bool {
         guard scanned == code else { return false }
-        for id in Self.followerIDs { try? AlarmManager.shared.cancel(id: id) }
-        for id in Self.followerIDs { scheduled[id] = nil }
-        live = false
+        cancel(Self.followerIDs)
+        // A follower the system would not let go keeps the gate up, and the
+        // reason is under the switch; nothing plays over a ring still to come.
+        guard !live else { return true }
         work?.cancel()
         work = Task { await armFollowers() }
         Self.startWake()
         return true
+    }
+
+    /// Cancels what the system still holds of these, then reads back what
+    /// it holds now. The list is the state: a cancel that failed leaves its
+    /// alarm in it, and a schedule over that id would fail too.
+    private func cancel(_ ids: [UUID]) {
+        for id in ids {
+            // Every id goes, in case the list is behind; only one the list
+            // said was there is a failure worth reporting.
+            do { try AlarmManager.shared.cancel(id: id) } catch where scheduled.keys.contains(id) {
+                self.error = error.localizedDescription
+            } catch {}
+        }
+        read((try? AlarmManager.shared.alarms) ?? [])
     }
 
     /// Remembers the code that ends a volley.
@@ -157,12 +172,8 @@ final class WakeAlarm {
     private func apply(on: Bool) async {
         // The ids are fixed, so an existing alarm has to go before its
         // replacement; scheduling over it fails.
-        for id in Self.ids { try? AlarmManager.shared.cancel(id: id) }
-        guard on else {
-            scheduled = [:]
-            isOn = false
-            return
-        }
+        cancel(Self.ids)
+        guard on else { return }
         do {
             let state = try await AlarmManager.shared.requestAuthorization()
             denied = state == .denied
@@ -195,20 +206,23 @@ final class WakeAlarm {
             self.error = nil
         } catch {
             guard !Task.isCancelled else { return }
-            isOn = false
+            // Off means off: the first ring and any followers that got in
+            // before the failure go too, or the switch would say off over
+            // an alarm that rings.
+            cancel(Self.ids)
             self.error = error.localizedDescription
         }
     }
 
     /// Replaces the followers with the next morning's.
     private func armFollowers(from now: Date = .now) async {
-        for id in Self.followerIDs { try? AlarmManager.shared.cancel(id: id) }
-        for id in Self.followerIDs { scheduled[id] = nil }
+        cancel(Self.followerIDs)
         do {
             try await scheduleFollowers(from: now)
             error = nil
         } catch {
             guard !Task.isCancelled else { return }
+            cancel(Self.followerIDs)
             self.error = error.localizedDescription
         }
     }
