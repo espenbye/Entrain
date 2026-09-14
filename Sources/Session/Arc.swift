@@ -28,12 +28,31 @@ import Foundation
 ///
 /// Wind Down walks alpha to delta at bedtime and Wake walks delta back to
 /// beta after a nap. Their rate keyframes are written over a nominal ramp
-/// and stretched to the session's; see `rampSeconds(for:)`.
+/// and stretched to the session's; see `rampSeconds(for:)`. Nap is both in
+/// one table: a flat 2 Hz to drift on, and the Wake ramp over the last
+/// third, so the whole thing stretches with the timer and ends awake.
+///
+/// Sprint cycles rather than ramps: twenty-five minutes at 16 Hz, five at
+/// 10 Hz, walking down into the break and back up out of it, and the table
+/// repeats for as long as the session runs. A rate that cycles is not a
+/// ramp, so it is read at play time and never stretched to the timer.
 extension Mode {
     /// Seconds over which a sleep bed settles, before Health knows better.
     static let onsetSeconds: Double = 20 * 60
     /// One sleep cycle.
     static let cycleSeconds: Double = 90 * 60
+    /// One round of work and the break after it.
+    static let sprintSeconds: Double = 30 * 60
+
+    /// How long the table repeats over, for the two modes that never rest:
+    /// Deep Sleep's depth follows the sleep cycle, Sprint's rate the round.
+    var cycle: Double? {
+        switch self {
+        case .deepSleep: Self.cycleSeconds
+        case .sprint: Self.sprintSeconds
+        default: nil
+        }
+    }
 
     /// The whole of a mode's behaviour over time. Every mode names its rate
     /// and depth at time zero; a channel no keyframe names holds its default,
@@ -45,8 +64,19 @@ extension Mode {
         // response, and shallow: 40 Hz modulation sits in the roughness
         // range and turns into a buzz at ordinary depth.
         case .gamma: [Keyframe(0, rate: 40, depth: 0.3)]
+        // The walks either side of the break take two minutes each, three
+        // hertz a minute: fast enough to be felt as the pace changing, which
+        // is the point of it, slow enough not to be caught as a step.
+        case .sprint: [
+            Keyframe(0, rate: 16, depth: 0.5),
+            Keyframe(25 * 60, rate: 16, depth: 0.5),
+            Keyframe(27 * 60, rate: 10, depth: 0.4),
+            Keyframe(28 * 60, rate: 10, depth: 0.4),
+            Keyframe(Self.sprintSeconds, rate: 16, depth: 0.5),
+        ]
         case .relax: [Keyframe(0, rate: 10, depth: 0.4)]
         case .meditate: [Keyframe(0, rate: 6, depth: 0.5)]
+        case .restore: [Keyframe(0, rate: 4, depth: 0.5)]
         case .sleep: [
             Keyframe(0, rate: 2, depth: 0.3, brightness: 0.3, level: 1),
             Keyframe(onset, depth: 0, brightness: -0.6, level: 0.6),
@@ -59,6 +89,10 @@ extension Mode {
             Keyframe(onset + Self.cycleSeconds / 2, depth: 0.5),
             Keyframe(onset + Self.cycleSeconds, depth: 0.15),
         ]
+        // Depth holds still so the rate is the only thing that stretches:
+        // an onset fade like Sleep's would sit at twenty minutes whatever
+        // the timer, while the rise moves with it, and the two would cross.
+        case .nap: [Keyframe(0, rate: 2, depth: 0.4), Keyframe(20 * 60, rate: 2), Keyframe(30 * 60, rate: 16)]
         case .windDown: [Keyframe(0, rate: 10, depth: 0.4), Keyframe(20 * 60, rate: 2)]
         case .wake: [Keyframe(0, rate: 2, depth: 0.5), Keyframe(15 * 60, rate: 16)]
         }
@@ -83,16 +117,16 @@ extension Mode {
     /// to that. Nothing that ends in bed gets a transient at all.
     var envelope: Double {
         switch self {
-        case .focus, .wake: 0.25
-        case .gamma: 0.3
+        case .focus, .wake, .nap: 0.25
+        case .gamma, .sprint: 0.3
         case .relax: 0.4
         case .meditate, .windDown: 0.45
-        case .sleep, .deepSleep: 0.5
+        case .restore, .sleep, .deepSleep: 0.5
         }
     }
 
-    /// The keyframes as curves, built once. Deep Sleep is the one mode with a
-    /// cycle, and only its depth reaches the end of it, so only its depth repeats.
+    /// The keyframes as curves, built once. Only a track that reaches the end
+    /// of its mode's cycle repeats: Deep Sleep's depth, and Sprint's rate and depth.
     var arc: Arc { Self.arcs[self]! }
 
     /// The same, around a listener's own sleep onset. The usual twenty
@@ -101,19 +135,20 @@ extension Mode {
     func arc(onset: Double) -> Arc {
         onset == Self.onsetSeconds
             ? arc
-            : Arc(keyframes(onset: onset), cycle: self == .deepSleep ? Self.cycleSeconds : nil)
+            : Arc(keyframes(onset: onset), cycle: cycle)
     }
 
     private static let arcs: [Mode: Arc] = Dictionary(uniqueKeysWithValues: Mode.allCases.map {
-        ($0, Arc($0.keyframes(), cycle: $0 == .deepSleep ? cycleSeconds : nil))
+        ($0, Arc($0.keyframes(), cycle: $0.cycle))
     })
 
     /// How long the rate ramp takes: a timed session ramps over the whole
     /// timer, less the taper, so Wind Down arrives at 2 Hz before it fades
-    /// out. Endless sessions use the table's own length. Nil for steady modes.
+    /// out. Endless sessions use the table's own length. Nil for steady modes
+    /// and for a rate that cycles, which is read as written.
     func rampSeconds(for length: SessionLength) -> Double? {
         let nominal = arc.rate.end
-        guard nominal > 0 else { return nil }
+        guard nominal > 0, arc.rate.settles < .infinity else { return nil }
         guard length != .endless else { return nominal }
         return max(1, Double(length.seconds) - (tapers ? fadeOut : 0))
     }
@@ -122,7 +157,7 @@ extension Mode {
     /// session's own length. Linear in Hz: a ramp should walk at a steady
     /// hertz per minute, where a level wants the arc's raised cosine.
     func rate(elapsed: Double, length: SessionLength) -> Double {
-        guard let seconds = rampSeconds(for: length) else { return arc.rate.value(at: 0) }
+        guard let seconds = rampSeconds(for: length) else { return arc.rate.value(at: elapsed) }
         return arc.rate.value(at: elapsed * arc.rate.end / seconds)
     }
 

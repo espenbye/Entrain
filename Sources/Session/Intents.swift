@@ -176,10 +176,13 @@ extension Mode: AppEnum {
     static let caseDisplayRepresentations: [Mode: DisplayRepresentation] = [
         .focus: "Focus",
         .gamma: "Recall",
+        .sprint: "Sprint",
         .relax: "Relax",
         .meditate: "Meditate",
+        .restore: "Restore",
         .sleep: "Sleep",
         .deepSleep: "Deep Sleep",
+        .nap: "Nap",
         .windDown: "Wind Down",
         .wake: "Wake",
     ]

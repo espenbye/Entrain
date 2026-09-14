@@ -56,8 +56,8 @@ extension Mode {
     /// compiles too and which has no business knowing about oscillators.
     var tonality: Tonality {
         switch self {
-        case .focus, .gamma: .open
-        case .relax, .meditate, .wake: .warm
+        case .focus, .gamma, .sprint: .open
+        case .relax, .meditate, .restore, .nap, .wake: .warm
         case .windDown, .sleep, .deepSleep: .dark
         }
     }

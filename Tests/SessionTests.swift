@@ -314,6 +314,52 @@ struct SessionTests {
         #expect(Mode.focus.rampSeconds(for: .sixty) == nil)
     }
 
+    /// Nap holds 2 Hz for the first two thirds of the timer and walks to
+    /// 16 Hz over the last third, whatever the timer is; an endless nap
+    /// uses the table's own thirty minutes. Depth never moves, so only the
+    /// rate is stretched.
+    @Test func napRisesOverTheLastThirdOfTheTimer() {
+        #expect(Mode.nap.rate(elapsed: 0, length: .thirty) == 2)
+        #expect(Mode.nap.rate(elapsed: 20 * 60, length: .thirty) == 2)
+        #expect(Mode.nap.rate(elapsed: 25 * 60, length: .thirty) == 9)
+        #expect(Mode.nap.rate(elapsed: 30 * 60, length: .thirty) == 16)
+        #expect(Mode.nap.rate(elapsed: 59 * 60, length: .ninety) == 2)
+        #expect(Mode.nap.rate(elapsed: 90 * 60, length: .ninety) == 16)
+        #expect(Mode.nap.rate(elapsed: 30 * 60, length: .endless) == 16)
+        #expect(Mode.nap.depth(elapsed: 0) == Mode.nap.depth(elapsed: 29 * 60))
+        #expect(!Mode.nap.tapers)
+        #expect(Mode.nap.cue == nil)
+        #expect(!Mode.nap.isSleep)
+    }
+
+    /// Sprint repeats its round for as long as it plays and is never
+    /// stretched: the 25-minute round is the same on a 15-minute timer, an
+    /// eight-hour one and no timer at all.
+    @Test func sprintCyclesAndDoesNotStretch() {
+        for length in [SessionLength.endless, .fifteen, .eightHours] {
+            #expect(Mode.sprint.rampSeconds(for: length) == nil)
+            #expect(Mode.sprint.rate(elapsed: 0, length: length) == 16)
+            #expect(Mode.sprint.rate(elapsed: 25 * 60, length: length) == 16)
+            #expect(Mode.sprint.rate(elapsed: 26 * 60, length: length) == 13)
+            #expect(Mode.sprint.rate(elapsed: 27 * 60 + 30, length: length) == 10)
+            #expect(Mode.sprint.rate(elapsed: 30 * 60, length: length) == 16)
+            #expect(Mode.sprint.rate(elapsed: 57 * 60 + 30, length: length) == 10)
+            #expect(Mode.sprint.rate(elapsed: 3 * 3600 + 5 * 60, length: length) == 16)
+            #expect(Mode.sprint.evolves(at: 10 * 3600, length: length))
+        }
+        #expect(Mode.sprint.depth(elapsed: 27 * 60 + 30) < Mode.sprint.depth(elapsed: 0))
+        #expect(Mode.sprint.depth(elapsed: 60 * 60) == Mode.sprint.depth(elapsed: 0))
+    }
+
+    /// Restore is steady at 4 Hz, which is slow enough for the actuator.
+    @Test func restoreIsSteadyAndFelt() {
+        #expect(Mode.restore.rampSeconds(for: .sixty) == nil)
+        #expect(Mode.restore.rate(elapsed: 0, length: .endless) == 4)
+        #expect(Mode.restore.rate(elapsed: 3600, length: .sixty) == 4)
+        #expect(!Mode.restore.evolves(at: 1, length: .endless))
+        #expect(Mode.restore.feelsBeat(at: 0, length: .endless))
+    }
+
     @Test func timedRampsFollowTheTimer() {
         // Wake ramps over the whole timer.
         #expect(Mode.wake.rampSeconds(for: .sixty) == 3600.0)
