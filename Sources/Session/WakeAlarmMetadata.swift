@@ -22,5 +22,11 @@ struct CancelWakeAlarmIntent: LiveActivityIntent {
 extension WakeAlarmMetadata {
     /// Fixed, so a relaunch finds the alarm it scheduled.
     static let alarmID = UUID(uuidString: "6F3A1D8E-2B4C-4E9A-9C1F-7D5E8A2B3C4D")!
+
+    /// The volley's followers, one fixed id each, so a relaunch finds those
+    /// too and a re-arm replaces rather than piles up.
+    static let followerIDs: [UUID] = (1..<WakeVolley.count).map {
+        UUID(uuidString: String(format: "6F3A1D8E-2B4C-4E9A-9C1F-7D5E8A2B3C%02X", $0))!
+    }
 }
 #endif

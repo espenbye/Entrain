@@ -18,6 +18,8 @@ import SwiftUI
 /// settings the Settings window; this file is iOS and iPadOS only.
 struct RootTabs: View {
     @Bindable var session: Session
+    @Bindable private var alarm = WakeAlarm.shared
+    @Environment(\.scenePhase) private var phase
 
     var body: some View {
         TabView {
@@ -27,9 +29,24 @@ struct RootTabs: View {
             Tab("Day", systemImage: "clock") {
                 DayScreen(session: session)
             }
+            Tab("Alarm", systemImage: "alarm") {
+                AlarmScreen(session: session)
+            }
             Tab("Settings", systemImage: "gearshape") {
                 SettingsScreen(session: session)
             }
+        }
+        // A volley in progress makes the whole app the scanner. The cover
+        // has no way to dismiss it; scanning the code ends the volley,
+        // which takes the cover with it.
+        .fullScreenCover(isPresented: .constant(alarm.live)) {
+            WakeGate()
+                .interactiveDismissDisabled()
+        }
+        // Coming forward, from the alarm's I'm Up button or the Home
+        // Screen, is when the app finds out a volley is going.
+        .onChange(of: phase, initial: true) { _, new in
+            if new == .active { alarm.refresh() }
         }
         // The tab bar takes the mode's tint like everything else, so
         // switching mode moves the whole shell and not just the backdrop.
