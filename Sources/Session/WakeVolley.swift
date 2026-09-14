@@ -7,18 +7,21 @@ import Foundation
 /// a row of followers two minutes apart, each its own alarm, so Stop only
 /// ever silences the one that is ringing and the next one is already on
 /// its way. Only scanning the registered code cancels the rest. The row is
-/// capped at twenty minutes, because a phone that rings all morning in an
-/// empty flat is hostile rather than hard.
+/// capped at an hour: long enough that nobody sleeps through it, short
+/// enough that a phone left at home is not ringing at lunch.
 ///
 /// Pure date arithmetic, with no AlarmKit in it, so it compiles and is
 /// tested on the Mac where the framework does not exist.
 enum WakeVolley {
     /// Between rings.
     static let spacing: TimeInterval = 120
-    /// Rings in a volley, the first included.
-    static let count = 10
+    /// Rings in a volley, the first included. The system has a cap on
+    /// alarms it does not publish; `WakeAlarm` keeps what it gets.
+    static let count = 30
     /// How long after the first ring the volley is still going.
     static var window: TimeInterval { spacing * Double(count) }
+    /// The same, for a sentence.
+    static var minutes: Int { Int(window / 60) }
 
     /// The first ring after `now`: the next occurrence of the time on one
     /// of the days, or of the time alone when there are no days.

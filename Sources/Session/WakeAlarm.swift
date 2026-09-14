@@ -13,7 +13,7 @@ import Observation
 /// a repeating clock alarm, which the system re-arms after each ring and
 /// shows only while ringing.
 ///
-/// With Scan to Stop on, the first ring is followed by nine more two minutes
+/// With Scan to Stop on, the first ring is followed by a row more two minutes
 /// apart (see `WakeVolley`), and the only thing that cancels the followers
 /// is scanning the code registered here. The first ring is the alarm above,
 /// so a morning slept through does not cost the next one; the followers are
@@ -57,6 +57,9 @@ final class WakeAlarm {
     private(set) var denied = false
     /// Why the last attempt to schedule failed. Nil once one succeeds.
     private(set) var error: String?
+    /// How many rings the last volley got: all of them, or as many as the
+    /// system allowed.
+    private(set) var rings = WakeVolley.count
 
     private let defaults: UserDefaults
     /// Every alarm of ours the system holds, by id, with the follower's
@@ -96,7 +99,7 @@ final class WakeAlarm {
     }
 
     /// Whether a volley is going on right now: a first ring within the last
-    /// twenty minutes, and a follower of that ring still to come. Tomorrow's
+    /// hour, and a follower of that ring still to come. Tomorrow's
     /// followers, armed after a scan, sit a day away and do not count.
     private func isLive(at now: Date) -> Bool {
         guard scanToStop, code != nil,
@@ -210,16 +213,26 @@ final class WakeAlarm {
         }
     }
 
+    /// The system caps how many alarms an app may hold and does not say
+    /// where. A volley cut short at the cap is still a volley, so the
+    /// followers it refused are simply not there, and the tab says how
+    /// many rings there are.
     private func scheduleFollowers(from now: Date) async throws {
         guard let first = WakeVolley.next(time, days: days, after: now) else { return }
         let attributes = attributes(countdown: false)
-        for (id, date) in zip(Self.followerIDs, WakeVolley.followers(after: first)) {
+        rings = WakeVolley.count
+        for (index, (id, date)) in zip(Self.followerIDs, WakeVolley.followers(after: first)).enumerated() {
             guard !Task.isCancelled else { return }
-            _ = try await AlarmManager.shared.schedule(
-                id: id,
-                configuration: .alarm(schedule: .fixed(date), attributes: attributes, secondaryIntent: GetUpIntent(), sound: Self.sound)
-            )
-            scheduled[id] = date
+            do {
+                _ = try await AlarmManager.shared.schedule(
+                    id: id,
+                    configuration: .alarm(schedule: .fixed(date), attributes: attributes, secondaryIntent: GetUpIntent(), sound: Self.sound)
+                )
+                scheduled[id] = date
+            } catch AlarmManager.AlarmError.maximumLimitReached {
+                rings = index + 1
+                return
+            }
         }
     }
 

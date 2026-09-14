@@ -73,9 +73,11 @@ struct AlarmScreen: View {
                 if cameraDenied {
                     Text("Allow the camera for Entrain in Settings to register a code.")
                 } else if alarm.code == nil {
-                    Text("Scan any barcode or QR code that lives where you want to end up, like the toothpaste. On, the alarm rings again every 2 minutes for 20 minutes, and only scanning that code stops it.")
+                    Text("Scan any barcode or QR code that lives where you want to end up, like the toothpaste. On, the alarm rings again every 2 minutes for \(WakeVolley.minutes) minutes, and only scanning that code stops it.")
+                } else if alarm.rings < WakeVolley.count {
+                    Text("On, Stop only silences the ring in progress. iOS allows \(alarm.rings) rings, so the alarm rings again every 2 minutes for \(alarm.rings * 2) minutes until you scan the code, and then Wake plays.")
                 } else {
-                    Text("On, Stop only silences the ring in progress. The alarm rings again every 2 minutes for 20 minutes until you scan the code, and then Wake plays.")
+                    Text("On, Stop only silences the ring in progress. The alarm rings again every 2 minutes for \(WakeVolley.minutes) minutes until you scan the code, and then Wake plays.")
                 }
             }
         }
@@ -134,7 +136,7 @@ private struct RegisterCodeSheet: View {
 /// reason it is there. It cannot be dismissed; scanning the registered
 /// code is the way out, and it ends the volley and starts Wake. A code
 /// that is not the one is said so. A denied camera is pointed at Settings,
-/// and the volley runs out on its own after twenty minutes either way.
+/// and the volley runs out on its own after an hour either way.
 struct WakeGate: View {
     @Bindable private var alarm = WakeAlarm.shared
     @State private var wrong = false
@@ -172,7 +174,7 @@ struct WakeGate: View {
                 .clipShape(.rect(cornerRadius: 24))
                 .aspectRatio(1, contentMode: .fit)
             }
-            Text(wrong ? "Not that one." : "It rings again every 2 minutes for 20 minutes until you do.")
+            Text(wrong ? "Not that one." : "It rings again every 2 minutes for \(alarm.rings * 2) minutes until you do.")
                 .font(.footnote)
                 .foregroundStyle(wrong ? Mode.wake.tint : .secondary)
                 .multilineTextAlignment(.center)

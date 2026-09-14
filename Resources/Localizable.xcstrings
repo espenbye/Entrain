@@ -2502,26 +2502,6 @@
         }
       }
     },
-    "Scan any barcode or QR code that lives where you want to end up, like the toothpaste. On, the alarm rings again every 2 minutes for 20 minutes, and only scanning that code stops it.": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skann en strekkode eller QR-kode som ligger der du vil ende opp, som tannkremen. På ringer alarmen igjen hvert 2. minutt i 20 minutter, og bare å skanne den koden stopper den."
-          }
-        }
-      }
-    },
-    "On, Stop only silences the ring in progress. The alarm rings again every 2 minutes for 20 minutes until you scan the code, and then Wake plays.": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "På demper Stopp bare ringingen som pågår. Alarmen ringer igjen hvert 2. minutt i 20 minutter til du skanner koden, og så spiller Våkne."
-          }
-        }
-      }
-    },
     "Point the camera at the barcode or QR code that will stop the alarm.": {
       "localizations": {
         "nb": {
@@ -2582,16 +2562,6 @@
         }
       }
     },
-    "It rings again every 2 minutes for 20 minutes until you do.": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Den ringer igjen hvert 2. minutt i 20 minutter til du gjør det."
-          }
-        }
-      }
-    },
     "I'm Up": {
       "localizations": {
         "nb": {
@@ -2608,6 +2578,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tid"
+          }
+        }
+      }
+    },
+    "Scan any barcode or QR code that lives where you want to end up, like the toothpaste. On, the alarm rings again every 2 minutes for %lld minutes, and only scanning that code stops it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skann en strekkode eller QR-kode som ligger der du vil ende opp, som tannkremen. På ringer alarmen igjen hvert 2. minutt i %lld minutter, og bare å skanne den koden stopper den."
+          }
+        }
+      }
+    },
+    "On, Stop only silences the ring in progress. iOS allows %1$lld rings, so the alarm rings again every 2 minutes for %2$lld minutes until you scan the code, and then Wake plays.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "På demper Stopp bare ringingen som pågår. iOS tillater %1$lld ringinger, så alarmen ringer igjen hvert 2. minutt i %2$lld minutter til du skanner koden, og så spiller Våkne."
+          }
+        }
+      }
+    },
+    "On, Stop only silences the ring in progress. The alarm rings again every 2 minutes for %lld minutes until you scan the code, and then Wake plays.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "På demper Stopp bare ringingen som pågår. Alarmen ringer igjen hvert 2. minutt i %lld minutter til du skanner koden, og så spiller Våkne."
+          }
+        }
+      }
+    },
+    "It rings again every 2 minutes for %lld minutes until you do.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Den ringer igjen hvert 2. minutt i %lld minutter til du gjør det."
           }
         }
       }

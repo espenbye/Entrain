@@ -35,19 +35,20 @@ struct WakeVolleyTests {
         #expect(WakeVolley.last(Self.seven, days: [], before: Self.date(14, 6, 59), calendar: Self.calendar) == Self.date(13, 7))
     }
 
-    @Test func followersAreTwoMinutesApartForTwentyMinutes() {
+    @Test func followersAreTwoMinutesApartForAnHour() {
         let followers = WakeVolley.followers(after: Self.seven)
         #expect(followers.count == WakeVolley.count - 1)
         #expect(followers.first == Self.date(14, 7, 2))
-        #expect(followers.last == Self.date(14, 7, 18))
-        #expect(WakeVolley.window == 1200)
+        #expect(followers.last == Self.date(14, 7, 58))
+        #expect(WakeVolley.window == 3600)
+        #expect(WakeVolley.minutes == 60)
     }
 
     @Test func liveOnlyInsideTheWindowAfterAFirstRing() {
         #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(14, 6, 59), calendar: Self.calendar) == nil)
         #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(14, 7), calendar: Self.calendar) == Self.date(14, 7))
-        #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(14, 7, 19), calendar: Self.calendar) == Self.date(14, 7))
-        #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(14, 7, 20), calendar: Self.calendar) == nil)
+        #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(14, 7, 59), calendar: Self.calendar) == Self.date(14, 7))
+        #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(14, 8), calendar: Self.calendar) == nil)
         // Saturday is not a picked day, so Friday's ring is long over.
         #expect(WakeVolley.liveStart(Self.seven, days: Self.weekdays, at: Self.date(19, 7, 5), calendar: Self.calendar) == nil)
     }
