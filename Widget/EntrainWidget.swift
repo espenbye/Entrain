@@ -14,10 +14,13 @@ struct EntrainWidgets: WidgetBundle {
         #if !os(watchOS)
         FocusControl()
         GammaControl()
+        SprintControl()
         RelaxControl()
         MeditateControl()
+        RestoreControl()
         SleepControl()
         DeepSleepControl()
+        NapControl()
         WindDownControl()
         WakeControl()
         #endif
@@ -261,10 +264,13 @@ func modeControl(_ mode: Mode) -> some ControlWidgetConfiguration {
 
 struct FocusControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.focus) } }
 struct GammaControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.gamma) } }
+struct SprintControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.sprint) } }
 struct RelaxControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.relax) } }
 struct MeditateControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.meditate) } }
+struct RestoreControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.restore) } }
 struct SleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.sleep) } }
 struct DeepSleepControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.deepSleep) } }
+struct NapControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.nap) } }
 struct WindDownControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.windDown) } }
 struct WakeControl: ControlWidget { var body: some ControlWidgetConfiguration { modeControl(.wake) } }
 #endif

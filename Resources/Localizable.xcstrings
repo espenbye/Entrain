@@ -2621,6 +2621,96 @@
           }
         }
       }
+    },
+    "Sprint": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprint"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvile"
+          }
+        }
+      }
+    },
+    "Nap": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lur"
+          }
+        }
+      }
+    },
+    "Work in rounds": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jobb i runder"
+          }
+        }
+      }
+    },
+    "Rest without sleeping": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvile uten å sove"
+          }
+        }
+      }
+    },
+    "Short sleep, then up": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kort søvn, så opp"
+          }
+        }
+      }
+    },
+    "Twenty-five minutes at 16 Hz, five at 10 Hz, and round again. The rate walks down into the break and back up for the next round, so the sound keeps the rhythm of the work instead of a clock doing it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tjuefem minutter på 16 Hz, fem på 10 Hz, og så en ny runde. Takten går ned inn i pausen og opp igjen til neste runde, så lyden holder arbeidsrytmen i stedet for en klokke."
+          }
+        }
+      }
+    },
+    "4 Hz is the edge of theta and delta, where the body rests deeply without sleeping: the state a yoga nidra or a non-sleep deep rest aims for. Slow enough to feel as well as hear.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 Hz er grensen mellom theta og delta, der kroppen hviler dypt uten å sove: tilstanden yoga nidra eller dyp hvile uten søvn sikter mot. Sakte nok til å kjennes så vel som høres."
+          }
+        }
+      }
+    },
+    "2 Hz to drift on, then delta walked up to beta over the last third of the timer, so the nap ends awake instead of groggy. Keep it under thirty minutes to stay out of deep sleep, or take a full ninety for a whole cycle.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 Hz å drive av på, så delta gått opp til beta over den siste tredjedelen av tiden, så luren ender våken framfor omtåket. Hold den under tretti minutter for å unngå dyp søvn, eller ta hele nitti for en full syklus."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

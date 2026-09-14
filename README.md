@@ -8,10 +8,13 @@ A Mac, iPhone, iPad and Apple Watch app that plays a generated soundscape with r
 | ------------------ | ---------- | --------------------- | ------ | ---------------------------------- |
 | Deep work          | Focus      | 16 Hz                 | 0.5    | Alert, task-oriented               |
 | Memory and learning | Recall    | 40 Hz                 | 0.3    | Alert; 40 Hz steady-state response |
+| Work in rounds     | Sprint     | 16 Hz for 25 min, 10 Hz for 5, repeating | 0.5 / 0.4 | Alert, in rounds with a break |
 | Unwind             | Relax      | 10 Hz                 | 0.4    | Calm, unwinding                    |
 | Stillness          | Meditate   | 6 Hz                  | 0.5    | Deep, inward attention             |
+| Rest without sleeping | Restore | 4 Hz                  | 0.5    | Deep rest this side of sleep       |
 | Fall asleep        | Sleep      | 2 Hz                  | 0.3 → 0 over 20 min | Drifting off          |
 | Stay asleep        | Deep Sleep | 1 Hz                  | 0.15 → 0.5 per sleep cycle | Slow-wave sleep |
+| Short sleep, then up | Nap      | 2 Hz, then 2 → 16 Hz over the last third of the timer | 0.4 | A nap that ends awake |
 | Ease toward bed    | Wind Down  | 10 → 2 Hz over the timer | 0.4    | Bedtime, alpha down to delta       |
 | Gentle rise        | Wake       | 2 → 16 Hz over the timer | 0.5    | After a nap, delta back up to beta |
 
@@ -19,7 +22,7 @@ The player leads with the first column: someone choosing a sound is choosing wha
 
 Each mode sets the modulation rate and depth. On top of that you pick:
 
-- **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus and Wind Down start on Rain, Gamma, Relax, Meditate and Wake on Pad. A mix is scaled so it sits at the level of a single sound.
+- **Sound**: any combination of Rain, Pad, Drone and Noise, remembered per mode. Focus, Sprint and Wind Down start on Rain, Gamma, Relax, Meditate, Restore and Wake on Pad, Nap on Noise. A mix is scaled so it sits at the level of a single sound.
 - **Intensity**: Low, Medium, High, Strong (scales modulation depth). Medium is right for most people; Strong exists for the listener who under-responds to ordinary background sound and finds the quiet version does nothing at all. It stops at 1.45× rather than going further because roughness grows with depth, and the envelope tests hold every mode, at every rate it passes through and every intensity it can be played at, under the roughness of Gamma's own 40 Hz sine. Entrain asks about this once on first launch, in one skippable question about how background sound works for you, and the answer sets the default; Settings shows the same setting afterwards, in the same words
 - **Timer**: Endless, 15 to 90 minutes, or 2, 4 or 8 hours. A timed session fades out when it ends. Pausing keeps the countdown; it resumes where it stopped.
 - **Binaural**: optional binaural beat at the same rate. It needs headphones: over speakers the app says so and mutes the beat until headphones come back, leaving the setting on
@@ -28,7 +31,9 @@ Each mode sets the modulation rate and depth. On top of that you pick:
 
 Gamma is shallow on purpose: 40 Hz is the most reproducible rate for driving a steady-state response on EEG, but at ordinary depth it sounds like a buzz.
 
-Wind Down and Wake ramp their rate linearly over play time, then hold; pausing stops the clock, and switching mode restarts it. A timed session ramps over the whole timer: Wake arrives at 16 Hz as the timer ends, Wind Down at 2 Hz as its five-minute taper begins, so a 30-minute Wind Down walks 10 to 2 Hz in 25 minutes. Endless sessions ramp over 20 minutes (Wind Down) and 15 (Wake). Wind Down starts on Rain and tapers over the last five minutes of a timed session like the sleep modes; Wake starts on Pad.
+Wind Down and Wake ramp their rate linearly over play time, then hold; pausing stops the clock, and switching mode restarts it. A timed session ramps over the whole timer: Wake arrives at 16 Hz as the timer ends, Wind Down at 2 Hz as its five-minute taper begins, so a 30-minute Wind Down walks 10 to 2 Hz in 25 minutes. Endless sessions ramp over 20 minutes (Wind Down) and 15 (Wake). Nap is Sleep's 2 Hz and Wake's rise in one table: flat for the first two thirds of the timer, then delta walked up to beta over the last third, so a 30-minute nap rises over its last ten minutes and ends awake rather than in the middle of a cycle. It is a daytime mode, not a sleep bed: sound and intensity stay tunable, there is no taper and no bedtime signature, and its depth holds still so that only the rate stretches with the timer.
+
+Sprint cycles rather than ramps: twenty-five minutes at 16 Hz, then five at 10 Hz, walking down into the break and back up out of it over two minutes each way, and round again for as long as the session runs. A rate that cycles is read at play time and never stretched to the timer. Restore is a steady 4 Hz at the edge of theta and delta, the deep rest without sleep that yoga nidra and non-sleep deep rest aim for; it sits in the rest shelf under Meditate, keeps Meditate's room and gets haptics, since 4 Hz is slow enough to feel. Wind Down starts on Rain and tapers over the last five minutes of a timed session like the sleep modes; Wake starts on Pad.
 
 Meditate can guide the breath. Pick a breathing pattern and a length in the session card: Coherent (5 in, 5 out), Box (4-4-4-4), 4-7-8 or Long Exhale (4 in, 6 out), for 1, 3, 5 or 10 minutes or the whole session. While it runs, a circle in the player swells over the inhale, holds and shrinks over the exhale, naming the phase and counting its seconds, and a short tone marks each phase: rising to breathe in, steady to hold, falling to breathe out, with a longer note when the exercise is over. A timed exercise rounds to whole breaths, and the soundscape keeps playing after it ends. Pausing, or changing the pattern or length, starts the exercise over from the first breath. The pattern and length sync between devices like the mode.
 

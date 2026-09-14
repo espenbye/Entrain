@@ -57,9 +57,12 @@ extension Room {
         switch mode {
         case .focus: Space(preset: .smallRoom, level: -20, blend: 0.12)
         case .gamma: Space(preset: .smallRoom, level: -18, blend: 0.15)
+        case .sprint: Space(preset: .smallRoom, level: -20, blend: 0.12)
         case .relax: Space(preset: .mediumRoom, level: -12, blend: 0.30)
         case .meditate: Space(preset: .largeRoom, level: -10, blend: 0.38)
+        case .restore: Space(preset: .largeRoom, level: -11, blend: 0.34)
         case .windDown: Space(preset: .mediumRoom, level: -12, blend: 0.28)
+        case .nap: Space(preset: .mediumRoom, level: -16, blend: 0.18)
         case .wake: Space(preset: .mediumRoom, level: -14, blend: 0.22)
         case .sleep, .deepSleep: Space(preset: .smallRoom, level: -24, blend: 0.08)
         }
