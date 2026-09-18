@@ -56,7 +56,10 @@ struct CircadianDayTests {
         #expect(day.span(at: Self.date(13))?.phase == .sharpest)
         #expect(day.span(at: Self.date(15))?.phase == .dip)
         #expect(day.span(at: Self.date(15))?.mode == .sprint)
-        #expect(day.span(at: Self.date(16))?.phase == .afternoon)
+        // Seventeen and not sixteen: the recovery begins exactly at 16:00 on
+        // a clock day, and a date on a boundary is inside both spans that
+        // meet there, so `span(at:)` answers with the one that is ending.
+        #expect(day.span(at: Self.date(17))?.phase == .afternoon)
         #expect(day.span(at: Self.date(20))?.phase == .windDown)
         #expect(day.span(at: Self.date(23))?.phase == .night)
     }
