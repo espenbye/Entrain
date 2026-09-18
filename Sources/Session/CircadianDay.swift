@@ -1,12 +1,14 @@
 import Foundation
 
-/// What the body clock is doing at an hour, named. There are exactly six
-/// because `Suggestion` has exactly six branches: this is the same opinion
-/// under another name, not a second schedule beside it. Inventing a
-/// seventh boundary here — a post-lunch dip at wake plus seven hours, a
-/// temperature minimum two hours before it — would put a table in this file
-/// that says almost what `Suggestion` says, and the two would drift the
-/// first time either was touched.
+/// What the body clock is doing at an hour, named. There are exactly as
+/// many as `Suggestion` has branches: this is the same opinion under
+/// another name, not a second schedule beside it. Inventing a boundary
+/// here that `Suggestion` does not have — a post-lunch dip at wake plus
+/// seven hours, a temperature minimum two hours before it — would put a
+/// table in this file that says almost what `Suggestion` says, and the two
+/// would drift the first time either was touched. The dip below is not
+/// that: it is a boundary `Suggestion` draws, in the sun `Suggestion`
+/// draws the others in, and it is named here because it is drawn there.
 ///
 /// A phase describes the clock; the mode describes what to play through it.
 /// They are not the same thing, which is why both are carried: on a day
@@ -14,12 +16,13 @@ import Foundation
 /// it is simply played as Relax, and a day view that collapsed the two
 /// would report the body had no morning at all.
 enum CircadianPhase: String, Codable, CaseIterable, Sendable {
-    case morning, sharpest, afternoon, windDown, night, wake
+    case morning, sharpest, dip, afternoon, windDown, night, wake
 
     var title: LocalizedStringResource {
         switch self {
         case .morning: "Morning"
         case .sharpest: "Midday"
+        case .dip: "Afternoon Dip"
         case .afternoon: "Afternoon"
         case .windDown: "Wind-Down Window"
         case .night: "Night"
@@ -36,8 +39,10 @@ enum CircadianPhase: String, Codable, CaseIterable, Sendable {
             "Alertness climbs over the first hours after waking, and light this early pulls the clock earlier. The carrier is at its brightest here."
         case .sharpest:
             "The middle of the day is where attention holds longest and reaction times are shortest."
+        case .dip:
+            "Alertness sags a few hours after midday, most noticeably around seven hours after waking. Attention holds in short stretches here rather than long ones, and this is the one part of the day where a nap costs the night nothing."
         case .afternoon:
-            "Alertness dips in the afternoon, most noticeably around seven hours after waking, and recovers into the evening."
+            "Alertness recovers from the dip and holds into the evening, then falls away as melatonin starts to rise."
         case .windDown:
             "Melatonin starts rising a couple of hours before your usual bedtime. Bright light and sharp sound push it later, so Entrain goes warm and shallow."
         case .night:
@@ -101,8 +106,17 @@ struct CircadianDay: Equatable, Sendable {
     var isAnchored: Bool { bedtime != nil }
 
     /// The span holding `date`, or nil when it falls outside the day.
+    ///
+    /// Half-open, because the spans meet end to end. `DateInterval.contains`
+    /// takes both of its ends, so a date exactly on a boundary sits in the
+    /// span that is ending as well as the one beginning, and the first match
+    /// wins: the ring would name the stretch that has just finished while
+    /// `Suggestion` names the one that has just started, for the minute the
+    /// two share. The day's last midnight belongs to the last span, which is
+    /// what the fallback is for.
     func span(at date: Date) -> Span? {
-        spans.first { $0.interval.contains(date) } ?? (date == end ? spans.last : nil)
+        spans.first { $0.interval.start <= date && date < $0.interval.end }
+            ?? (date == end ? spans.last : nil)
     }
 
     /// How far through the day `date` sits, 0...1, for placing it on the ring.

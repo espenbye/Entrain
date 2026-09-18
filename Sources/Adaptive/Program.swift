@@ -14,7 +14,9 @@ import Foundation
 /// should make rather than find made for them. Where the day says sleep,
 /// the program holds Wind Down and names what it is holding back, so the
 /// last step into bed stays a tap. Wake is not held: it is a fifteen-minute
-/// ramp out of a nap, not a night.
+/// ramp out of a nap, not a night. Nor is Nap, for the same reason and one
+/// more: it is half an hour that ends by waking you, and the day only ever
+/// asks for it at the top of the afternoon dip.
 struct Program {
     /// How far ahead the next change is looked for, and how finely. Every
     /// boundary `Suggestion` has falls on a solar or habitual time, none of
