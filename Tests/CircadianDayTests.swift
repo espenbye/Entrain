@@ -36,10 +36,14 @@ struct CircadianDayTests {
 
     /// The ring must say what the suggestion card says at the same minute,
     /// or the app has two opinions about the hour.
+    ///
+    /// Every five minutes rather than once an hour: a boundary is exactly
+    /// where the two can disagree, the day is built on a five-minute grid,
+    /// and an hourly sample walks straight past all of them.
     @Test func agreesWithTheSuggestion() {
         let day = Self.day()
-        for hour in 0..<24 {
-            let when = Self.date(hour, 30)
+        for minute in stride(from: 0, to: 24 * 60, by: 5) {
+            let when = Self.date(0).addingTimeInterval(Double(minute) * 60)
             let suggestion = Suggestion.at(
                 when, day: { SolarDay.clock(on: $0, calendar: Self.calendar) }, calendar: Self.calendar
             )
@@ -56,10 +60,9 @@ struct CircadianDayTests {
         #expect(day.span(at: Self.date(13))?.phase == .sharpest)
         #expect(day.span(at: Self.date(15))?.phase == .dip)
         #expect(day.span(at: Self.date(15))?.mode == .sprint)
-        // Seventeen and not sixteen: the recovery begins exactly at 16:00 on
-        // a clock day, and a date on a boundary is inside both spans that
-        // meet there, so `span(at:)` answers with the one that is ending.
-        #expect(day.span(at: Self.date(17))?.phase == .afternoon)
+        // The recovery opens exactly at 16:00 on a clock day, and a span
+        // holds its start and not its end, so the boundary is the recovery's.
+        #expect(day.span(at: Self.date(16))?.phase == .afternoon)
         #expect(day.span(at: Self.date(20))?.phase == .windDown)
         #expect(day.span(at: Self.date(23))?.phase == .night)
     }

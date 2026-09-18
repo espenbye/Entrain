@@ -106,8 +106,17 @@ struct CircadianDay: Equatable, Sendable {
     var isAnchored: Bool { bedtime != nil }
 
     /// The span holding `date`, or nil when it falls outside the day.
+    ///
+    /// Half-open, because the spans meet end to end. `DateInterval.contains`
+    /// takes both of its ends, so a date exactly on a boundary sits in the
+    /// span that is ending as well as the one beginning, and the first match
+    /// wins: the ring would name the stretch that has just finished while
+    /// `Suggestion` names the one that has just started, for the minute the
+    /// two share. The day's last midnight belongs to the last span, which is
+    /// what the fallback is for.
     func span(at date: Date) -> Span? {
-        spans.first { $0.interval.contains(date) } ?? (date == end ? spans.last : nil)
+        spans.first { $0.interval.start <= date && date < $0.interval.end }
+            ?? (date == end ? spans.last : nil)
     }
 
     /// How far through the day `date` sits, 0...1, for placing it on the ring.
