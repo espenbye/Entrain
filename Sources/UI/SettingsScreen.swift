@@ -149,7 +149,7 @@ private struct SleepTargetSection: View {
 private struct NotificationsSection: View {
     @Bindable private var notifications = PhaseNotifications.shared
 
-    private static let order: [CircadianPhase] = [.wake, .morning, .sharpest, .afternoon, .windDown, .night]
+    private static let order: [CircadianPhase] = [.wake, .morning, .sharpest, .dip, .afternoon, .windDown, .night]
 
     var body: some View {
         Section {

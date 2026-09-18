@@ -351,6 +351,16 @@
         }
       }
     },
+    "Afternoon Dip": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ettermiddagsdipp"
+          }
+        }
+      }
+    },
     "Aiming For": {
       "localizations": {
         "nb": {
@@ -381,12 +391,22 @@
         }
       }
     },
-    "Alertness dips in the afternoon, most noticeably around seven hours after waking, and recovers into the evening.": {
+    "Alertness recovers from the dip and holds into the evening, then falls away as melatonin starts to rise.": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
-            "value": "Våkenheten faller om ettermiddagen, tydeligst rundt sju timer etter at du våknet, og tar seg opp igjen mot kvelden."
+            "value": "Våkenheten tar seg opp igjen etter dippen og holder seg ut kvelden, før den faller når melatoninet begynner å stige."
+          }
+        }
+      }
+    },
+    "Alertness sags a few hours after midday, most noticeably around seven hours after waking. Attention holds in short stretches here rather than long ones, and this is the one part of the day where a nap costs the night nothing.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Våkenheten faller noen timer etter midt på dagen, tydeligst rundt sju timer etter at du våknet. Oppmerksomheten holder i korte økter her, ikke lange, og dette er den ene delen av døgnet der en lur ikke går ut over natten."
           }
         }
       }
@@ -2018,6 +2038,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Foreslått for ettermiddagen"
+          }
+        }
+      }
+    },
+    "Suggested for the afternoon dip": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått for ettermiddagsdippen"
+          }
+        }
+      }
+    },
+    "Suggested after a short night": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foreslått etter en kort natt"
           }
         }
       }

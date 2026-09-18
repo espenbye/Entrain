@@ -54,6 +54,8 @@ struct CircadianDayTests {
         #expect(day.span(at: Self.date(6))?.phase == .wake)
         #expect(day.span(at: Self.date(9))?.phase == .morning)
         #expect(day.span(at: Self.date(13))?.phase == .sharpest)
+        #expect(day.span(at: Self.date(15))?.phase == .dip)
+        #expect(day.span(at: Self.date(15))?.mode == .sprint)
         #expect(day.span(at: Self.date(16))?.phase == .afternoon)
         #expect(day.span(at: Self.date(20))?.phase == .windDown)
         #expect(day.span(at: Self.date(23))?.phase == .night)

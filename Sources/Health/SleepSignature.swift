@@ -29,6 +29,12 @@ struct SleepSignature: Equatable, Sendable {
     var drift: TimeInterval? = nil
     /// Nights the signature rests on.
     var nights: Int
+    /// The most recent night Health holds, kept whole beside the averages.
+    /// Everything else here is the fortnight's habit, which is the right
+    /// thing to hang a bedtime off and the wrong thing to ask about today:
+    /// a habit cannot tell you that last night was short, because a short
+    /// night is exactly what an average is built to absorb.
+    var last: SleepNight? = nil
 }
 
 extension SleepSignature {
@@ -68,6 +74,28 @@ extension SleepSignature {
     /// night cannot collapse or stretch the arc.
     var onset: TimeInterval? { latency.map { min(45 * 60, max(5 * 60, $0)) } }
 
+    /// A night short enough to be worth sleeping through the afternoon dip
+    /// for. Six hours is the conventional cutoff for short sleep, under the
+    /// seven to nine hours recommended for an adult (National Sleep
+    /// Foundation 2015), and it is one night rather than a habit: it says
+    /// today is short, not that you sleep too little.
+    static let shortNight: TimeInterval = 6 * 3600
+
+    /// Whether the night that ended before `date` was a short one.
+    ///
+    /// The night has to be the one just gone: a day later, with nothing new
+    /// recorded, the answer is no rather than a stale yes, and before this
+    /// morning's wake there is no night behind `date` at all. A night below
+    /// `SleepNight.shortest` never became a `SleepNight` in the first place,
+    /// so the very worst nights are invisible here — that floor is there to
+    /// keep a watch that came off out of the averages, and it is the right
+    /// trade for the averages.
+    func wasShort(before date: Date) -> Bool {
+        guard let last, last.asleep < Self.shortNight else { return false }
+        let since = date.timeIntervalSince(last.wake)
+        return since >= 0 && since < 86400
+    }
+
     /// The signature over the most recent `window` nights, or nil when
     /// there are none. Nights with no data were never in `nights` and do
     /// not count against it.
@@ -86,7 +114,8 @@ extension SleepSignature {
             latency: latencies.isEmpty ? nil : latencies[latencies.count / 2],
             spread: spread,
             drift: drift(of: Array(recent), calendar: calendar),
-            nights: recent.count
+            nights: recent.count,
+            last: recent.last
         )
     }
 

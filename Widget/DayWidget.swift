@@ -51,7 +51,10 @@ struct DayProvider: TimelineProvider {
 
     /// What a fresh install draws before the app has ever run: the clock
     /// day, which is the same fallback everything else uses without Health
-    /// or a location.
+    /// or a location. Written out by hand because `Suggestion` is not in
+    /// this target, so it has to be kept honest by eye: without a
+    /// signature the night's edges are the sun's, which puts Wind Down at
+    /// sunset and the night three hours after it.
     private static func placeholder(at date: Date) -> CircadianDay {
         DayPhases(
             spans: [
@@ -59,9 +62,10 @@ struct DayProvider: TimelineProvider {
                 .init(phase: .wake, mode: .wake, start: 5 * 3600),
                 .init(phase: .morning, mode: .focus, start: 7 * 3600),
                 .init(phase: .sharpest, mode: .gamma, start: 11 * 3600 + 48 * 60),
-                .init(phase: .afternoon, mode: .relax, start: 14 * 3600 + 12 * 60),
-                .init(phase: .windDown, mode: .windDown, start: 16 * 3600),
-                .init(phase: .night, mode: .sleep, start: 19 * 3600),
+                .init(phase: .dip, mode: .sprint, start: 14 * 3600 + 12 * 60),
+                .init(phase: .afternoon, mode: .relax, start: 16 * 3600),
+                .init(phase: .windDown, mode: .windDown, start: 19 * 3600),
+                .init(phase: .night, mode: .sleep, start: 22 * 3600),
             ],
             sunrise: 7 * 3600, sunset: 19 * 3600
         ).day(on: date)

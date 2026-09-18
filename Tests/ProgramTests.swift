@@ -19,6 +19,7 @@ struct ProgramTests {
     @Test func playsWhatTheDaySuggests() {
         #expect(Self.plan(9).mode == .focus)
         #expect(Self.plan(13).mode == .gamma)
+        #expect(Self.plan(15).mode == .sprint)
         #expect(Self.plan(16).mode == .relax)
         #expect(Self.plan(20).mode == .windDown)
         #expect(Self.plan(5).mode == .wake)
@@ -45,8 +46,22 @@ struct ProgramTests {
         #expect(morning.at == SuggestionTests.date(11, 50))
 
         let midday = Self.plan(13)
-        #expect(midday.next == .relax)
+        #expect(midday.next == .sprint)
         #expect(midday.at == SuggestionTests.date(14, 15))
+
+        // And the dip gives way to the recovery at three quarters of the day.
+        let dip = Self.plan(15)
+        #expect(dip.next == .relax)
+        #expect(dip.at == SuggestionTests.date(16))
+    }
+
+    /// The bed the program refuses to make is a night, not a nap. Half an
+    /// hour that ends by waking you is a change of background like any
+    /// other, so the program takes it and does not ask.
+    @Test func itTakesTheNapTheDipAsksFor() {
+        let dip = Self.plan(14, 15, sleep: SuggestionTests.shortSleeper())
+        #expect(dip.mode == .nap)
+        #expect(!dip.asks)
     }
 
     /// A settled bedtime moves the program's boundaries with the suggestion's.
