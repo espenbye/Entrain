@@ -272,4 +272,47 @@ struct SessionLogTests {
     @Test func theLogOutlivesTheComparisonWindow() {
         #expect(SessionLog.window > NightEffect.window)
     }
+
+    // MARK: Recovering a stretch nobody closed
+
+    static func scratch() -> (UserDefaults, String) {
+        let suite = "no.espenbye.entrain.tests.\(UUID().uuidString)"
+        return (UserDefaults(suiteName: suite)!, suite)
+    }
+
+    /// A stretch that has only just opened still counts as one, so the
+    /// shortest length that counts is its floor. Otherwise `appending`
+    /// would drop the very thing recovery exists to keep.
+    @Test func anOpenStretchRecoversWithAtLeastTheShortestLength() {
+        let (defaults, suite) = Self.scratch()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let start = Self.now.addingTimeInterval(-3600)
+        SessionLog.opening(.sleep, from: start, through: start, in: defaults)
+        #expect(SessionLog.recover(in: defaults, now: Self.now)
+            == [PlayedSession(.sleep, DateInterval(start: start, duration: SessionLog.shortest))])
+    }
+
+    /// A bed left playing all night and force quit before morning recovers
+    /// as far as it was last known to have got, not as the five minutes it
+    /// opened with. The short version would end before the night's window
+    /// opened and file the night as quiet, which is the one error the whole
+    /// mechanism exists to prevent.
+    @Test func anOpenStretchRecoversAsFarAsItWasKnownToHaveGot() {
+        let (defaults, suite) = Self.scratch()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let start = Self.now.addingTimeInterval(-8 * 3600)
+        SessionLog.opening(.sleep, from: start, through: start, in: defaults)
+        SessionLog.opening(.sleep, from: start, through: start.addingTimeInterval(6 * 3600), in: defaults)
+        let log = SessionLog.recover(in: defaults, now: Self.now)
+        #expect(log == [PlayedSession(.sleep, DateInterval(start: start, duration: 6 * 3600))])
+        // Folding it in forgets it, so the next launch does not log it twice.
+        #expect(SessionLog.recover(in: defaults, now: Self.now) == log)
+    }
+
+    /// Nothing left open is the ordinary case, and it costs no write.
+    @Test func recoveringWithNothingOpenLeavesTheLogAlone() {
+        let (defaults, suite) = Self.scratch()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        #expect(SessionLog.recover(in: defaults, now: Self.now).isEmpty)
+    }
 }

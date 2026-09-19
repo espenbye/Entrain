@@ -226,6 +226,10 @@ final class Session {
     /// change is what ends the stretch and `mode` is already the new one by
     /// then.
     private var slept: (mode: Mode, start: Date)?
+    /// Keeps the open stretch's end up to date while it plays, so a force
+    /// quit leaves behind how far the bed actually got. See
+    /// `SessionLog.opening`.
+    private var sleptMark: Task<Void, Never>?
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
     /// Play time in this mode, which is what a ramp walks along. `played`
@@ -538,11 +542,22 @@ final class Session {
         let start = clock()
         slept = (mode, start)
         // A bed outlives the app that started it more often than anything
-        // else here does; see `SessionLog.opening`.
-        SessionLog.opening(mode, at: start, in: defaults)
+        // else here does, so the stretch is on disk from its first second
+        // and kept current from there; see `SessionLog.opening`.
+        SessionLog.opening(mode, from: start, through: start, in: defaults)
+        sleptMark?.cancel()
+        sleptMark = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(SessionLog.mark))
+                guard !Task.isCancelled, let self, let slept = self.slept else { return }
+                SessionLog.opening(slept.mode, from: slept.start, through: self.clock(), in: self.defaults)
+            }
+        }
     }
 
     private func endSleepLog() {
+        sleptMark?.cancel()
+        sleptMark = nil
         guard let slept else { return }
         self.slept = nil
         SessionLog.closing(in: defaults)

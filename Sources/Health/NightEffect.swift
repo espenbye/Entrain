@@ -168,6 +168,9 @@ extension NightEffect {
         return merged
     }
 
+    /// One entry per measure that cleared the floor on both sides. A
+    /// measure is dropped rather than shown thin, because a figure with
+    /// four nights under it reads exactly like one with forty.
     private static func comparisons(
         withSound: [SleepNight], quiet: [SleepNight],
         restingHeartRate: [Date: Double], calendar: Calendar
@@ -185,6 +188,9 @@ extension NightEffect {
         }
     }
 
+    /// One value per night that has one for `measure`. Nights Health had
+    /// nothing for are absent rather than zero, which is why the counts are
+    /// taken from what comes back here and not from `nights`.
     private static func values(
         of measure: Measure, over nights: [SleepNight],
         rate: [Date: Double], calendar: Calendar
@@ -209,6 +215,8 @@ extension NightEffect {
         Dictionary(values.map { (calendar.startOfDay(for: $0.day), $0.value) }, uniquingKeysWith: { _, last in last })
     }
 
+    /// The middle value, or the mean of the middle two. Nil for an empty
+    /// series, which is how a measure with nothing behind it drops out.
     static func median(_ values: [Double]) -> Double? {
         guard !values.isEmpty else { return nil }
         let sorted = values.sorted()

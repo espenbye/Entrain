@@ -16,11 +16,30 @@ struct DayScreen: View {
     @Bindable var session: Session
     @Bindable private var daylight = Daylight.shared
     private let health = HealthSignals.shared
-    /// Recomputed when Health hands over a different set of nights or a
-    /// session lands in the log, and not once a minute with the ring: the
-    /// nights behind it move once a day at most, and the screen redraws
-    /// sixty times an hour.
+    /// Recomputed when what it is drawn from changes, and not once a
+    /// minute with the ring: the nights behind it move once a day at most,
+    /// and the screen redraws sixty times an hour.
     @State private var nights: NightEffect = .empty
+
+    /// Everything `NightEffect` is computed from, in one comparable value,
+    /// so the task below reruns exactly when the answer could have moved.
+    /// Counting the nights and the sessions is not enough: a night already
+    /// read is replaced by a fuller version of itself as the morning's
+    /// fragments arrive, and the log can prune an old stretch in the same
+    /// breath as it adds a new one, and neither moves a count.
+    private struct Inputs: Equatable {
+        var nights: [SleepNight]
+        var sessions: [PlayedSession]
+        var rate: [DailyValue]
+    }
+
+    private var inputs: Inputs {
+        Inputs(
+            nights: health.nights,
+            sessions: session.sleepLog,
+            rate: health.series[.restingHeartRate] ?? []
+        )
+    }
     #if os(macOS)
     @Environment(\.dismiss) private var dismiss
     #endif
@@ -92,11 +111,12 @@ struct DayScreen: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .background(Backdrop(mode: session.mode))
-            .task(id: [health.nights.count, session.sleepLog.count]) {
+            .task(id: inputs) {
+                let inputs = self.inputs
                 nights = NightEffect.from(
-                    nights: health.nights,
-                    sessions: session.sleepLog,
-                    restingHeartRate: health.series[.restingHeartRate] ?? []
+                    nights: inputs.nights,
+                    sessions: inputs.sessions,
+                    restingHeartRate: inputs.rate
                 )
             }
         }
