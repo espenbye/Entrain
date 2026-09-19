@@ -54,6 +54,17 @@ struct SleepNight: Equatable, Codable, Sendable {
 
     var bedtime: Date { interval.start }
     var wake: Date { interval.end }
+
+    /// Time between falling asleep and waking that was not recorded as
+    /// sleep: getting up, or lying awake at four. It is the span minus the
+    /// sleep in it rather than a sum of awake samples, because the night
+    /// belongs to one source and only that source's account of it is used.
+    ///
+    /// On a watch that stages the whole night a gap is a wakening, which is
+    /// what this means. On a sparser source it is only a gap, and the
+    /// figure reads high — one more reason nothing here is a measurement to
+    /// act on. See `NightEffect`, which is the only thing that reads it.
+    var awake: TimeInterval { max(0, interval.duration - asleep) }
 }
 
 extension SleepNight {

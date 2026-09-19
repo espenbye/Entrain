@@ -2941,6 +2941,96 @@
           }
         }
       }
+    },
+    "Asleep After": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sovnet etter"
+          }
+        }
+      }
+    },
+    "Awake in the Night": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Våken i løpet av natten"
+          }
+        }
+      }
+    },
+    "From %lld nights with a sound and %lld without, out of the %lld this device has on file.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra %1$lld netter med lyd og %2$lld uten, av de %3$lld denne enheten har notert."
+          }
+        }
+      }
+    },
+    "From putting a sleep bed on to the first sleep your watch recorded, over %lld nights. Health cannot work this out on its own, because it does not know when the sound started.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra du satte på en søvnlyd til den første søvnen klokken registrerte, over %lld netter. Helse kan ikke regne dette ut selv, for den vet ikke når lyden begynte."
+          }
+        }
+      }
+    },
+    "Nights": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Netter"
+          }
+        }
+      }
+    },
+    "Quiet": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stille"
+          }
+        }
+      }
+    },
+    "These are your own nights and not an experiment. You choose the nights you put a sound on, and those are not the same as the nights you do not, so anything here describes what happened rather than what caused it. Sleep comes from your watch, which tells sleep from waking well and one stage from another poorly, so nothing here counts deep sleep.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dette er dine egne netter og ikke et eksperiment. Du velger selv hvilke netter du setter på en lyd, og de nettene er ikke de samme som nettene du lar være, så alt her beskriver hva som skjedde og ikke hva som forårsaket det. Søvnen kommer fra klokken din, som skiller søvn fra våkenhet godt og ett søvnstadium fra et annet dårlig, så ingenting her teller dyp søvn."
+          }
+        }
+      }
+    },
+    "Time Asleep": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sovetid"
+          }
+        }
+      }
+    },
+    "With Sound": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Med lyd"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
