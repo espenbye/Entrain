@@ -101,10 +101,14 @@ struct WidgetView: View {
     var body: some View {
         switch family {
         case .accessoryInline:
+            // The mode's own symbol, not the day's: one line has no room for
+            // the note that explains the sun everywhere else, and an icon
+            // that disagrees with the name beside it is what VoiceOver reads
+            // out. What is playing and how long is left is the whole line.
             Label {
                 Text(verbatim: state.mode.title + " ") + countdownText
             } icon: {
-                Image(systemName: choice.symbol)
+                Image(systemName: state.mode.symbol)
             }
         case .accessoryRectangular:
             HStack(spacing: 8) {
