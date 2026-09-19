@@ -3,7 +3,9 @@ import SwiftUI
 /// The player on iPhone, iPad and in the Mac window. What is playing and a
 /// transport, the mode the time of day suggests, every mode on three
 /// shelves, then what changes per session in a glass card. Everything set
-/// once lives behind the gear. The backdrop takes the mode's tint so
+/// once lives behind the gear, and the breath lives in `PracticeScreen`:
+/// the player asks which mode, and the practice is the other question, so
+/// answering it in both places was two doors into one room. The backdrop takes the mode's tint so
 /// switching modes changes the room, not just a label. The Mac window is
 /// wide enough for two columns, so nothing scrolls there, and the window
 /// is the size of its content.
@@ -56,8 +58,8 @@ struct PlayerScreen: View {
         #if os(macOS)
         // Both columns hang from the same top edge, below the gear.
         HStack(alignment: .top, spacing: 0) {
-            // Meditate's breathing rows and circle can outgrow the window
-            // height; the column scrolls only then.
+            // The card can outgrow the window height on a long mode; the
+            // column scrolls only then.
             ScrollView {
                 VStack(spacing: 24) {
                     Hero(session: session)
@@ -147,20 +149,12 @@ private struct Hero: View {
                     .fill(session.mode.tint.opacity(0.35))
                     .blur(radius: 30)
                     .frame(width: 120, height: 120)
-                if session.breath.isActive {
-                    // The exercise takes the symbol's place while it runs.
-                    BreathingCircle(guide: session.breath, tint: session.mode.tint, size: 140)
-                        .transition(.opacity)
-                } else {
-                    Image(systemName: session.mode.symbol)
-                        .font(.system(size: heroSize, weight: .light))
-                        .foregroundStyle(.white)
-                        .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying && !reduceMotion)
-                        .transition(.opacity)
-                }
+                Image(systemName: session.mode.symbol)
+                    .font(.system(size: heroSize, weight: .light))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.breathe, options: .repeating, isActive: session.isPlaying && !reduceMotion)
             }
             .frame(minHeight: 120)
-            .animation(.default, value: session.breath.isActive)
 
             VStack(spacing: 4) {
                 // What the mode is for, then the state it drives and the
@@ -415,32 +409,6 @@ private struct SessionCard: View {
                     .labelsHidden()
                     .tint(.primary)
                 }
-                Divider()
-            }
-            if session.mode.guidesBreath {
-                Row("Breathing") {
-                    Picker("Breathing", selection: $session.breathing) {
-                        ForEach(BreathingPattern.allCases) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
-                    .tint(.primary)
-                }
-                if session.breathing != .none {
-                    Row("Breathing Length") {
-                        Picker("Breathing Length", selection: $session.breathingLength) {
-                            ForEach(BreathingLength.allCases) { Text($0.title).tag($0) }
-                        }
-                        .pickerStyle(.menu)
-                        .labelsHidden()
-                        .tint(.primary)
-                    }
-                }
-                Text(session.breathing.blurb)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 12)
                 Divider()
             }
             Row("Timer") {

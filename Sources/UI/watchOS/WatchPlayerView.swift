@@ -3,6 +3,13 @@ import SwiftUI
 /// The watch app: transport up top, then the same settings as the other
 /// platforms, one row each so they read at wrist size. Volume is the Digital
 /// Crown in the system Now Playing app, so it has no row here.
+///
+/// The breath is not among them. It is a tab on iPhone and iPad and a sheet
+/// on the Mac, and the reason is the same on all three: the player asks
+/// which mode, a practice starts from which breath, and a list that answers
+/// both reads as one long settings screen. The watch has no tab bar, so it
+/// gets the same thing as a screen of its own, one row down. See
+/// `WatchPracticeView`.
 struct WatchPlayerView: View {
     @Bindable var session: Session
     @Bindable private var daylight = Daylight.shared
@@ -17,17 +24,12 @@ struct WatchPlayerView: View {
                     error: session.error,
                     toggle: session.toggle
                 )
-                if session.breath.isActive {
-                    Section {
-                        BreathingCircle(guide: session.breath, tint: session.mode.tint, size: 96)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                    }
-                }
                 ModeSection(session: session)
                 Section {
                     if session.mode.guidesBreath {
-                        BreathingPickers(session: session)
+                        NavigationLink("Practice") {
+                            WatchPracticeView(session: session)
+                        }
                     }
                     if !session.mode.isSleep {
                         NavigationLink("Sound") {

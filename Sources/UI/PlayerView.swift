@@ -69,8 +69,11 @@ struct LayerToggles: View {
     }
 }
 
-/// The exercise and its length, for the rest modes. Shown only there: work
-/// wants no count to keep and sleep wants no attention paid. See
+/// The exercise and its length, as two rows. `WatchPracticeView` is the
+/// only thing that draws them now: the phone, iPad and Mac set a breath
+/// from `PracticeScreen`, where the patterns are tiles with their counts on
+/// them rather than names in a menu. Only ever reached from the rest modes,
+/// since work wants no count to keep and sleep wants no attention paid. See
 /// `Mode.guidesBreath`.
 struct BreathingPickers: View {
     @Bindable var session: Session
