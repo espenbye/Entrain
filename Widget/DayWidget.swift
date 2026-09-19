@@ -202,7 +202,6 @@ struct DayWidgetView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                let rest = day.upcoming(after: now).prefix(Self.rows)
                 if !rest.isEmpty {
                     Divider()
                     Text("Later Today")
@@ -244,6 +243,11 @@ struct DayWidgetView: View {
     /// is what fits under the ring without shrinking the rows; a day has
     /// eight or so, and the ones past the fourth are tomorrow's problem.
     private static let rows = 4
+
+    /// The stretches the large widget offers, cut to what fits under the ring.
+    private var rest: [CircadianDay.Span] {
+        Array(day.upcoming(after: now).prefix(Self.rows))
+    }
 
     /// The ring in words, for the sizes where the ring is the whole widget.
     /// `DayRing` hides its canvas from VoiceOver because a canvas has
