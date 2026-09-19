@@ -31,10 +31,22 @@ struct PracticeScreen: View {
 
     private var bedMode: Mode { bed ?? (session.mode.guidesBreath ? session.mode : .meditate) }
 
-    /// True while a practice is actually under way, which is a rest mode
-    /// playing. The exercise takes the screen then and the pickers give way
-    /// to it, the way the breathing circle takes the player's hero.
-    private var sitting: Bool { session.isPlaying && session.mode.guidesBreath }
+    /// True while a practice is actually under way: a bed playing with a
+    /// breath chosen over it. The exercise takes the screen then and the
+    /// tiles give way to it.
+    ///
+    /// The pattern has to be part of it. Without it, any playing rest mode
+    /// put this screen into its running state, so somebody who had put Relax
+    /// on from the player and come here to start a breath was shown a pause
+    /// button and no tiles: the one thing the screen exists for was
+    /// unreachable until they stopped the sound first.
+    ///
+    /// `breathing` rather than `breath.isActive`, so that an exercise which
+    /// has run its length and left the soundscape playing does not throw the
+    /// screen back to the tiles under somebody still sitting there.
+    private var sitting: Bool {
+        session.isPlaying && session.mode.guidesBreath && session.breathing != .none
+    }
 
     /// What the backdrop and the tints follow: the mode being practised
     /// while one is, the mode about to be otherwise.
