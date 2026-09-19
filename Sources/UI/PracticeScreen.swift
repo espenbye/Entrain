@@ -82,6 +82,10 @@ struct PracticeScreen: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(Backdrop(mode: tinting))
         .animation(.default, value: sitting)
+        // Only where there is a card to feed. The Mac compiles `PracticeCard`
+        // out and has no Health to read, so the task would assign an empty
+        // history to a view nobody draws, twice, two seconds apart.
+        #if !os(macOS)
         .task(id: session.isPlaying) {
             history = await session.practice()
             // The sitting that just ended is still on its way into Health:
@@ -97,6 +101,7 @@ struct PracticeScreen: View {
             guard !Task.isCancelled else { return }
             history = await session.practice()
         }
+        #endif
     }
 
     // The Mac sheet has no title bar to hang Done off, so it floats in the
