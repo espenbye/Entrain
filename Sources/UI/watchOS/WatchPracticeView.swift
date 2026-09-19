@@ -33,6 +33,17 @@ struct WatchPracticeView: View {
             }
             Section {
                 BreathingPickers(session: session)
+                // `Session.startBreathing` wants a session already running,
+                // so picking a pattern on a stopped watch set the pattern
+                // and nothing else. The phone has the same button on its
+                // start card, and this does the same thing: the mode is
+                // already a bed, since the row into this screen is on the
+                // rest shelf, so there is nothing to choose but to begin.
+                if !session.isPlaying {
+                    Button("Begin") {
+                        Task { await session.start(.mode(session.mode)) }
+                    }
+                }
             } footer: {
                 Text(session.breathing.blurb)
             }
