@@ -61,7 +61,10 @@ extension TimeInterval {
     /// Rounded down to the minute, like Health's own mindful figure: a
     /// session is credited with the minutes it actually ran.
     var practiceMinutes: String {
-        Duration.seconds(Int(self))
-            .formatted(.units(allowed: self >= 3600 ? [.hours, .minutes] : [.minutes], width: .abbreviated))
+        // Spelled out rather than written inline in the call: two array
+        // literals either side of a ternary have nothing to infer their
+        // element type from, and the compiler reads the pair as `[Any]`.
+        let allowed: Set<Duration.UnitsFormatStyle.Unit> = self >= 3600 ? [.hours, .minutes] : [.minutes]
+        return Duration.seconds(Int(self)).formatted(.units(allowed: allowed, width: .abbreviated))
     }
 }
