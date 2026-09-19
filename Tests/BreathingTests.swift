@@ -143,9 +143,9 @@ struct BreathGuideTests {
         Session(defaults: defaults, widgetDirectory: widgetDirectory) { [audio] _ in audio }
     }
 
-    /// The guide runs only while Meditate plays with a pattern chosen, and
-    /// the first breath's cue reaches the render thread at once.
-    @Test func guideFollowsMeditateAndPlay() async {
+    /// The guide runs only while a rest mode plays with a pattern chosen,
+    /// and the first breath's cue reaches the render thread at once.
+    @Test func guideFollowsTheRestModesAndPlay() async {
         let session = makeSession()
         let p = session.parameters
         session.mode = .meditate
@@ -161,12 +161,22 @@ struct BreathGuideTests {
         #expect(Cue.decode(p.cue.load(ordering: .relaxed)) == .breath(.inhale))
         let cue = p.cue.load(ordering: .relaxed)
 
-        // Another mode has no breath to follow; back in Meditate it starts over.
-        session.mode = .relax
+        // Work has no breath to follow: a count to keep is the distraction
+        // Focus exists to keep out. Back on the rest shelf it starts over.
+        session.mode = .focus
         #expect(!session.breath.isActive)
         session.mode = .meditate
         #expect(session.breath.position?.phase == .inhale)
         #expect(p.cue.load(ordering: .relaxed) != cue)
+
+        // The whole rest shelf breathes, not Meditate alone, and the sleep
+        // beds still do not: the point there is to stop paying attention.
+        for mode in Mode.allCases {
+            session.mode = mode
+            #expect(session.breath.isActive == mode.guidesBreath, "\(mode) should breathe: \(mode.guidesBreath)")
+        }
+        #expect(Mode.allCases.filter(\.guidesBreath) == [.relax, .meditate, .restore])
+        session.mode = .meditate
 
         session.breathing = .none
         #expect(!session.breath.isActive)

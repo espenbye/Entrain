@@ -13,6 +13,7 @@ struct PlayerScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     #if os(macOS)
     @State private var showsDay = false
+    @State private var showsPractice = false
     #endif
 
     var body: some View {
@@ -26,11 +27,17 @@ struct PlayerScreen: View {
                     .padding(16)
             }
             .overlay(alignment: .topLeading) {
-                dayButton
-                    .padding(16)
+                HStack(spacing: 8) {
+                    dayButton
+                    practiceButton
+                }
+                .padding(16)
             }
             .sheet(isPresented: $showsDay) {
                 DayScreen(session: session)
+            }
+            .sheet(isPresented: $showsPractice) {
+                PracticeScreen(session: session)
             }
             #endif
             // The one first-launch question. Not dismissible by swipe: it
@@ -101,6 +108,18 @@ struct PlayerScreen: View {
             .buttonBorderShape(.circle)
             .controlSize(.large)
             .accessibilityLabel("Your Day")
+    }
+
+    /// The practice, beside the day. Same argument as the day button: the
+    /// Mac window has no tab bar to put a fifth screen in, so what is a tab
+    /// on iPhone and iPad is a sheet here. See `RootTabs`.
+    private var practiceButton: some View {
+        Button("Practice", systemImage: PracticeScreen.symbol) { showsPractice = true }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .accessibilityLabel("Practice")
     }
 
     private var settingsButton: some View {
@@ -398,7 +417,7 @@ private struct SessionCard: View {
                 }
                 Divider()
             }
-            if session.mode == .meditate {
+            if session.mode.guidesBreath {
                 Row("Breathing") {
                     Picker("Breathing", selection: $session.breathing) {
                         ForEach(BreathingPattern.allCases) { Text($0.title).tag($0) }

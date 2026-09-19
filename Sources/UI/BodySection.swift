@@ -34,7 +34,7 @@ struct BodySection: View {
                 Text("Health")
             } footer: {
                 if let sleep = health.sleep {
-                    Text("From the last \(sleep.nights) nights on this device. Entrain reads Health; it never writes anything but your Meditate minutes, and nothing leaves the device.")
+                    Text("From the last \(sleep.nights) nights on this device. Entrain reads Health; it never writes anything but your Meditate and Restore minutes, and nothing leaves the device.")
                 }
             }
         }
@@ -71,7 +71,7 @@ struct HeartRateSection: View {
                 }
             }
         } footer: {
-            Text("Shows your heart rate through Meditate and Relax, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery.")
+            Text("Shows your heart rate through a Relax, Meditate or Restore session, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery.")
         }
     }
 }

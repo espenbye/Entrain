@@ -58,10 +58,12 @@ final class LiveHeartRate {
     }
 
     /// Starts the sensor for a mode that has a body to watch. Rest is where
-    /// the heart is the point — Meditate paces the breath and Relax asks
-    /// for the same thing without the counting. Work modes and the sleep
-    /// beds get nothing: eight hours of continuous heart rate to show a
-    /// number nobody is awake to read is not a trade worth making.
+    /// the heart is the point, and the rest shelf is exactly the shelf a
+    /// breath may be paced over, so the coherence reading has a cue to
+    /// compare against in every mode this runs in: see `Mode.guidesBreath`.
+    /// Work modes and the sleep beds get nothing: eight hours of continuous
+    /// heart rate to show a number nobody is awake to read is not a trade
+    /// worth making.
     func start(for mode: Mode) async {
         guard isOn, mode.purpose == .rest, session == nil, HKHealthStore.isHealthDataAvailable() else { return }
         await authorize()

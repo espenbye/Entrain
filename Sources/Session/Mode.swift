@@ -45,6 +45,23 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Whether a breathing exercise may run over the mode. The rest shelf,
+    /// which is Relax, Meditate and Restore: a paced breath belongs where
+    /// the listener is already sitting still with nothing else to do. It
+    /// was Meditate alone, which left `HeartRateSection`'s offer to show
+    /// the heart through "Meditate and Relax" unreachable in the Relax half.
+    /// Not the work modes, where counting a breath is the distraction
+    /// Focus exists to keep out, and not the sleep ones, where the point is
+    /// to stop paying attention rather than to pay it to a count.
+    var guidesBreath: Bool { purpose == .rest }
+
+    /// Whether a stretch of this mode is a mindful session in the sense
+    /// Health means. Meditate is the obvious one; Restore is yoga nidra and
+    /// non-sleep deep rest, which is the same category and belongs on the
+    /// same chart. Relax is not: unwinding with a sound on is not a
+    /// practice, and logging it would quietly inflate the figure.
+    var isMindful: Bool { self == .meditate || self == .restore }
+
     /// Whether head tracking may run. Not in bed: rolling over would swing
     /// the room, and the sensors cost power over an eight-hour session. A
     /// nap is lying down too.

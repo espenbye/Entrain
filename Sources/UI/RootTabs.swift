@@ -13,9 +13,16 @@ import SwiftUI
 /// player said settings belonged to the player, when most of them are about
 /// the day and the system.
 ///
+/// Practice is next to the player because it starts a session too, and it
+/// earns its own tab rather than a shelf in the player's grid by asking the
+/// opposite question: the grid asks which mode, and a practice begins from
+/// which breath. It is also the only place the mindful minutes Entrain
+/// writes to Health are ever read back. See `PracticeScreen`.
+///
 /// The Mac keeps the buttons. Its window is two columns wide and has no tab
-/// bar to put anything in, so the day stays a sheet off `PlayerScreen` and
-/// settings the Settings window; this file is iOS and iPadOS only.
+/// bar to put anything in, so the day and the practice are sheets off
+/// `PlayerScreen` and settings is the Settings window; this file is iOS and
+/// iPadOS only.
 struct RootTabs: View {
     @Bindable var session: Session
     @Bindable private var alarm = WakeAlarm.shared
@@ -25,6 +32,9 @@ struct RootTabs: View {
         TabView {
             Tab("Player", systemImage: "waveform") {
                 PlayerScreen(session: session)
+            }
+            Tab("Practice", systemImage: PracticeScreen.symbol) {
+                PracticeScreen(session: session)
             }
             Tab("Day", systemImage: "clock") {
                 DayScreen(session: session)

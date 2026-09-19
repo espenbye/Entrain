@@ -26,7 +26,7 @@ struct WatchPlayerView: View {
                 }
                 ModeSection(session: session)
                 Section {
-                    if session.mode == .meditate {
+                    if session.mode.guidesBreath {
                         BreathingPickers(session: session)
                     }
                     if !session.mode.isSleep {

@@ -74,7 +74,7 @@ final class Session {
         }
     }
 
-    /// The breathing exercise over Meditate, and how long it runs. Synced
+    /// The breathing exercise over a rest mode, and how long it runs. Synced
     /// like the mode: which exercise you do is a preference, not a device.
     var breathing: BreathingPattern {
         didSet {
@@ -208,7 +208,7 @@ final class Session {
     /// Off until launch has taken the store in, and while a remote change is
     /// applied, so the store's own values are not sent back over each other.
     private var mirrors = false
-    /// Wall-clock start of the Meditate segment playing now.
+    /// Wall-clock start of the mindful segment playing now.
     private var mindfulStart: Date?
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
@@ -491,10 +491,11 @@ final class Session {
 
     // MARK: Mindful minutes
 
-    /// Meditate is the one mode Health has a place for. Each stretch of play
-    /// is its own segment, so a pause is a break, not part of the session.
+    /// Meditate and Restore are the modes Health has a place for; see
+    /// `Mode.isMindful`. Each stretch of play is its own segment, so a
+    /// pause is a break, not part of the session.
     private func startMindful() {
-        guard mode == .meditate else { return }
+        guard mode.isMindful else { return }
         mindfulStart = .now
         mindful?.prepare()
     }
@@ -503,6 +504,16 @@ final class Session {
         guard let start = mindfulStart else { return }
         mindfulStart = nil
         mindful?.log(DateInterval(start: start, end: .now))
+    }
+
+    /// What Health has of this practice, for `PracticeScreen`. Read when the
+    /// screen asks rather than held as a signal: it is a screen nobody has
+    /// open most of the time, and a figure kept warm all day would cost a
+    /// Health query every launch to show nobody anything. Empty wherever
+    /// there is no log, which is the Mac and the tests that pass none.
+    func practice() async -> PracticeHistory {
+        guard let mindful else { return .empty }
+        return PracticeHistory.from(await mindful.sessions(days: PracticeHistory.window), now: clock())
     }
 
     // MARK: Body
@@ -528,11 +539,12 @@ final class Session {
 
     // MARK: Breathing
 
-    /// The exercise runs while Meditate plays with a pattern chosen, from
+    /// The exercise runs while a rest mode plays with a pattern chosen, from
     /// its first breath: a pause, a new pattern or a new length starts it
-    /// over rather than resuming mid-breath.
+    /// over rather than resuming mid-breath. See `Mode.guidesBreath` for
+    /// which modes those are.
     private func startBreathing() {
-        guard isPlaying, mode == .meditate, breathing != .none else {
+        guard isPlaying, mode.guidesBreath, breathing != .none else {
             breath.stop()
             return
         }
