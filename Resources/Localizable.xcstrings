@@ -2751,6 +2751,106 @@
           }
         }
       }
+    },
+    "Plays what the hour asks for, and keeps moving with it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller det timen ber om, og fortsetter å flytte seg med den."
+          }
+        }
+      }
+    },
+    "Set Following the Day": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett følg dagen"
+          }
+        }
+      }
+    },
+    "Follows the day, or pauses it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Følger dagen, eller pauser den."
+          }
+        }
+      }
+    },
+    "Set Playing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett avspilling"
+          }
+        }
+      }
+    },
+    "Plays or pauses the current mode.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av eller pauser gjeldende modus."
+          }
+        }
+      }
+    },
+    "Plays or pauses whatever Entrain is set to.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller av eller pauser det Entrain er satt til."
+          }
+        }
+      }
+    },
+    "Following": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Følger"
+          }
+        }
+      }
+    },
+    "Following your day": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Følger dagen din"
+          }
+        }
+      }
+    },
+    "Later Today": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senere i dag"
+          }
+        }
+      }
+    },
+    "Next: %@ at %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neste: %@ kl. %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

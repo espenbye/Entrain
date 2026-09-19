@@ -89,6 +89,90 @@ struct ToggleSessionIntent: AppIntent, AudioPlaybackIntent, StartsSession {
     }
 }
 
+/// Follow the Day from outside the app: a widget button, a Control Center
+/// toggle or a spoken shortcut. It starts playing as well as switching the
+/// program on, because `Program` only ever runs while something is playing
+/// — a day nobody can hear is not being followed — and because every other
+/// way into the day from outside the app starts a session too.
+struct FollowDayIntent: AppIntent, AudioPlaybackIntent, StartsSession {
+    static let title: LocalizedStringResource = "Follow the Day"
+    static let description = IntentDescription("Plays what the hour asks for, and keeps moving with it.")
+    static var supportedModes: IntentModes { .background }
+    #if compiler(>=6.4)
+    @available(macOS 27, iOS 27, watchOS 27, *)
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
+    #endif
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        #if !WIDGET
+        let session = Session.shared
+        await session.start(.day)
+        guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
+        #endif
+        return .result()
+    }
+}
+
+/// Behind the Follow the Day control: on follows the day, off pauses, which
+/// is the bargain the mode toggles already make. Off does not switch the
+/// program off — a paused program runs no clock of its own, and turning it
+/// off here would mean the next play came back on a mode nobody chose.
+struct SetFollowingDayIntent: SetValueIntent, AudioPlaybackIntent, StartsSession {
+    static let title: LocalizedStringResource = "Set Following the Day"
+    static let description = IntentDescription("Follows the day, or pauses it.")
+    static var supportedModes: IntentModes { .background }
+    #if compiler(>=6.4)
+    @available(macOS 27, iOS 27, watchOS 27, *)
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
+    #endif
+
+    @Parameter(title: "Following") var value: Bool
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        #if !WIDGET
+        let session = Session.shared
+        if value {
+            await session.start(.day)
+            guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
+        } else {
+            session.pause()
+        }
+        #endif
+        return .result()
+    }
+}
+
+/// Behind the plain Entrain control: whatever is set, playing or paused.
+/// `ToggleSessionIntent` cannot sit in Control Center, which wants a value
+/// it can light up rather than a button that flips one it cannot see.
+struct SetSessionPlayingIntent: SetValueIntent, AudioPlaybackIntent, StartsSession {
+    static let title: LocalizedStringResource = "Set Playing"
+    static let description = IntentDescription("Plays or pauses the current mode.")
+    static var supportedModes: IntentModes { .background }
+    #if compiler(>=6.4)
+    @available(macOS 27, iOS 27, watchOS 27, *)
+    static var allowedExecutionTargets: IntentExecutionTargets { .main }
+    #endif
+
+    @Parameter(title: "Playing") var value: Bool
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        #if !WIDGET
+        let session = Session.shared
+        if value {
+            await session.play()
+            guard session.isPlaying else { throw SessionIntentError.audioUnavailable }
+        } else {
+            session.pause()
+        }
+        #endif
+        return .result()
+    }
+}
+
 /// Behind each Control Center toggle: on starts the mode, off pauses.
 struct SetModePlayingIntent: SetValueIntent, AudioPlaybackIntent, StartsSession {
     static let title: LocalizedStringResource = "Set Mode Playing"
@@ -146,6 +230,15 @@ struct EntrainShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Start Session",
             systemImageName: "waveform"
+        )
+        AppShortcut(
+            intent: FollowDayIntent(),
+            phrases: [
+                "Follow the day in \(.applicationName)",
+                "Follow my day in \(.applicationName)",
+            ],
+            shortTitle: "Follow the Day",
+            systemImageName: ModeChoice.symbol
         )
         AppShortcut(
             intent: StopSessionIntent(),
