@@ -82,6 +82,24 @@ struct PracticeTests {
         #expect(history.today == 10 * 60)
     }
 
+    /// The window counts today as one of its days, so it reaches back one
+    /// day less than its length. Both the Health query and the week's total
+    /// measure from here, and a window that reached back `days` full days
+    /// would cover a day more than the footer claims.
+    @Test func aWindowCountsTodayAsOneOfItsDays() {
+        let midnight = Self.midnight
+        let calendar = Self.calendar
+        #expect(PracticeHistory.start(ofLast: 1, before: Self.now, calendar: calendar) == midnight)
+        let week = PracticeHistory.start(ofLast: 7, before: Self.now, calendar: calendar)
+        #expect(calendar.dateComponents([.day], from: week, to: midnight).day == 6)
+        let window = PracticeHistory.start(ofLast: PracticeHistory.window, before: Self.now, calendar: calendar)
+        #expect(calendar.dateComponents([.day], from: window, to: midnight).day == PracticeHistory.window - 1)
+        // The sitting six days back is the oldest the week takes, and the
+        // one a day before it falls outside, which is what `from` counts.
+        #expect(Self.sitting(days: 6, hour: 9, minutes: 30).start >= week)
+        #expect(Self.sitting(days: 7, hour: 9, minutes: 30).start < week)
+    }
+
     @Test func nothingReducesToEmpty() {
         let history = PracticeHistory.from([], now: Self.now, calendar: Self.calendar)
         #expect(history == .empty)

@@ -45,7 +45,7 @@ struct PracticeHistory: Equatable, Sendable {
         _ sessions: [DateInterval], now: Date = .now, calendar: Calendar = .current
     ) -> PracticeHistory {
         let midnight = calendar.startOfDay(for: now)
-        let weekStart = calendar.date(byAdding: .day, value: -(week - 1), to: midnight) ?? midnight
+        let weekStart = start(ofLast: week, before: now, calendar: calendar)
         let ordered = sessions.sorted { $0.start > $1.start }
         return PracticeHistory(
             sessions: Array(ordered.prefix(shown)),
@@ -53,6 +53,20 @@ struct PracticeHistory: Equatable, Sendable {
             lastWeek: ordered.lazy.filter { $0.start >= weekStart }.reduce(0) { $0 + $1.duration },
             count: ordered.count
         )
+    }
+
+    /// The midnight a window of `days` days begins at, counting today as one
+    /// of them: seven days is today and the six before it, not today and
+    /// seven.
+    ///
+    /// It lives here because both ends of the figure have to agree on it.
+    /// The week's total measured inclusively while the Health query asked
+    /// for `days` days before today's midnight, which is a day more, so the
+    /// footer named a window the count did not keep to. One definition, used
+    /// by both, is the only way that stays true.
+    static func start(ofLast days: Int, before now: Date = .now, calendar: Calendar = .current) -> Date {
+        let midnight = calendar.startOfDay(for: now)
+        return calendar.date(byAdding: .day, value: -(days - 1), to: midnight) ?? midnight
     }
 }
 

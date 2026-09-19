@@ -42,8 +42,7 @@ struct MindfulMinutes: MindfulLog {
     /// newest first, so there is nothing for a sort descriptor to add here.
     func sessions(days: Int) async -> [DateInterval] {
         guard HKHealthStore.isHealthDataAvailable() else { return [] }
-        let calendar = Calendar.current
-        let start = calendar.date(byAdding: .day, value: -days, to: calendar.startOfDay(for: .now))
+        let start = PracticeHistory.start(ofLast: days)
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.categorySample(
                 type: Self.type,
