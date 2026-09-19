@@ -161,6 +161,28 @@ enum ModeChoice: Hashable, Sendable {
     case mode(Mode)
 
     static let symbol = "sun.horizon"
+
+    /// Every choice in the list, the day last: it is the one that is not a
+    /// mode, and putting it after the eleven keeps the modes in the order
+    /// everything else draws them in. Twelve also fills a three-across grid
+    /// exactly, which is what the widget lays them out on.
+    static var all: [ModeChoice] { Mode.allCases.map { ModeChoice.mode($0) } + [ModeChoice.day] }
+
+    /// The name and the symbol, so a list can draw a row without knowing
+    /// which of the two kinds it has.
+    var title: String {
+        switch self {
+        case .day: String(localized: "Follow the Day")
+        case .mode(let mode): mode.title
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .day: Self.symbol
+        case .mode(let mode): mode.symbol
+        }
+    }
 }
 
 /// The three shelves the modes sit on in the player. Wake is on the sleep

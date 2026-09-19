@@ -49,11 +49,42 @@ struct WidgetState: Codable, Sendable {
     var remaining: Int?
     /// When a running timed session ends. Nil when paused or endless.
     var deadline: Date?
+    /// Whether the day is driving the session: see `Program`. The widget
+    /// needs it for the same reason the player does — while it is on, the
+    /// mode on screen is the day's choice and not this listener's, and the
+    /// thing to light up is the day rather than the mode it happens to be
+    /// playing this hour.
+    var program: Bool
+
+    init(mode: Mode, sound: String, isPlaying: Bool, remaining: Int?, deadline: Date?, program: Bool = false) {
+        self.mode = mode
+        self.sound = sound
+        self.isPlaying = isPlaying
+        self.remaining = remaining
+        self.deadline = deadline
+        self.program = program
+    }
+
+    /// A snapshot written by a version that had no program in it reads back
+    /// as a session nobody was following the day with, which is what it was.
+    /// Without this the first launch after an update would decode nothing at
+    /// all and the widget would fall back to its placeholder.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        mode = try container.decode(Mode.self, forKey: .mode)
+        sound = try container.decode(String.self, forKey: .sound)
+        isPlaying = try container.decode(Bool.self, forKey: .isPlaying)
+        remaining = try container.decodeIfPresent(Int.self, forKey: .remaining)
+        deadline = try container.decodeIfPresent(Date.self, forKey: .deadline)
+        program = try container.decodeIfPresent(Bool.self, forKey: .program) ?? false
+    }
 
     /// Whether the widget would draw the same thing from `other`. Two
     /// deadlines within a second of each other are the same countdown.
     func matches(_ other: WidgetState?) -> Bool {
-        guard let other, mode == other.mode, sound == other.sound, isPlaying == other.isPlaying else { return false }
+        guard let other, mode == other.mode, sound == other.sound,
+              isPlaying == other.isPlaying, program == other.program
+        else { return false }
         switch (deadline, other.deadline) {
         case let (mine?, theirs?): return abs(mine.timeIntervalSince(theirs)) < 1
         case (nil, nil): return remaining == other.remaining
@@ -65,7 +96,7 @@ struct WidgetState: Codable, Sendable {
     /// is over, even if the app was killed before it could say so.
     func at(_ date: Date) -> WidgetState {
         guard isPlaying, let deadline, deadline <= date else { return self }
-        return WidgetState(mode: mode, sound: sound, isPlaying: false, remaining: nil, deadline: nil)
+        return WidgetState(mode: mode, sound: sound, isPlaying: false, remaining: nil, deadline: nil, program: program)
     }
 
     static func load(from directory: URL? = directory) -> WidgetState? {
