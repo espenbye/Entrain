@@ -63,7 +63,7 @@ struct PlayerControls: View {
             Picker("Timer", selection: $session.length) {
                 ForEach(SessionLength.allCases) { Text($0.title).tag($0) }
             }
-            if session.mode == .meditate {
+            if session.mode.guidesBreath {
                 BreathingPickers(session: session)
             }
         }

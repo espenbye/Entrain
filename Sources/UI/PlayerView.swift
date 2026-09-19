@@ -69,8 +69,9 @@ struct LayerToggles: View {
     }
 }
 
-/// The exercise and its length, for Meditate. Shown only there: the other
-/// modes have no breath to follow.
+/// The exercise and its length, for the rest modes. Shown only there: work
+/// wants no count to keep and sleep wants no attention paid. See
+/// `Mode.guidesBreath`.
 struct BreathingPickers: View {
     @Bindable var session: Session
 

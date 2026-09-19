@@ -29,8 +29,15 @@ struct SessionTests {
     final class FakeMindful: MindfulLog {
         var prepared = 0
         var segments: [DateInterval] = []
+        /// What Health would hand back, and the window it was asked for.
+        var stored: [DateInterval] = []
+        var asked: Int?
         func prepare() { prepared += 1 }
         func log(_ segment: DateInterval) { segments.append(segment) }
+        func sessions(days: Int) async -> [DateInterval] {
+            asked = days
+            return stored
+        }
     }
 
     /// The iCloud store as a dictionary. `changed` plays the other device.

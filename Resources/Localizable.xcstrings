@@ -982,16 +982,6 @@
         }
       }
     },
-    "From the last %lld nights on this device. Entrain reads Health; it never writes anything but your Meditate minutes, and nothing leaves the device.": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fra de siste %lld nettene på denne enheten. Entrain leser fra Helse, skriver ingenting annet enn Mediter-minuttene dine, og ingenting forlater enheten."
-          }
-        }
-      }
-    },
     "Gamma": {
       "localizations": {
         "nb": {
@@ -1758,16 +1748,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vis i Dock"
-          }
-        }
-      }
-    },
-    "Shows your heart rate through Meditate and Relax, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery.": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Viser pulsen din gjennom Mediter og Slapp av, og hvor godt den følger pusten. Holder pulssensoren i gang, så det koster batteri."
           }
         }
       }
@@ -2748,6 +2728,116 @@
           "stringUnit": {
             "state": "translated",
             "value": "2 Hz å drive av på, så delta gått opp til beta over den siste tredjedelen av tiden, så luren ender våken framfor omtåket. Hold den under tretti minutter for å unngå dyp søvn, eller ta hele nitti for en full syklus."
+          }
+        }
+      }
+    },
+    "From the last %lld nights on this device. Entrain reads Health; it never writes anything but your Meditate and Restore minutes, and nothing leaves the device.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra de siste %lld nettene på denne enheten. Entrain leser fra Helse, skriver ingenting annet enn Mediter- og Hvile-minuttene dine, og ingenting forlater enheten."
+          }
+        }
+      }
+    },
+    "Shows your heart rate through a Relax, Meditate or Restore session, and how closely it follows the breathing. Keeps the heart sensor running, so it costs battery.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viser pulsen din gjennom en Slapp av-, Mediter- eller Hvile-økt, og hvor godt den følger pusten. Holder pulssensoren i gang, så det koster batteri."
+          }
+        }
+      }
+    },
+    "Practice": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Øving"
+          }
+        }
+      }
+    },
+    "Breath": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pust"
+          }
+        }
+      }
+    },
+    "Underneath": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Underlag"
+          }
+        }
+      }
+    },
+    "Your Practice": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Øvingen din"
+          }
+        }
+      }
+    },
+    "Begin": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Begynn"
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I dag"
+          }
+        }
+      }
+    },
+    "Last 7 Days": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siste 7 dager"
+          }
+        }
+      }
+    },
+    "Nothing here yet. A Meditate or Restore session lasting a minute or more is logged to Health as mindful minutes, and shows up here.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingenting her ennå. En Mediter- eller Hvile-økt som varer ett minutt eller mer logges til Helse som bevisste minutter, og dukker opp her."
+          }
+        }
+      }
+    },
+    "Mindful minutes as Health has them, over the last %lld days. That includes sessions other apps logged: writing to Health is what puts a sitting on the same chart as Mindfulness and Breathe, and reading only Entrain's own back would say less than the write does.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bevisste minutter slik Helse har dem, for de siste %lld dagene. Det inkluderer økter andre apper har logget: å skrive til Helse er det som setter en økt på samme graf som Bevisst nærvær og Pust, og å lese bare Entrains egne tilbake ville sagt mindre enn skrivingen gjør."
           }
         }
       }
