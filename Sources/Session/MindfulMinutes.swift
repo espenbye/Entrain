@@ -40,13 +40,20 @@ struct MindfulMinutes: MindfulLog {
 
     /// In whatever order Health returns them; `PracticeHistory` puts them
     /// newest first, so there is nothing for a sort descriptor to add here.
+    ///
+    /// `.strictStartDate` because the window is a window of start dates.
+    /// Left to itself the predicate takes any sample that overlaps the
+    /// range, so a sitting that began the evening before the window opened
+    /// and ran past its midnight would come back inside it — and the
+    /// reduction counts a sitting whole against the day it began on, so it
+    /// would have been counted in a window it started before.
     func sessions(days: Int) async -> [DateInterval] {
         guard HKHealthStore.isHealthDataAvailable() else { return [] }
         let start = PracticeHistory.start(ofLast: days)
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.categorySample(
                 type: Self.type,
-                predicate: HKQuery.predicateForSamples(withStart: start, end: nil)
+                predicate: HKQuery.predicateForSamples(withStart: start, end: nil, options: .strictStartDate)
             )],
             sortDescriptors: []
         )
