@@ -238,7 +238,9 @@ struct EntrainShortcuts: AppShortcutsProvider {
                 "Follow my day in \(.applicationName)",
             ],
             shortTitle: "Follow the Day",
-            systemImageName: ModeChoice.symbol
+            // A literal, not `ModeChoice.symbol`: this argument is a
+            // compile-time constant, and a `static let` is not one.
+            systemImageName: "sun.horizon"
         )
         AppShortcut(
             intent: StopSessionIntent(),
