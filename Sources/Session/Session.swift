@@ -534,7 +534,7 @@ final class Session {
     /// mindful segments, each stretch of play is its own entry, so a pause
     /// is a break and a mode change ends one stretch and opens the next.
     private func startSleepLog() {
-        guard SessionLog.keeps(mode) else { return }
+        guard mode.runsIntoTheNight else { return }
         let start = clock()
         slept = (mode, start)
         // A bed outlives the app that started it more often than anything

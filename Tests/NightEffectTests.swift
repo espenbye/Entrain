@@ -73,7 +73,7 @@ struct NightEffectTests {
 
     /// A Relax at nine in the evening is not a night's sound, and the night
     /// after it is a quiet one. Nothing is in the log but the modes that
-    /// end in bed, so this is really the guard in `SessionLog.keeps`, but a
+    /// run into a night, so this is really the guard in `startSleepLog`, but a
     /// log written by an older build could still hold one.
     @Test func daytimeModesDoNotMakeANightASoundNight() {
         let nights = (0..<14).map { Self.night($0) }
@@ -243,10 +243,9 @@ struct SessionLogTests {
         PlayedSession(mode, DateInterval(start: now.addingTimeInterval(-daysAgo * 86400), duration: hours * 3600))
     }
 
-    /// Only the modes that end in bed. Nothing here asks what was playing
-    /// at the desk.
-    @Test func keepsOnlyTheModesThatEndInBed() {
-        #expect(Mode.allCases.filter { SessionLog.keeps($0) } == [.sleep, .deepSleep, .nap, .windDown, .wake])
+    /// Wind Down and the two beds, and nothing else. Nothing here asks what
+    /// was playing at the desk, and a nap is not a night.
+    @Test func onlyTheModesThatRunIntoANightAreKept() {
         #expect(Mode.allCases.filter(\.runsIntoTheNight) == [.sleep, .deepSleep, .windDown])
     }
 

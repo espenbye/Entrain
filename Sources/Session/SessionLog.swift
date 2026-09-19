@@ -21,10 +21,13 @@ struct PlayedSession: Equatable, Codable, Sendable {
 /// The log itself: what is kept, for how long, and what is not worth
 /// keeping.
 ///
-/// Only the modes that end in bed are recorded. A log of everything the
-/// user ever played would be a more interesting file and a worse idea:
-/// nothing here asks what they listened to at their desk, and a record that
-/// exists for one question should hold only what that question needs.
+/// Only `Mode.runsIntoTheNight` is recorded, which is Wind Down and the two
+/// sleep beds. A log of everything the user ever played would be a more
+/// interesting file and a worse idea: nothing here asks what they listened
+/// to at their desk, and a record that exists for one question should hold
+/// only what that question needs. Nap and Wake are left out for the same
+/// reason — they are daytime sleep and a rise out of it, and no night is
+/// grouped by either.
 ///
 /// There is no separate note of when the log began, because the oldest
 /// entry is it. A night earlier than the first session on file is a night
@@ -44,9 +47,6 @@ enum SessionLog {
 
     static let key = "sessions.slept"
     static let openKey = "sessions.slept.open"
-
-    /// Whether a stretch of `mode` belongs in the log.
-    static func keeps(_ mode: Mode) -> Bool { mode.purpose == .sleep }
 
     /// `log` with `session` in it, oldest first, pruned to the window.
     /// Sessions shorter than `shortest` are dropped rather than recorded as
