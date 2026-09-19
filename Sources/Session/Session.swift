@@ -56,6 +56,11 @@ final class Session {
         didSet {
             program ? startProgram() : stopProgram()
             save()
+            // The widget and the Control Center toggles draw the day as the
+            // thing that is on, so turning it on and off is a state change
+            // like any other. Nothing else here reaches them: `mode` goes
+            // through `apply`, and this does not touch the engine at all.
+            broadcast()
         }
     }
     /// What the program is playing and what it has lined up next, for the
@@ -777,7 +782,8 @@ final class Session {
             sound: layers.title,
             isPlaying: isPlaying,
             remaining: remaining,
-            deadline: deadline
+            deadline: deadline,
+            program: program
         )
         guard !state.matches(widgetState) else { return }
         widgetState = state

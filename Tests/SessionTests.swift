@@ -758,6 +758,42 @@ struct SessionTests {
         #expect(mindful.segments.allSatisfy { $0.duration >= 0 && $0.end <= .now })
     }
 
+    /// The widget and the Control Center toggles draw the day as the thing
+    /// that is lit, so switching it on is a change they have to be told
+    /// about. Nothing else in `program` reaches them.
+    @Test func widgetSeesTheProgram() async {
+        let session = makeSession()
+        await session.play()
+        #expect(WidgetState.load(from: widgetDirectory)?.program == false)
+
+        session.program = true
+        #expect(WidgetState.load(from: widgetDirectory)?.program == true)
+
+        // A mode picked by hand ends the program, and the snapshot says so.
+        session.mode = .relax
+        #expect(WidgetState.load(from: widgetDirectory)?.program == false)
+    }
+
+    @Test func widgetSnapshotsDifferByTheProgramAlone() {
+        let following = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: nil, program: true)
+        let alone = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: nil)
+        #expect(!following.matches(alone))
+        #expect(following.matches(following))
+        #expect(following.at(.now).program)
+    }
+
+    /// The first read after an update finds a file written before there was
+    /// a program to write. It has to decode, or the widget falls back to its
+    /// placeholder until the app next changes state.
+    @Test func widgetSnapshotWithoutAProgramStillDecodes() throws {
+        let json = Data(#"{"mode":"relax","sound":"Pad","isPlaying":true}"#.utf8)
+        let state = try JSONDecoder().decode(WidgetState.self, from: json)
+        #expect(state.mode == .relax)
+        #expect(state.isPlaying)
+        #expect(!state.program)
+        #expect(state.remaining == nil)
+    }
+
     @Test func widgetTreatsAPastDeadlineAsStopped() {
         let playing = WidgetState(mode: .relax, sound: "Pad", isPlaying: true, remaining: nil, deadline: .now.addingTimeInterval(60))
         #expect(playing.at(.now).isPlaying)

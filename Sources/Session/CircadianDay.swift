@@ -123,6 +123,19 @@ struct CircadianDay: Equatable, Sendable {
     func progress(of date: Date) -> Double {
         min(1, max(0, date.timeIntervalSince(start) / length))
     }
+
+    /// The stretches still to come after `date`, in order. What is left of
+    /// today, which is the only part of it a widget can offer to start: the
+    /// ring already says where the marker is, and nobody can act on an hour
+    /// that has gone.
+    func upcoming(after date: Date) -> [Span] {
+        spans.filter { $0.interval.start > date }
+    }
+
+    /// The next stretch after `date`, or nil in the last one of the day.
+    func next(after date: Date) -> Span? {
+        upcoming(after: date).first
+    }
 }
 
 /// The day as the widget stores it: times of day rather than dates.

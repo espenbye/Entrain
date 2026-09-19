@@ -95,6 +95,21 @@ struct CircadianDayTests {
         #expect(Self.day().isAnchored == false)
     }
 
+    /// What the widget offers to start: the stretches still ahead, in
+    /// order, and never the one the marker is standing in — the ring
+    /// already says where that is, and nobody can act on an hour that has
+    /// gone. The last stretch of the day has nothing after it.
+    @Test func upcomingIsWhatIsLeftOfTheDay() {
+        let day = Self.day()
+        let rest = day.upcoming(after: Self.date(15))
+        #expect(rest.allSatisfy { $0.interval.start > Self.date(15) })
+        #expect(rest == Array(day.spans.suffix(rest.count)))
+        #expect(rest.first == day.next(after: Self.date(15)))
+        #expect(day.next(after: Self.date(15))?.phase == .afternoon)
+        #expect(day.upcoming(after: day.start) == Array(day.spans.dropFirst()))
+        #expect(day.next(after: Self.date(23, 59)) == nil)
+    }
+
     // MARK: The widget's snapshot
 
     /// The widget stores times of day, not dates, so that a snapshot taken
