@@ -43,6 +43,16 @@ final class HealthSignals {
     private(set) var sleep: SleepSignature?
     /// Today against this person's own baseline, per metric.
     private(set) var vitals: [BodyMetric: BodySignal] = [:]
+    /// Every night inside the read window, oldest first, as `SleepNight`
+    /// reduced them. `sleep` is the fortnight's habit distilled to four
+    /// numbers, which is the right thing to hang a bedtime off and has
+    /// nothing left in it to compare one night against another with, so
+    /// `NightEffect` reads the nights themselves.
+    private(set) var nights: [SleepNight] = []
+    /// The daily series behind `vitals`, oldest first, per metric. Kept for
+    /// the same reason: a `BodySignal` is today against a baseline and
+    /// cannot say what any other day was.
+    private(set) var series: [BodyMetric: [DailyValue]] = [:]
     /// Called when a read finished and the signals may have moved. Health
     /// arrives a second or two after launch, well after anything that asked
     /// for it has already drawn, so the day widget is republished from here
@@ -89,13 +99,15 @@ final class HealthSignals {
 
     private func read() async {
         guard let source else { return }
-        sleep = SleepSignature.from(await source.nights())
+        nights = await source.nights()
+        sleep = SleepSignature.from(nights)
         for metric in BodyMetric.allCases {
             // The most recent day Health has a value for stands in for
             // today: a resting heart rate is not written until the device
             // has had the day to measure one, so before then yesterday is
             // the freshest thing there is to compare.
             let daily = await source.daily(metric, days: BodySignal.window + 1)
+            series[metric] = daily
             guard let latest = daily.last else { continue }
             vitals[metric] = BodySignal.from(
                 history: daily.dropLast().map(\.value), today: latest.value, metric: metric

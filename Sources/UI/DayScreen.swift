@@ -16,6 +16,30 @@ struct DayScreen: View {
     @Bindable var session: Session
     @Bindable private var daylight = Daylight.shared
     private let health = HealthSignals.shared
+    /// Recomputed when what it is drawn from changes, and not once a
+    /// minute with the ring: the nights behind it move once a day at most,
+    /// and the screen redraws sixty times an hour.
+    @State private var nights: NightEffect = .empty
+
+    /// Everything `NightEffect` is computed from, in one comparable value,
+    /// so the task below reruns exactly when the answer could have moved.
+    /// Counting the nights and the sessions is not enough: a night already
+    /// read is replaced by a fuller version of itself as the morning's
+    /// fragments arrive, and the log can prune an old stretch in the same
+    /// breath as it adds a new one, and neither moves a count.
+    private struct Inputs: Equatable {
+        var nights: [SleepNight]
+        var sessions: [PlayedSession]
+        var rate: [DailyValue]
+    }
+
+    private var inputs: Inputs {
+        Inputs(
+            nights: health.nights,
+            sessions: session.sleepLog,
+            rate: health.series[.restingHeartRate] ?? []
+        )
+    }
     #if os(macOS)
     @Environment(\.dismiss) private var dismiss
     #endif
@@ -75,6 +99,7 @@ struct DayScreen: View {
                     PhaseList(day: day, now: context.date, session: session)
                     TargetCard(target: session.sleepTarget, measured: health.sleep)
                     RhythmCard(sleep: health.sleep, daylight: health.vitals[.timeInDaylight])
+                    NightsCard(effect: nights)
                     Text(footer(day))
                         .font(.footnote)
                         .foregroundStyle(.tertiary)
@@ -86,6 +111,14 @@ struct DayScreen: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .background(Backdrop(mode: session.mode))
+            .task(id: inputs) {
+                let inputs = self.inputs
+                nights = NightEffect.from(
+                    nights: inputs.nights,
+                    sessions: inputs.sessions,
+                    restingHeartRate: inputs.rate
+                )
+            }
         }
     }
 }
@@ -339,6 +372,122 @@ private struct RhythmCard: View {
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+
+    private static func duration(_ seconds: TimeInterval) -> String {
+        guard seconds.isFinite else { return "—" }
+        let allowed: Set<Duration.UnitsFormatStyle.Unit> = seconds >= 3600 ? [.hours, .minutes] : [.minutes]
+        return Duration.seconds(seconds.rounded()).formatted(.units(allowed: allowed, width: .abbreviated))
+    }
+}
+
+/// What this person's own nights did, with a sound playing into them and
+/// without one.
+///
+/// It sits under the rhythm because it is the same kind of thing: a
+/// description of nights already recorded, with nothing acting on it. What
+/// it is careful not to be is a verdict. The card never says a night was
+/// better, never scores one group against the other and never writes the
+/// difference out as a number, because the difference is the one figure a
+/// reader would carry away as proof. Two medians side by side, with the
+/// nights each rests on printed under them, is as far as the data goes;
+/// `NightEffect` says why in full.
+private struct NightsCard: View {
+    let effect: NightEffect
+
+    var body: some View {
+        if !effect.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Nights")
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
+                    .foregroundStyle(.secondary)
+                if let onset = effect.onset {
+                    onsetRow(onset)
+                }
+                if let counts = effect.comparisons.first {
+                    table
+                    Text("From \(counts.soundNights) nights with a sound and \(counts.quietNights) without, out of the \(effect.nights) this device has on file.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text("These are your own nights and not an experiment. You choose the nights you put a sound on, and those are not the same as the nights you do not, so anything here describes what happened rather than what caused it. Sleep comes from your watch, which tells sleep from waking well and one stage from another poorly, so nothing here counts deep sleep.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassEffect(.regular, in: .rect(cornerRadius: 18))
+        }
+    }
+
+    private func onsetRow(_ onset: TimeInterval) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Asleep After")
+                    .font(.subheadline)
+                Spacer(minLength: 8)
+                Text(verbatim: Self.duration(onset))
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+            }
+            Text("From putting a sleep bed on to the first sleep your watch recorded, over \(effect.onsetNights) nights. Health cannot work this out on its own, because it does not know when the sound started.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var table: some View {
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
+            GridRow {
+                Color.clear
+                    .frame(width: 0, height: 0)
+                heading("With Sound")
+                    .gridColumnAlignment(.trailing)
+                heading("Quiet")
+                    .gridColumnAlignment(.trailing)
+            }
+            ForEach(effect.comparisons, id: \.measure) { comparison in
+                GridRow {
+                    Text(Self.title(comparison.measure))
+                        .font(.subheadline)
+                    figure(comparison.withSound, comparison.measure)
+                    figure(comparison.without, comparison.measure)
+                }
+            }
+        }
+    }
+
+    private func heading(_ title: LocalizedStringResource) -> some View {
+        Text(title)
+            .font(.caption2)
+            .textCase(.uppercase)
+            .foregroundStyle(.secondary)
+    }
+
+    private func figure(_ value: Double, _ measure: NightEffect.Measure) -> some View {
+        Text(verbatim: Self.value(value, measure))
+            .font(.subheadline.weight(.semibold).monospacedDigit())
+    }
+
+    private static func title(_ measure: NightEffect.Measure) -> LocalizedStringResource {
+        switch measure {
+        case .asleep: "Time Asleep"
+        case .awake: "Awake in the Night"
+        case .restingHeartRate: "Resting Heart Rate"
+        }
+    }
+
+    private static func value(_ value: Double, _ measure: NightEffect.Measure) -> String {
+        switch measure {
+        // Beats per minute to the whole beat: a median that resolves tenths
+        // of a beat would suggest the two groups are separated by something,
+        // and seven nights against seven are not.
+        case .restingHeartRate: "\(Int(value.rounded())) BPM"
+        default: duration(value)
         }
     }
 

@@ -39,10 +39,26 @@ final class HealthReader: BodySensing {
 
     private static let anchorKey = "health.sleep.anchor"
     private static let nightsKey = "health.sleep.nights"
+    /// How far back the sleep read goes, which is as far as the hungriest
+    /// consumer needs. `SleepSignature` takes the last fortnight of it and
+    /// `NightEffect` the last two months; one query serves both, and a
+    /// window that is a day longer than either keeps the oldest night whole
+    /// rather than clipped by the query's own edge.
+    private static let window = max(SleepSignature.window, NightEffect.window)
+    /// The window the cache below was filled for. The anchor is the reason
+    /// it has to be remembered: it marks a point in Health's own sequence,
+    /// not a point in a predicate, so an anchor taken while the query
+    /// reached back a fortnight will not hand over anything older when the
+    /// query is widened to two months. An install upgrading into the wider
+    /// window would keep its fourteen nights and wait out the rest, so the
+    /// anchor and the nights are dropped together the first time the window
+    /// moves, and the read that follows is the full one.
+    private static let windowKey = "health.sleep.window"
 
     func nights() async -> [SleepNight] {
         guard HKHealthStore.isHealthDataAvailable() else { return [] }
-        let start = Calendar.current.date(byAdding: .day, value: -(SleepSignature.window + 1), to: .now) ?? .now
+        forgetCacheIfWindowMoved()
+        let start = Calendar.current.date(byAdding: .day, value: -(Self.window + 1), to: .now) ?? .now
         let predicate = HKSamplePredicate.categorySample(
             type: HKCategoryType(.sleepAnalysis),
             predicate: HKQuery.predicateForSamples(withStart: start, end: nil)
@@ -90,6 +106,16 @@ final class HealthReader: BodySensing {
             stage, DateInterval(start: sample.startDate, end: sample.endDate),
             source: sample.sourceRevision.source.bundleIdentifier
         )
+    }
+
+    /// Drops the anchor and the nights together when the window is not the
+    /// one they were filled for; see `windowKey`. It runs once per change,
+    /// because the new window is written down as they go.
+    private func forgetCacheIfWindowMoved() {
+        guard defaults.integer(forKey: Self.windowKey) != Self.window else { return }
+        defaults.removeObject(forKey: Self.anchorKey)
+        defaults.removeObject(forKey: Self.nightsKey)
+        defaults.set(Self.window, forKey: Self.windowKey)
     }
 
     private var anchor: HKQueryAnchor? {
