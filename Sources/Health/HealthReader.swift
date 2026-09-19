@@ -39,10 +39,16 @@ final class HealthReader: BodySensing {
 
     private static let anchorKey = "health.sleep.anchor"
     private static let nightsKey = "health.sleep.nights"
+    /// How far back the sleep read goes, which is as far as the hungriest
+    /// consumer needs. `SleepSignature` takes the last fortnight of it and
+    /// `NightEffect` the last two months; one query serves both, and a
+    /// window that is a day longer than either keeps the oldest night whole
+    /// rather than clipped by the query's own edge.
+    private static let window = max(SleepSignature.window, NightEffect.window)
 
     func nights() async -> [SleepNight] {
         guard HKHealthStore.isHealthDataAvailable() else { return [] }
-        let start = Calendar.current.date(byAdding: .day, value: -(SleepSignature.window + 1), to: .now) ?? .now
+        let start = Calendar.current.date(byAdding: .day, value: -(Self.window + 1), to: .now) ?? .now
         let predicate = HKSamplePredicate.categorySample(
             type: HKCategoryType(.sleepAnalysis),
             predicate: HKQuery.predicateForSamples(withStart: start, end: nil)

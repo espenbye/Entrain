@@ -33,10 +33,12 @@ final class Session {
             // the same card, and there is only ever one thing in charge.
             if program && !advancing { program = false }
             endMindful()
+            endSleepLog()
             played = 0
             playStart = isPlaying ? .now : nil
             if isPlaying {
                 startMindful()
+                startSleepLog()
                 startBody()
                 // An input may care which mode it serves; it starts over.
                 inputs.forEach { $0.stop() }
@@ -190,6 +192,10 @@ final class Session {
     /// Why there is no sound although the user pressed play. Nil once audio is running.
     private(set) var error: String?
 
+    /// The nights this device has sound on file for: see `SessionLog` for
+    /// what is kept and `NightEffect` for the one thing it is read by.
+    private(set) var sleepLog: [PlayedSession] = []
+
     let parameters = AudioParameters()
     /// The modulation as touch, phase-locked to the render clock.
     private let hapticPlayer: HapticPlayer
@@ -215,6 +221,11 @@ final class Session {
     private var mirrors = false
     /// Wall-clock start of the mindful segment playing now.
     private var mindfulStart: Date?
+    /// The stretch of a night mode playing now, and which one it is. The
+    /// mode is carried rather than read back at the end, because a mode
+    /// change is what ends the stretch and `mode` is already the new one by
+    /// then.
+    private var slept: (mode: Mode, start: Date)?
     /// Created on first play: a login item should not touch audio hardware at launch.
     private var engine: (any SessionAudio)?
     /// Play time in this mode, which is what a ramp walks along. `played`
@@ -289,6 +300,7 @@ final class Session {
             isOn: defaults.bool(forKey: "sleep.target")
         )
         asksIntensity = !defaults.bool(forKey: "intensity.asked")
+        sleepLog = SessionLog.recover(in: defaults)
         hapticPlayer = HapticPlayer(parameters: parameters)
         #if canImport(CoreMotion) && !os(watchOS)
         headTrackingAvailable = HeadTracker.isAvailable
@@ -416,6 +428,7 @@ final class Session {
         isPlaying = true
         playStart = .now
         startMindful()
+        startSleepLog()
         startBody()
         startBreathing()
         inputs.forEach { $0.start(for: mode) }
@@ -434,6 +447,7 @@ final class Session {
         played = playTime
         playStart = nil
         endMindful()
+        endSleepLog()
         stopBody()
         breath.stop()
         hapticPlayer.stop()
@@ -509,6 +523,36 @@ final class Session {
         guard let start = mindfulStart else { return }
         mindfulStart = nil
         mindful?.log(DateInterval(start: start, end: .now))
+    }
+
+    // MARK: The night's own log
+
+    /// Wind Down and the two sleep beds, written down locally because
+    /// Health has no idea they ever played: without this a night with a bed
+    /// under it and a night without look identical from Health's side, and
+    /// `NightEffect` would have nothing to split nights on. Like the
+    /// mindful segments, each stretch of play is its own entry, so a pause
+    /// is a break and a mode change ends one stretch and opens the next.
+    private func startSleepLog() {
+        guard SessionLog.keeps(mode) else { return }
+        let start = clock()
+        slept = (mode, start)
+        // A bed outlives the app that started it more often than anything
+        // else here does; see `SessionLog.opening`.
+        SessionLog.opening(mode, at: start, in: defaults)
+    }
+
+    private func endSleepLog() {
+        guard let slept else { return }
+        self.slept = nil
+        SessionLog.closing(in: defaults)
+        let now = clock()
+        guard now > slept.start else { return }
+        sleepLog = SessionLog.appending(
+            PlayedSession(slept.mode, DateInterval(start: slept.start, end: now)),
+            to: sleepLog, now: now
+        )
+        SessionLog.save(sleepLog, to: defaults)
     }
 
     /// What Health has of this practice, for `PracticeScreen`. Read when the

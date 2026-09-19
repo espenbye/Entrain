@@ -62,6 +62,13 @@ enum Mode: String, CaseIterable, Identifiable, Codable, Sendable {
     /// practice, and logging it would quietly inflate the figure.
     var isMindful: Bool { self == .meditate || self == .restore }
 
+    /// Whether a stretch of this mode is sound put on for the night that
+    /// follows it. Wind Down joins the two sleep beds because its timer
+    /// ends in bed by design; Nap and Wake are daytime sleep and a rise out
+    /// of it, and neither belongs to a night. It is what `NightEffect`
+    /// splits nights on, and nothing about how a mode sounds.
+    var runsIntoTheNight: Bool { isSleep || self == .windDown }
+
     /// Whether head tracking may run. Not in bed: rolling over would swing
     /// the room, and the sensors cost power over an eight-hour session. A
     /// nap is lying down too.
