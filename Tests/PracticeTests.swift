@@ -89,12 +89,18 @@ struct PracticeTests {
         #expect(PracticeHistory.empty.today == 0)
     }
 
-    /// Minutes are truncated, not rounded: a sitting is credited with the
-    /// minutes it actually ran, which is what Health does with its own.
+    /// Minutes are floored, not rounded: a sitting is credited with the
+    /// minutes it actually ran. `.units` rounds to nearest left to itself,
+    /// which would read ninety seconds as two minutes, so the flooring
+    /// happens before the duration is built.
     @Test func spansReadAsMinutesAndGrowPastAnHour() {
+        // Part of a minute is not a minute, and a minute and a half is one.
         #expect(TimeInterval(59).practiceMinutes == TimeInterval(0).practiceMinutes)
         #expect(TimeInterval(119).practiceMinutes == TimeInterval(60).practiceMinutes)
+        #expect(TimeInterval(90).practiceMinutes == TimeInterval(60).practiceMinutes)
+        // An hour is where the hours unit joins in, and a minute under it is not.
         #expect(TimeInterval(3540).practiceMinutes != TimeInterval(3600).practiceMinutes)
+        #expect(TimeInterval(3599).practiceMinutes == TimeInterval(3540).practiceMinutes)
         #expect(!TimeInterval(1500).practiceMinutes.isEmpty)
     }
 }

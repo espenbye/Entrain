@@ -57,14 +57,21 @@ struct PracticeHistory: Equatable, Sendable {
 }
 
 extension TimeInterval {
-    /// A span of practice as "25 min", growing to "1 h 25 min" past an hour.
-    /// Rounded down to the minute, like Health's own mindful figure: a
-    /// session is credited with the minutes it actually ran.
+    /// A span of practice as "25 min", growing to "1 hr 25 min" past an hour.
+    ///
+    /// Floored to the whole minute here rather than left to the format
+    /// style, which rounds to nearest: ninety seconds of sitting is a minute
+    /// and a half, and reporting it as two credits half a minute nobody sat.
+    /// A practice log that rounds up is a practice log that flatters, and
+    /// the figure is meant to be the one Health holds. Formatting a whole
+    /// number of minutes also makes the style's rounding a no-op, so the
+    /// hours-and-minutes split past an hour is exact.
     var practiceMinutes: String {
-        // Spelled out rather than written inline in the call: two array
+        let minutes = Int(self) / 60
+        // The set is named rather than written inline in the call: two array
         // literals either side of a ternary have nothing to infer their
         // element type from, and the compiler reads the pair as `[Any]`.
-        let allowed: Set<Duration.UnitsFormatStyle.Unit> = self >= 3600 ? [.hours, .minutes] : [.minutes]
-        return Duration.seconds(Int(self)).formatted(.units(allowed: allowed, width: .abbreviated))
+        let allowed: Set<Duration.UnitsFormatStyle.Unit> = minutes >= 60 ? [.hours, .minutes] : [.minutes]
+        return Duration.seconds(minutes * 60).formatted(.units(allowed: allowed, width: .abbreviated))
     }
 }
