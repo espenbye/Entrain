@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The widget's own manifest. An extension is a separate bundle with a
+	     separate executable, so Apple reads its manifest rather than the
+	     app's, and the Xcode privacy report aggregates the two. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<!-- Empty, and it should stay empty. The widget draws WidgetState and
+	     CircadianDay out of a file the app writes; it touches no defaults and
+	     no other required reason API. Anything here that reaches for
+	     UserDefaults needs NSPrivacyAccessedAPICategoryUserDefaults added,
+	     with 1C8F.1 rather than the app's CA92.1 if it reads the App Group. -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>
