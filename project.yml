@@ -32,6 +32,8 @@ targetTemplates:
       - Sources/Health
       - Sources/UI/PlayerView.swift
       - Sources/UI/BodySection.swift
+      # Resources carries PrivacyInfo.xcprivacy, which has to land at the
+      # bundle root under exactly that name for App Review to read it.
       - Resources
     settings:
       base:
@@ -54,6 +56,9 @@ targetTemplates:
       - Sources/Session/WidgetState.swift
       - Sources/Session/Intents.swift
       - Resources/Localizable.xcstrings
+      # The extension is its own bundle, so it needs its own manifest rather
+      # than the app's; this one declares no required reason API at all.
+      - Widget/PrivacyInfo.xcprivacy
     info:
       properties:
         CFBundleDisplayName: Entrain
